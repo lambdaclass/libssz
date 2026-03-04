@@ -81,6 +81,11 @@ impl<const N: usize> SszBitlist<N> {
         true
     }
 
+    /// Returns the raw data bytes (without delimiter bit).
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+
     /// Push a bit. Returns `Err` if at capacity.
     pub fn push(&mut self, value: bool) -> Result<(), TypeError> {
         if self.len >= N {

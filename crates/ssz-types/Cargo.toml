@@ -6,9 +6,10 @@ description = "Bounded SSZ collection types: Vector, List, Bitvector, Bitlist"
 
 [features]
 default = ["std"]
-std = ["alloc", "ssz/std"]
-alloc = ["ssz/alloc"]
+std = ["alloc", "ssz/std", "ssz-merkle/std"]
+alloc = ["ssz/alloc", "ssz-merkle/alloc"]
 
 [dependencies]
 ssz = { path = "../ssz", default-features = false }
+ssz-merkle = { path = "../ssz-merkle", default-features = false }
 smallvec = { version = "1.13", default-features = false }

@@ -9,6 +9,7 @@ mod list;
 mod bitvector;
 mod bitlist;
 mod union;
+mod hash_tree_root;
 
 pub use error::TypeError;
 pub use vector::SszVector;
