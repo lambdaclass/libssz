@@ -12,3 +12,6 @@ alloc = ["ssz/alloc"]
 [dependencies]
 ssz = { path = "../ssz", default-features = false }
 sha2 = { version = "0.10", default-features = false }
+
+[build-dependencies]
+sha2 = "0.10"
