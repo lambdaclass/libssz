@@ -1,0 +1,14 @@
+[package]
+name = "ssz-types"
+version = "0.1.0"
+edition = "2021"
+description = "Bounded SSZ collection types: Vector, List, Bitvector, Bitlist"
+
+[features]
+default = ["std"]
+std = ["alloc", "ssz/std"]
+alloc = ["ssz/alloc"]
+
+[dependencies]
+ssz = { path = "../ssz", default-features = false }
+smallvec = { version = "1.13", default-features = false }

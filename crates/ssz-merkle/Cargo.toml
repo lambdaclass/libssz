@@ -1,0 +1,14 @@
+[package]
+name = "ssz-merkle"
+version = "0.1.0"
+edition = "2021"
+description = "SSZ Merkleization: HashTreeRoot, merkleize, zero hashes"
+
+[features]
+default = ["std"]
+std = ["alloc", "ssz/std"]
+alloc = ["ssz/alloc"]
+
+[dependencies]
+ssz = { path = "../ssz", default-features = false }
+sha2 = { version = "0.10", default-features = false }

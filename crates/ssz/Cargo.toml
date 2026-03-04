@@ -1,0 +1,13 @@
+[package]
+name = "ssz"
+version = "0.1.0"
+edition = "2021"
+description = "Simple Serialize (SSZ) encoding/decoding for Ethereum consensus"
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[dependencies]
+smallvec = { version = "1.13", default-features = false }
