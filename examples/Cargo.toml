@@ -1,0 +1,26 @@
+[package]
+name = "ssz-examples"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+ssz = { path = "../crates/ssz" }
+ssz-types = { path = "../crates/ssz-types" }
+ssz-merkle = { path = "../crates/ssz-merkle" }
+
+[[bin]]
+name = "basic_types"
+path = "src/bin/basic_types.rs"
+
+[[bin]]
+name = "containers"
+path = "src/bin/containers.rs"
+
+[[bin]]
+name = "collections"
+path = "src/bin/collections.rs"
+
+[[bin]]
+name = "no_std_usage"
+path = "src/bin/no_std_usage.rs"

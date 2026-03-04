@@ -5,4 +5,5 @@ members = [
     "crates/ssz-types",
     "crates/ssz-merkle",
     "crates/ssz-derive",
+    "examples",
 ]
