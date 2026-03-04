@@ -8,6 +8,10 @@ description = "Derive macros for SSZ encoding, decoding, and HashTreeRoot"
 proc-macro = true
 
 [dependencies]
-syn = { version = "2", features = ["full"] }
+syn = { version = "2", features = ["full", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1"
+
+[dev-dependencies]
+ssz = { path = "../ssz" }
+ssz-merkle = { path = "../ssz-merkle" }
