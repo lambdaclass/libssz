@@ -56,7 +56,8 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 /// Compute the Merkle root of a list of chunks.
 ///
 /// If `limit` is `Some(n)`, the tree is padded as if there were `n` leaf chunks
-/// (using precomputed zero hashes).
+/// (using precomputed zero hashes). The padding is virtual — only the real chunks
+/// are materialized, and the remaining subtree roots come from precomputed zero hashes.
 #[cfg(feature = "alloc")]
 pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
     let count = match limit {
@@ -83,13 +84,26 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
         leaf_count.trailing_zeros() as usize
     };
 
-    // Build the bottom layer: real chunks + zero padding
-    let mut layer: Vec<Node> = Vec::with_capacity(leaf_count);
-    layer.extend_from_slice(chunks);
-    layer.resize(leaf_count, ZERO_HASHES[0]);
+    // Only allocate for real data, padded to the next power of two.
+    // The rest of the tree is handled via precomputed zero hashes.
+    let real_leaf_count = if chunks.is_empty() {
+        1
+    } else {
+        chunks.len().next_power_of_two()
+    };
+    let real_depth = if real_leaf_count == 1 {
+        0
+    } else {
+        real_leaf_count.trailing_zeros() as usize
+    };
 
-    // Hash layer by layer
-    for zero_hash in ZERO_HASHES.iter().take(depth) {
+    // Build bottom layer from real chunks only
+    let mut layer: Vec<Node> = Vec::with_capacity(real_leaf_count);
+    layer.extend_from_slice(chunks);
+    layer.resize(real_leaf_count, ZERO_HASHES[0]);
+
+    // Hash layer by layer up to real_depth
+    for zero_hash in ZERO_HASHES.iter().take(real_depth) {
         let mut next = Vec::with_capacity(layer.len() / 2);
         for pair in layer.chunks(2) {
             let left = &pair[0];
@@ -99,7 +113,14 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
         layer = next;
     }
 
-    layer[0]
+    // Now layer[0] is the root of the real data subtree.
+    // Merge with zero hashes for the remaining virtual depth levels.
+    let mut root = layer[0];
+    for zero_hash in ZERO_HASHES.iter().take(depth).skip(real_depth) {
+        root = hash_nodes(&root, zero_hash);
+    }
+
+    root
 }
 
 /// Mix in a length value: hash_nodes(root, length_as_le_bytes_node).
@@ -162,6 +183,35 @@ impl HashTreeRoot for [u8; 32] {
     #[inline(always)]
     fn hash_tree_root(&self) -> Node {
         *self
+    }
+}
+
+// ── [u8; 4] ──
+
+impl HashTreeRoot for [u8; 4] {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        node[..4].copy_from_slice(self);
+        node
+    }
+}
+
+// ── [u8; 48] ──
+
+#[cfg(feature = "alloc")]
+impl HashTreeRoot for [u8; 48] {
+    fn hash_tree_root(&self) -> Node {
+        merkleize(&pack(self), None)
+    }
+}
+
+// ── [u8; 96] ──
+
+#[cfg(feature = "alloc")]
+impl HashTreeRoot for [u8; 96] {
+    fn hash_tree_root(&self) -> Node {
+        merkleize(&pack(self), None)
     }
 }
 

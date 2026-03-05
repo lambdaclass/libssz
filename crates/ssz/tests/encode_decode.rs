@@ -161,12 +161,13 @@ fn container_mixed_round_trip() {
     let c: u16 = 1000;
 
     // Encode
-    let mut encoder = ContainerEncoder::new();
+    let mut buf = Vec::new();
+    let fixed_part_len_enc = 4 + 4 + 2; // u32 + offset + u16
+    let mut encoder = ContainerEncoder::new(&mut buf, fixed_part_len_enc);
     encoder.append_fixed(&a);
     encoder.append_variable(&b);
     encoder.append_fixed(&c);
-    let mut buf = Vec::new();
-    encoder.finalize(&mut buf);
+    encoder.finalize();
 
     // Expected:
     // [42, 0, 0, 0]         a = 42 (u32 LE)
@@ -195,11 +196,11 @@ fn container_all_fixed_round_trip() {
     let x: u32 = 7;
     let y: u64 = 999;
 
-    let mut encoder = ContainerEncoder::new();
+    let mut buf = Vec::new();
+    let mut encoder = ContainerEncoder::new(&mut buf, 4 + 8);
     encoder.append_fixed(&x);
     encoder.append_fixed(&y);
-    let mut buf = Vec::new();
-    encoder.finalize(&mut buf);
+    encoder.finalize();
 
     assert_eq!(buf.len(), 4 + 8);
 
@@ -476,15 +477,14 @@ fn decode_error_display_formats_correctly() {
 // ── ContainerEncoder default ──
 
 #[test]
-fn container_encoder_default() {
-    // Default and new should produce identical encoders
-    let mut enc_default = ContainerEncoder::default();
-    let mut enc_new = ContainerEncoder::new();
-    enc_default.append_fixed(&42u32);
-    enc_new.append_fixed(&42u32);
+fn container_encoder_new() {
     let mut buf1 = Vec::new();
     let mut buf2 = Vec::new();
-    enc_default.finalize(&mut buf1);
-    enc_new.finalize(&mut buf2);
+    let mut enc1 = ContainerEncoder::new(&mut buf1, 4);
+    enc1.append_fixed(&42u32);
+    enc1.finalize();
+    let mut enc2 = ContainerEncoder::new(&mut buf2, 4);
+    enc2.append_fixed(&42u32);
+    enc2.finalize();
     assert_eq!(buf1, buf2);
 }

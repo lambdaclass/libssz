@@ -2,7 +2,7 @@
 
 A fast, modular [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus, written in Rust.
 
-Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Faster than Lighthouse and ssz_rs on every encode benchmark. Fuzz-tested against both reference implementations.
+Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Fuzz-tested against both reference implementations.
 
 ## Performance
 
@@ -31,6 +31,19 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 | `BeaconBlockHeader` | 12.7 ns | 12.3 ns | 207 ns | ~1x | **16x** |
 | `Vec<u64>` (1K) | 123 ns | 1.23 µs | 780 ns | **10x** | **6.3x** |
 | `Vec<u64>` (100K) | 10.3 µs | 154 µs | 112 µs | **15x** | **10.9x** |
+
+#### BeaconState (21 fields, variable-length)
+
+| Benchmark | Validators | libssz | Lighthouse | vs Lighthouse |
+|-----------|-----------|--------|------------|---------------|
+| Encode | 16K | 808 µs | 756 µs | ~1x |
+| Encode | 100K | 654 µs | 5.61 ms | **8.6x** |
+| Encode | 300K | 11.9 ms | 18.0 ms | **1.5x** |
+| Encode | 1M | 5.67 ms | 19.0 ms | **3.4x** |
+| Decode | 16K | 123 µs | 237 µs | **1.9x** |
+| Decode | 100K | 539 µs | 804 µs | **1.5x** |
+| Decode | 300K | 1.51 ms | 2.23 ms | **1.5x** |
+| Decode | 1M | 4.94 ms | 7.22 ms | **1.5x** |
 
 #### Hash Tree Root
 
@@ -62,6 +75,19 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 | `Vec<u64>` (1K) | 609 ns | 799 ns | 522 ns | **1.3x** | 0.9x |
 | `Vec<u64>` (100K) | 42.7 µs | 60.3 µs | 33.7 µs | **1.4x** | 0.8x |
 
+#### BeaconState (21 fields, variable-length)
+
+| Benchmark | Validators | libssz | Lighthouse | vs Lighthouse |
+|-----------|-----------|--------|------------|---------------|
+| Encode | 16K | 139 µs | 170 µs | **1.2x** |
+| Encode | 100K | 433 µs | 854 µs | **2.0x** |
+| Encode | 300K | 3.54 ms | 6.53 ms | **1.8x** |
+| Encode | 1M | 11.4 ms | 24.3 ms | **2.1x** |
+| Decode | 16K | 76 µs | 190 µs | **2.5x** |
+| Decode | 100K | 335 µs | 849 µs | **2.5x** |
+| Decode | 300K | 3.09 ms | 4.04 ms | **1.3x** |
+| Decode | 1M | 11.1 ms | 14.3 ms | **1.3x** |
+
 #### Hash Tree Root
 
 | Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
@@ -70,13 +96,15 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 | `u64` | 2.4 ns | 2.1 ns | 31 ns | ~1x | **13x** |
 | `[u8; 32]` | 2.80 ns | 2.80 ns | 57.8 ns | ~1x | **21x** |
 
-libssz is fastest on encode and `Vec<u64>` decode across the board — bulk memcpy on little-endian for both encode and decode. Full results: `cargo bench --bench differential`.
+libssz beats Lighthouse on both BeaconState encode and decode at every validator count, and dominates on primitives and vectors. Full results: `cargo bench --bench differential`.
 
 <details>
 <summary>How</summary>
 
-- **All-fixed containers** bypass `ContainerEncoder`/`ContainerDecoder` entirely — the derive macro generates direct field-by-field append/decode when all fields are fixed-size, eliminating heap allocations and offset bookkeeping
-- **Bulk memcpy for integer vectors** — both encode and decode of `Vec<u64>` use a single memcpy on little-endian platforms instead of per-element iteration
+- **Direct-write `ContainerEncoder`** — variable data writes directly to the output buffer with no intermediate allocation. Fixed fields are patched in-place into a pre-allocated region. Eliminates the double-write that a separate variable buffer would cause
+- **All-fixed containers** bypass `ContainerEncoder`/`ContainerDecoder` entirely — the derive macro generates direct field-by-field append/decode, eliminating heap allocations and offset bookkeeping
+- **Inlined bulk encode/decode** — the derive macro generates `ssz_append_fixed_slice` and `ssz_decode_fixed_vec` overrides that inline per-field operations directly into the loop body, skipping per-item struct-level length checks
+- **Bulk memcpy for `[u8; N]` and integers** — both encode and decode use a single memcpy on little-endian platforms instead of per-element iteration
 - **Aggressive inlining** — `#[inline(always)]` on all trait impls that cross crate boundaries
 
 </details>

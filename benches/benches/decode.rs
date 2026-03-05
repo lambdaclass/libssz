@@ -1,10 +1,12 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use ssz::SszDecode;
 use ssz_bench::fixtures::{
-    make_bench_union, make_bitlist, make_bitlist_2048, make_bitvector, make_bitvector_512,
-    make_header, make_list_u64, make_nested_container, make_validator, make_validator_list,
-    make_variable_container, make_vec_u64, make_vector_bytes32, pre_encode, BeaconBlockHeader,
-    BenchUnion, NestedContainer, Validator, VariableContainer,
+    make_attestation_data, make_beacon_state, make_bench_union, make_bitlist, make_bitlist_2048,
+    make_bitvector, make_bitvector_512, make_checkpoint, make_eth1_data, make_fork, make_header,
+    make_list_u64, make_nested_container, make_pending_attestation, make_validator,
+    make_validator_list, make_variable_container, make_vec_u64, make_vector_bytes32, pre_encode,
+    AttestationData, BeaconBlockHeader, BeaconState, BenchUnion, Checkpoint, Eth1Data, Fork,
+    NestedContainer, PendingAttestation, Validator, VariableContainer,
 };
 use ssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
@@ -218,6 +220,54 @@ fn decode_list_u64(c: &mut Criterion) {
     group.finish();
 }
 
+fn decode_consensus_containers(c: &mut Criterion) {
+    let mut group = c.benchmark_group("decode/consensus_containers");
+    let fork = make_fork();
+    let checkpoint = make_checkpoint(42);
+    let eth1_data = make_eth1_data(42);
+    let attestation_data = make_attestation_data(42);
+    let pending_attestation = make_pending_attestation(42);
+    let fork_enc = pre_encode(&fork);
+    let checkpoint_enc = pre_encode(&checkpoint);
+    let eth1_data_enc = pre_encode(&eth1_data);
+    let attestation_data_enc = pre_encode(&attestation_data);
+    let pending_attestation_enc = pre_encode(&pending_attestation);
+    group.bench_function("fork", |b| {
+        b.iter(|| Fork::from_ssz_bytes(black_box(&fork_enc)).unwrap())
+    });
+    group.bench_function("checkpoint", |b| {
+        b.iter(|| Checkpoint::from_ssz_bytes(black_box(&checkpoint_enc)).unwrap())
+    });
+    group.bench_function("eth1_data", |b| {
+        b.iter(|| Eth1Data::from_ssz_bytes(black_box(&eth1_data_enc)).unwrap())
+    });
+    group.bench_function("attestation_data", |b| {
+        b.iter(|| AttestationData::from_ssz_bytes(black_box(&attestation_data_enc)).unwrap())
+    });
+    group.bench_function("pending_attestation", |b| {
+        b.iter(|| PendingAttestation::from_ssz_bytes(black_box(&pending_attestation_enc)).unwrap())
+    });
+    group.finish();
+}
+
+fn decode_beacon_state(c: &mut Criterion) {
+    let mut group = c.benchmark_group("decode/beacon_state");
+    group.sample_size(10);
+    for &n_validators in &[16384, 100_000, 300_000] {
+        let state = make_beacon_state(n_validators);
+        let encoded = pre_encode(&state);
+        group.throughput(Throughput::Bytes(encoded.len() as u64));
+        group.bench_with_input(
+            BenchmarkId::from_parameter(n_validators),
+            &encoded,
+            |b, encoded| {
+                b.iter(|| BeaconState::from_ssz_bytes(black_box(encoded)).unwrap());
+            },
+        );
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     decode_primitives,
@@ -231,5 +281,7 @@ criterion_group!(
     decode_variable_container,
     decode_nested_container,
     decode_list_u64,
+    decode_consensus_containers,
+    decode_beacon_state,
 );
 criterion_main!(benches);

@@ -15,11 +15,11 @@ fn main() {
         let y: u32 = 200;
 
         // Encode
-        let mut encoder = ContainerEncoder::new();
+        let mut buf = Vec::new();
+        let mut encoder = ContainerEncoder::new(&mut buf, 4 + 4);
         encoder.append_fixed(&x);
         encoder.append_fixed(&y);
-        let mut buf = Vec::new();
-        encoder.finalize(&mut buf);
+        encoder.finalize();
 
         println!("  Encoded: {buf:02x?} ({} bytes)", buf.len());
         assert_eq!(buf.len(), 8); // 4 + 4
@@ -46,12 +46,12 @@ fn main() {
         let memo: Vec<u8> = b"hello".to_vec();
 
         // Encode
-        let mut encoder = ContainerEncoder::new();
+        let mut buf = Vec::new();
+        let mut encoder = ContainerEncoder::new(&mut buf, 20 + 8 + 4);
         encoder.append_fixed(&sender); // 20 bytes
         encoder.append_fixed(&amount); // 8 bytes
         encoder.append_variable(&memo); // 4-byte offset + data
-        let mut buf = Vec::new();
-        encoder.finalize(&mut buf);
+        encoder.finalize();
 
         // Fixed part: 20 (sender) + 8 (amount) + 4 (offset) = 32 bytes
         // Variable part: 5 bytes ("hello")
@@ -90,12 +90,12 @@ fn main() {
         let tag: u16 = 42;
 
         // Encode -- fields in declaration order
-        let mut encoder = ContainerEncoder::new();
+        let mut buf = Vec::new();
+        let mut encoder = ContainerEncoder::new(&mut buf, 4 + 4 + 2);
         encoder.append_variable(&from); // 4-byte offset
         encoder.append_variable(&to); // 4-byte offset
         encoder.append_fixed(&tag); // 2 bytes
-        let mut buf = Vec::new();
-        encoder.finalize(&mut buf);
+        encoder.finalize();
 
         // Fixed part: 4 (offset) + 4 (offset) + 2 (tag) = 10 bytes
         // Variable part: 3 (from) + 2 (to) = 5 bytes

@@ -196,6 +196,33 @@ fn derive_encode_struct(
         })
         .collect();
 
+    // Compute fixed_part_len for ContainerEncoder — same pattern as decode
+    let encode_fixed_part_len_terms: Vec<_> = field_types
+        .iter()
+        .map(|ty| {
+            quote! {
+                {
+                    if <#ty as ssz::SszEncode>::is_fixed_size() {
+                        <#ty as ssz::SszEncode>::fixed_size()
+                    } else {
+                        4usize
+                    }
+                }
+            }
+        })
+        .collect();
+
+    // Bulk encode for all-fixed structs: inline field appends into the loop body
+    let bulk_append_stmts: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                <#ty as ssz::SszEncode>::ssz_append(&item.#fname, buf);
+            }
+        })
+        .collect();
+
     quote! {
         impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool {
@@ -218,9 +245,28 @@ fn derive_encode_struct(
                 if <Self as ssz::SszEncode>::is_fixed_size() {
                     #(#direct_append_stmts)*
                 } else {
-                    let mut encoder = ssz::ContainerEncoder::new();
+                    let fixed_part_len: usize = 0 #(+ #encode_fixed_part_len_terms)*;
+                    let total_len = ssz::SszEncode::encoded_len(self);
+                    let mut encoder = ssz::ContainerEncoder::with_capacity(buf, fixed_part_len, total_len);
                     #(#append_stmts)*
-                    encoder.finalize(buf);
+                    encoder.finalize();
+                }
+            }
+
+            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>)
+            where
+                Self: Sized,
+            {
+                if <Self as ssz::SszEncode>::is_fixed_size() {
+                    buf.reserve(<Self as ssz::SszEncode>::fixed_size() * items.len());
+                    for item in items {
+                        #(#bulk_append_stmts)*
+                    }
+                } else {
+                    buf.reserve(<Self as ssz::SszEncode>::fixed_size() * items.len());
+                    for item in items {
+                        item.ssz_append(buf);
+                    }
                 }
             }
         }
@@ -463,23 +509,39 @@ fn derive_decode_struct(
         quote! { #fname }
     });
 
-    // Fast path for all-fixed containers: direct decode from slices, no ContainerDecoder
+    // Fast path for all-fixed containers: decode using split_at, no ContainerDecoder
     let direct_decode_stmts: Vec<_> = field_names
         .iter()
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                let #fname = {
-                    let size = <#ty as ssz::SszDecode>::fixed_size();
-                    let val = <#ty as ssz::SszDecode>::from_ssz_bytes(&bytes[cursor..cursor + size])?;
-                    cursor += size;
-                    val
+                let (#fname, __remaining) = {
+                    let (slice, rest) = __remaining.split_at(<#ty as ssz::SszDecode>::fixed_size());
+                    (<#ty as ssz::SszDecode>::from_ssz_bytes(slice)?, rest)
                 };
             }
         })
         .collect();
 
     let field_constructs_fixed = field_names.iter().map(|fname| {
+        quote! { #fname }
+    });
+
+    // Bulk decode for all-fixed structs: inline field decodes, skip per-item length check
+    let bulk_decode_stmts: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                let (#fname, __remaining) = {
+                    let (slice, rest) = __remaining.split_at(<#ty as ssz::SszDecode>::fixed_size());
+                    (<#ty as ssz::SszDecode>::from_ssz_bytes(slice)?, rest)
+                };
+            }
+        })
+        .collect();
+
+    let field_constructs_bulk = field_names.iter().map(|fname| {
         quote! { #fname }
     });
 
@@ -503,7 +565,7 @@ fn derive_decode_struct(
                     if bytes.len() != expected {
                         return Err(ssz::DecodeError::InvalidFixedLength { expected, got: bytes.len() });
                     }
-                    let mut cursor = 0usize;
+                    let __remaining = bytes;
                     #(#direct_decode_stmts)*
                     Ok(#name {
                         #(#field_constructs_fixed,)*
@@ -521,6 +583,37 @@ fn derive_decode_struct(
                     Ok(#name {
                         #(#field_constructs,)*
                     })
+                }
+            }
+
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, ssz::DecodeError> {
+                if <Self as ssz::SszDecode>::is_fixed_size() {
+                    let item_size = <Self as ssz::SszDecode>::fixed_size();
+                    if item_size > 0 && bytes.len() % item_size != 0 {
+                        return Err(ssz::DecodeError::InvalidByteLength {
+                            expected: item_size,
+                            got: bytes.len(),
+                        });
+                    }
+                    let count = if item_size > 0 { bytes.len() / item_size } else { 0 };
+                    let mut result = Vec::with_capacity(count);
+                    // Inline per-item decode: skip struct-level length check
+                    // since chunks_exact guarantees correct chunk size.
+                    for chunk in bytes.chunks_exact(item_size) {
+                        let __remaining = chunk;
+                        #(#bulk_decode_stmts)*
+                        result.push(#name {
+                            #(#field_constructs_bulk,)*
+                        });
+                    }
+                    Ok(result)
+                } else {
+                    // Variable-size: fall back to default
+                    let item_size = <Self as ssz::SszDecode>::fixed_size();
+                    bytes
+                        .chunks_exact(item_size)
+                        .map(Self::from_ssz_bytes)
+                        .collect()
                 }
             }
         }

@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use ssz_bench::fixtures::{
-    make_bench_union, make_bitlist, make_bitlist_2048, make_bitvector, make_bitvector_512,
-    make_header, make_list_u64, make_nested_container, make_validator, make_validator_list,
-    make_variable_container, make_vec_u64, make_vector_bytes32,
+    make_attestation_data, make_beacon_state, make_bench_union, make_bitlist, make_bitlist_2048,
+    make_bitvector, make_bitvector_512, make_checkpoint, make_eth1_data, make_fork, make_header,
+    make_list_u64, make_nested_container, make_pending_attestation, make_validator,
+    make_validator_list, make_variable_container, make_vec_u64, make_vector_bytes32,
 };
 use ssz_merkle::HashTreeRoot;
 
@@ -164,6 +165,45 @@ fn htr_list_u64(c: &mut Criterion) {
     group.finish();
 }
 
+fn htr_consensus_containers(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hash_tree_root/consensus_containers");
+    let fork = make_fork();
+    let checkpoint = make_checkpoint(42);
+    let eth1_data = make_eth1_data(42);
+    let attestation_data = make_attestation_data(42);
+    let pending_attestation = make_pending_attestation(42);
+    group.bench_function("fork", |b| b.iter(|| black_box(&fork).hash_tree_root()));
+    group.bench_function("checkpoint", |b| {
+        b.iter(|| black_box(&checkpoint).hash_tree_root())
+    });
+    group.bench_function("eth1_data", |b| {
+        b.iter(|| black_box(&eth1_data).hash_tree_root())
+    });
+    group.bench_function("attestation_data", |b| {
+        b.iter(|| black_box(&attestation_data).hash_tree_root())
+    });
+    group.bench_function("pending_attestation", |b| {
+        b.iter(|| black_box(&pending_attestation).hash_tree_root())
+    });
+    group.finish();
+}
+
+fn htr_beacon_state(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hash_tree_root/beacon_state");
+    group.sample_size(10);
+    for &n_validators in &[16384, 100_000, 300_000] {
+        let state = make_beacon_state(n_validators);
+        group.bench_with_input(
+            BenchmarkId::from_parameter(n_validators),
+            &state,
+            |b, state| {
+                b.iter(|| black_box(state).hash_tree_root());
+            },
+        );
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     htr_primitives,
@@ -176,5 +216,7 @@ criterion_group!(
     htr_variable_container,
     htr_nested_container,
     htr_list_u64,
+    htr_consensus_containers,
+    htr_beacon_state,
 );
 criterion_main!(benches);

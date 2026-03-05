@@ -139,9 +139,29 @@ macro_rules! impl_ssz_decode_byte_array {
                         got: bytes.len(),
                     });
                 }
-                let mut arr = [0u8; $n];
-                arr.copy_from_slice(bytes);
-                Ok(arr)
+                Ok(bytes.try_into().unwrap())
+            }
+
+            #[cfg(feature = "alloc")]
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+                if bytes.len() % $n != 0 {
+                    return Err(DecodeError::InvalidByteLength {
+                        expected: $n,
+                        got: bytes.len(),
+                    });
+                }
+                let count = bytes.len() / $n;
+                let mut result = Vec::<[u8; $n]>::with_capacity(count);
+                // SAFETY: [u8; N] has no padding — same layout as &[u8].
+                unsafe {
+                    core::ptr::copy_nonoverlapping(
+                        bytes.as_ptr(),
+                        result.as_mut_ptr() as *mut u8,
+                        bytes.len(),
+                    );
+                    result.set_len(count);
+                }
+                Ok(result)
             }
         }
     };

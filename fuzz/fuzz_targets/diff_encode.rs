@@ -27,6 +27,25 @@ struct FuzzInput {
     state_root: [u8; 32],
     body_root: [u8; 32],
     vec_u64: Vec<u64>,
+    // Fork
+    prev_version: [u8; 4],
+    cur_version: [u8; 4],
+    fork_epoch: u64,
+    // Checkpoint
+    checkpoint_epoch: u64,
+    checkpoint_root: [u8; 32],
+    // Eth1Data
+    deposit_root: [u8; 32],
+    deposit_count: u64,
+    eth1_block_hash: [u8; 32],
+    // AttestationData
+    att_slot: u64,
+    att_index: u64,
+    att_beacon_block_root: [u8; 32],
+    source_epoch: u64,
+    source_root: [u8; 32],
+    target_epoch: u64,
+    target_root: [u8; 32],
 }
 
 /// Encode with our library.
@@ -112,4 +131,116 @@ fuzz_target!(|input: FuzzInput| {
     // ssz_rs: encode as List<u64, 1024> and compare
     let ssz_rs_list: ssz_rs::List<u64, 1024> = vec.clone().try_into().unwrap();
     assert_eq!(ours(&vec), ssz_rs_encode(&ssz_rs_list), "Vec<u64> ssz_rs");
+
+    // -- Container (Fork — 4 + 4 + 8 = 16 bytes, all fixed) --
+    let our_fork = {
+        let mut buf = Vec::new();
+        <[u8; 4] as libssz::SszEncode>::ssz_append(&input.prev_version, &mut buf);
+        <[u8; 4] as libssz::SszEncode>::ssz_append(&input.cur_version, &mut buf);
+        <u64 as libssz::SszEncode>::ssz_append(&input.fork_epoch, &mut buf);
+        buf
+    };
+    let lh_fork = {
+        let mut buf = Vec::new();
+        <[u8; 4] as lighthouse_ssz::Encode>::ssz_append(&input.prev_version, &mut buf);
+        <[u8; 4] as lighthouse_ssz::Encode>::ssz_append(&input.cur_version, &mut buf);
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.fork_epoch, &mut buf);
+        buf
+    };
+    let ssz_rs_fork = {
+        let mut buf = Vec::new();
+        ssz_rs::Serialize::serialize(&input.prev_version, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.cur_version, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.fork_epoch, &mut buf).unwrap();
+        buf
+    };
+    assert_eq!(our_fork, lh_fork, "Fork");
+    assert_eq!(our_fork, ssz_rs_fork, "Fork ssz_rs");
+
+    // -- Container (Checkpoint — 8 + 32 = 40 bytes, all fixed) --
+    let our_checkpoint = {
+        let mut buf = Vec::new();
+        <u64 as libssz::SszEncode>::ssz_append(&input.checkpoint_epoch, &mut buf);
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.checkpoint_root, &mut buf);
+        buf
+    };
+    let lh_checkpoint = {
+        let mut buf = Vec::new();
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.checkpoint_epoch, &mut buf);
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.checkpoint_root, &mut buf);
+        buf
+    };
+    let ssz_rs_checkpoint = {
+        let mut buf = Vec::new();
+        ssz_rs::Serialize::serialize(&input.checkpoint_epoch, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.checkpoint_root, &mut buf).unwrap();
+        buf
+    };
+    assert_eq!(our_checkpoint, lh_checkpoint, "Checkpoint");
+    assert_eq!(our_checkpoint, ssz_rs_checkpoint, "Checkpoint ssz_rs");
+
+    // -- Container (Eth1Data — 32 + 8 + 32 = 72 bytes, all fixed) --
+    let our_eth1data = {
+        let mut buf = Vec::new();
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.deposit_root, &mut buf);
+        <u64 as libssz::SszEncode>::ssz_append(&input.deposit_count, &mut buf);
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.eth1_block_hash, &mut buf);
+        buf
+    };
+    let lh_eth1data = {
+        let mut buf = Vec::new();
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.deposit_root, &mut buf);
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.deposit_count, &mut buf);
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.eth1_block_hash, &mut buf);
+        buf
+    };
+    let ssz_rs_eth1data = {
+        let mut buf = Vec::new();
+        ssz_rs::Serialize::serialize(&input.deposit_root, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.deposit_count, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.eth1_block_hash, &mut buf).unwrap();
+        buf
+    };
+    assert_eq!(our_eth1data, lh_eth1data, "Eth1Data");
+    assert_eq!(our_eth1data, ssz_rs_eth1data, "Eth1Data ssz_rs");
+
+    // -- Container (AttestationData — 8+8+32+40+40 = 128 bytes, all fixed) --
+    // source: (epoch u64, root [u8;32]); target: (epoch u64, root [u8;32])
+    let our_att_data = {
+        let mut buf = Vec::new();
+        <u64 as libssz::SszEncode>::ssz_append(&input.att_slot, &mut buf);
+        <u64 as libssz::SszEncode>::ssz_append(&input.att_index, &mut buf);
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.att_beacon_block_root, &mut buf);
+        // source checkpoint
+        <u64 as libssz::SszEncode>::ssz_append(&input.source_epoch, &mut buf);
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.source_root, &mut buf);
+        // target checkpoint
+        <u64 as libssz::SszEncode>::ssz_append(&input.target_epoch, &mut buf);
+        <[u8; 32] as libssz::SszEncode>::ssz_append(&input.target_root, &mut buf);
+        buf
+    };
+    let lh_att_data = {
+        let mut buf = Vec::new();
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.att_slot, &mut buf);
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.att_index, &mut buf);
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.att_beacon_block_root, &mut buf);
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.source_epoch, &mut buf);
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.source_root, &mut buf);
+        <u64 as lighthouse_ssz::Encode>::ssz_append(&input.target_epoch, &mut buf);
+        <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.target_root, &mut buf);
+        buf
+    };
+    let ssz_rs_att_data = {
+        let mut buf = Vec::new();
+        ssz_rs::Serialize::serialize(&input.att_slot, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.att_index, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.att_beacon_block_root, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.source_epoch, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.source_root, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.target_epoch, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.target_root, &mut buf).unwrap();
+        buf
+    };
+    assert_eq!(our_att_data, lh_att_data, "AttestationData");
+    assert_eq!(our_att_data, ssz_rs_att_data, "AttestationData ssz_rs");
 });

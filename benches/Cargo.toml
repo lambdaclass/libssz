@@ -15,8 +15,12 @@ ssz-derive = { path = "../crates/ssz-derive" }
 criterion = { version = "0.5", features = ["html_reports"] }
 iai-callgrind = "0.14"
 lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
+lighthouse_ssz_derive = { package = "ethereum_ssz_derive", version = "0.10" }
+lighthouse_ssz_types = { package = "ssz_types", version = "0.14" }
 tree_hash = "0.12"
+tree_hash_derive = "0.12"
 ssz_rs = "0.9"
+typenum = "1"
 
 [[bench]]
 name = "encode"

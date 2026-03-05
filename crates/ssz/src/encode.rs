@@ -136,6 +136,14 @@ macro_rules! impl_ssz_encode_byte_array {
             fn ssz_append(&self, buf: &mut Vec<u8>) {
                 buf.extend_from_slice(self);
             }
+            #[cfg(feature = "alloc")]
+            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+                // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+                let byte_slice = unsafe {
+                    core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * $n)
+                };
+                buf.extend_from_slice(byte_slice);
+            }
         }
     };
 }
@@ -188,74 +196,88 @@ fn encode_variable_length_items<'a, T: SszEncode + 'a>(
     let count = items.clone().count();
     let fixed_part_len = count * BYTES_PER_LENGTH_OFFSET;
 
-    let encoded: Vec<Vec<u8>> = items.map(|item| item.to_ssz()).collect();
+    let start = buf.len();
+    // Reserve space for offsets (will be patched in-place).
+    buf.resize(start + fixed_part_len, 0);
 
-    let mut offset = fixed_part_len;
-    for data in &encoded {
-        buf.extend_from_slice(&(offset as u32).to_le_bytes());
-        offset += data.len();
+    // Accumulate all variable data into a single buffer.
+    let mut variable_bytes = Vec::new();
+    for (i, item) in items.enumerate() {
+        let offset = fixed_part_len + variable_bytes.len();
+        let pos = start + i * BYTES_PER_LENGTH_OFFSET;
+        buf[pos..pos + BYTES_PER_LENGTH_OFFSET].copy_from_slice(&(offset as u32).to_le_bytes());
+        item.ssz_append(&mut variable_bytes);
     }
 
-    for data in &encoded {
-        buf.extend_from_slice(data);
-    }
+    buf.extend_from_slice(&variable_bytes);
 }
 
 /// Helper for encoding containers with mixed fixed/variable fields.
 ///
-/// Call `append_fixed` and `append_variable` in field order, then `finalize`.
-pub struct ContainerEncoder {
-    /// Combined fixed-part buffer. Fixed fields inline, placeholders for variable offsets.
-    fixed_buf: Vec<u8>,
-    /// Variable-part buffers, one per variable field, in order.
-    var_bufs: Vec<Vec<u8>>,
-    /// Byte positions in `fixed_buf` where offset placeholders were written.
-    offset_positions: Vec<usize>,
+/// Pre-allocates the fixed region in the output buffer, then writes variable
+/// data directly after it — no intermediate buffer. Fixed fields are patched
+/// into the pre-allocated region. This eliminates the double-write that a
+/// separate `variable_bytes` buffer would cause.
+pub struct ContainerEncoder<'a> {
+    buf: &'a mut Vec<u8>,
+    /// Absolute position in `buf` where this container starts.
+    start: usize,
+    /// Absolute position in `buf` where the next fixed field or offset goes.
+    fixed_cursor: usize,
+    /// Size of the fixed region (for debug assertions).
+    fixed_part_len: usize,
 }
 
-impl Default for ContainerEncoder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ContainerEncoder {
-    pub fn new() -> Self {
+impl<'a> ContainerEncoder<'a> {
+    pub fn new(buf: &'a mut Vec<u8>, fixed_part_len: usize) -> Self {
+        let start = buf.len();
+        buf.reserve(fixed_part_len);
+        buf.resize(start + fixed_part_len, 0);
         Self {
-            fixed_buf: Vec::new(),
-            var_bufs: Vec::new(),
-            offset_positions: Vec::new(),
+            buf,
+            start,
+            fixed_cursor: start,
+            fixed_part_len,
+        }
+    }
+
+    /// Create with a total encoded length hint for upfront allocation.
+    pub fn with_capacity(buf: &'a mut Vec<u8>, fixed_part_len: usize, total_len: usize) -> Self {
+        let start = buf.len();
+        buf.reserve(total_len);
+        buf.resize(start + fixed_part_len, 0);
+        Self {
+            buf,
+            start,
+            fixed_cursor: start,
+            fixed_part_len,
         }
     }
 
     /// Append a fixed-size field.
+    #[inline]
     pub fn append_fixed<T: SszEncode>(&mut self, value: &T) {
-        value.ssz_append(&mut self.fixed_buf);
+        let pos = self.fixed_cursor;
+        let end = self.buf.len();
+        value.ssz_append(self.buf);
+        let written = self.buf.len() - end;
+        self.buf.copy_within(end..end + written, pos);
+        self.buf.truncate(end);
+        self.fixed_cursor += written;
     }
 
     /// Append a variable-size field.
+    #[inline]
     pub fn append_variable<T: SszEncode>(&mut self, value: &T) {
-        self.offset_positions.push(self.fixed_buf.len());
-        self.fixed_buf
-            .extend_from_slice(&[0u8; BYTES_PER_LENGTH_OFFSET]);
-        self.var_bufs.push(value.to_ssz());
+        let var_offset = self.buf.len() - self.start;
+        self.buf[self.fixed_cursor..self.fixed_cursor + BYTES_PER_LENGTH_OFFSET]
+            .copy_from_slice(&(var_offset as u32).to_le_bytes());
+        self.fixed_cursor += BYTES_PER_LENGTH_OFFSET;
+        value.ssz_append(self.buf);
     }
 
-    /// Finalize and write the complete container encoding to `buf`.
-    pub fn finalize(mut self, buf: &mut Vec<u8>) {
-        let fixed_len = self.fixed_buf.len();
-        let mut offset = fixed_len;
-
-        // Patch placeholder offsets with actual values.
-        for (i, pos) in self.offset_positions.iter().enumerate() {
-            let offset_bytes = (offset as u32).to_le_bytes();
-            self.fixed_buf[*pos..*pos + BYTES_PER_LENGTH_OFFSET].copy_from_slice(&offset_bytes);
-            offset += self.var_bufs[i].len();
-        }
-
-        buf.extend_from_slice(&self.fixed_buf);
-        for part in &self.var_bufs {
-            buf.extend_from_slice(part);
-        }
+    /// Finalize the container. All data is already in the output buffer.
+    pub fn finalize(self) {
+        debug_assert_eq!(self.fixed_cursor, self.start + self.fixed_part_len);
     }
 }
