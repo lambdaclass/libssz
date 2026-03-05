@@ -6,19 +6,34 @@ Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. F
 
 ## Performance
 
-Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_ssz` + `tree_hash`) on Apple M-series, `--release` with thin LTO:
+Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_ssz` + `tree_hash`), `--release` with thin LTO.
+
+### Apple M3 Max (ARM)
 
 | Operation | libssz | Lighthouse | Speedup |
 |-----------|--------|-----------|---------|
 | Encode `BeaconBlockHeader` | 13.4 ns | 110 ns | **8.2x** |
 | Encode `Vec<u64>` (100K) | 10.3 µs | 55.6 µs | **5.4x** |
 | Encode `Vec<u64>` (1K) | 117 ns | 433 ns | **3.7x** |
+| Encode `[u8; 96]` | 12.1 ns | 16.1 ns | **1.3x** |
 | Decode `BeaconBlockHeader` | 12.6 ns | 12.2 ns | ~1x |
 | Decode `Vec<u64>` (1K) | 747 ns | 1.22 µs | **1.6x** |
 | HashTreeRoot `[u8; 32]` | 3.59 ns | 3.60 ns | ~1x |
-| Encode `[u8; 96]` | 12.1 ns | 16.1 ns | **1.3x** |
 
-libssz wins or ties on every benchmark. Full results: `cargo bench --bench differential`.
+### AMD Ryzen 9 9950X3D (x86_64)
+
+| Operation | libssz | Lighthouse | Speedup |
+|-----------|--------|-----------|---------|
+| Encode `BeaconBlockHeader` | 10.1 ns | 68.3 ns | **6.7x** |
+| Encode `Vec<u64>` (100K) | 9.44 µs | 28.4 µs | **3.0x** |
+| Encode `Vec<u64>` (1K) | 54.1 ns | 315 ns | **5.8x** |
+| Encode `u64` | 3.40 ns | 11.0 ns | **3.2x** |
+| Decode `BeaconBlockHeader` | 9.15 ns | 7.32 ns | ~1x |
+| Decode `Vec<u64>` (1K) | 518 ns | 813 ns | **1.6x** |
+| Decode `Vec<u64>` (100K) | 24.1 µs | 55.0 µs | **2.3x** |
+| HashTreeRoot `[u8; 32]` | 2.80 ns | 2.80 ns | ~1x |
+
+libssz wins or ties on every benchmark across both platforms. Full results: `cargo bench --bench differential`.
 
 <details>
 <summary>How</summary>
