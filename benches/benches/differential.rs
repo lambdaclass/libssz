@@ -27,6 +27,29 @@ fn lighthouse_decode_header(bytes: &[u8]) -> (u64, u64, [u8; 32], [u8; 32], [u8;
 }
 
 // ---------------------------------------------------------------------------
+// ssz_rs helpers for BeaconBlockHeader
+// ---------------------------------------------------------------------------
+
+fn ssz_rs_encode_header(h: &BeaconBlockHeader) -> Vec<u8> {
+    let mut buf = Vec::new();
+    ssz_rs::Serialize::serialize(&h.slot, &mut buf).unwrap();
+    ssz_rs::Serialize::serialize(&h.proposer_index, &mut buf).unwrap();
+    ssz_rs::Serialize::serialize(&h.parent_root, &mut buf).unwrap();
+    ssz_rs::Serialize::serialize(&h.state_root, &mut buf).unwrap();
+    ssz_rs::Serialize::serialize(&h.body_root, &mut buf).unwrap();
+    buf
+}
+
+fn ssz_rs_decode_header(bytes: &[u8]) -> (u64, u64, [u8; 32], [u8; 32], [u8; 32]) {
+    let slot = <u64 as ssz_rs::Deserialize>::deserialize(&bytes[0..8]).unwrap();
+    let proposer_index = <u64 as ssz_rs::Deserialize>::deserialize(&bytes[8..16]).unwrap();
+    let parent_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[16..48]).unwrap();
+    let state_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[48..80]).unwrap();
+    let body_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[80..112]).unwrap();
+    (slot, proposer_index, parent_root, state_root, body_root)
+}
+
+// ---------------------------------------------------------------------------
 // Encode benchmarks
 // ---------------------------------------------------------------------------
 
@@ -34,6 +57,25 @@ fn diff_encode_primitives(c: &mut Criterion) {
     let mut group = c.benchmark_group("diff/encode/primitives");
 
     macro_rules! bench_encode {
+        ($name:expr, $val:expr) => {
+            let val = $val;
+            group.bench_function(concat!("libssz/", $name), |b| {
+                b.iter(|| black_box(&val).to_ssz())
+            });
+            group.bench_function(concat!("lighthouse/", $name), |b| {
+                b.iter(|| lighthouse_ssz::Encode::as_ssz_bytes(black_box(&val)))
+            });
+            group.bench_function(concat!("ssz_rs/", $name), |b| {
+                b.iter(|| {
+                    let mut buf = Vec::new();
+                    ssz_rs::Serialize::serialize(black_box(&val), &mut buf).unwrap();
+                    buf
+                })
+            });
+        };
+    }
+
+    macro_rules! bench_encode_no_ssz_rs {
         ($name:expr, $val:expr) => {
             let val = $val;
             group.bench_function(concat!("libssz/", $name), |b| {
@@ -50,7 +92,7 @@ fn diff_encode_primitives(c: &mut Criterion) {
     bench_encode!("u16", 0xABCDu16);
     bench_encode!("u32", 0xDEAD_BEEFu32);
     bench_encode!("u64", 0x1234_5678_9ABC_DEF0u64);
-    bench_encode!("u128", u128::MAX);
+    bench_encode_no_ssz_rs!("u128", u128::MAX);
     group.finish();
 }
 
@@ -66,12 +108,32 @@ fn diff_encode_byte_arrays(c: &mut Criterion) {
             group.bench_function(concat!("lighthouse/", $name), |b| {
                 b.iter(|| lighthouse_ssz::Encode::as_ssz_bytes(black_box(&val)))
             });
+            group.bench_function(concat!("ssz_rs/", $name), |b| {
+                b.iter(|| {
+                    let mut buf = Vec::new();
+                    ssz_rs::Serialize::serialize(black_box(&val), &mut buf).unwrap();
+                    buf
+                })
+            });
+        };
+    }
+
+    // ssz_rs only supports arrays up to [T; 32], so bytes48 and bytes96 skip ssz_rs
+    macro_rules! bench_encode_bytes_no_ssz_rs {
+        ($name:expr, $val:expr) => {
+            let val = $val;
+            group.bench_function(concat!("libssz/", $name), |b| {
+                b.iter(|| black_box(&val).to_ssz())
+            });
+            group.bench_function(concat!("lighthouse/", $name), |b| {
+                b.iter(|| lighthouse_ssz::Encode::as_ssz_bytes(black_box(&val)))
+            });
         };
     }
 
     bench_encode_bytes!("bytes32", [0xABu8; 32]);
-    bench_encode_bytes!("bytes48", [0xABu8; 48]);
-    bench_encode_bytes!("bytes96", [0xABu8; 96]);
+    bench_encode_bytes_no_ssz_rs!("bytes48", [0xABu8; 48]);
+    bench_encode_bytes_no_ssz_rs!("bytes96", [0xABu8; 96]);
     group.finish();
 }
 
@@ -79,6 +141,8 @@ fn diff_encode_vec_u64(c: &mut Criterion) {
     let mut group = c.benchmark_group("diff/encode/vec_u64");
     for &size in &[100, 1_000, 100_000] {
         let data = make_vec_u64(size);
+        let ssz_rs_list: ssz_rs::List<u64, 1_000_000> =
+            data.clone().try_into().expect("fits in List");
         group.throughput(Throughput::Bytes((size * 8) as u64));
         group.bench_with_input(BenchmarkId::new("libssz", size), &data, |b, data| {
             b.iter(|| black_box(data).to_ssz());
@@ -86,6 +150,17 @@ fn diff_encode_vec_u64(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("lighthouse", size), &data, |b, data| {
             b.iter(|| lighthouse_ssz::Encode::as_ssz_bytes(black_box(data)));
         });
+        group.bench_with_input(
+            BenchmarkId::new("ssz_rs", size),
+            &ssz_rs_list,
+            |b, list| {
+                b.iter(|| {
+                    let mut buf = Vec::new();
+                    ssz_rs::Serialize::serialize(black_box(list), &mut buf).unwrap();
+                    buf
+                });
+            },
+        );
     }
     group.finish();
 }
@@ -96,6 +171,9 @@ fn diff_encode_header(c: &mut Criterion) {
     group.bench_function("libssz", |b| b.iter(|| black_box(&header).to_ssz()));
     group.bench_function("lighthouse", |b| {
         b.iter(|| lighthouse_encode_header(black_box(&header)))
+    });
+    group.bench_function("ssz_rs", |b| {
+        b.iter(|| ssz_rs_encode_header(black_box(&header)))
     });
     group.finish();
 }
@@ -118,6 +196,23 @@ fn diff_decode_primitives(c: &mut Criterion) {
                     <$ty as lighthouse_ssz::Decode>::from_ssz_bytes(black_box(&bytes)).unwrap()
                 })
             });
+            group.bench_function(concat!("ssz_rs/", $name), |b| {
+                b.iter(|| <$ty as ssz_rs::Deserialize>::deserialize(black_box(&bytes)).unwrap())
+            });
+        };
+    }
+
+    macro_rules! bench_decode_no_ssz_rs {
+        ($name:expr, $ty:ty, $val:expr) => {
+            let bytes = pre_encode(&$val);
+            group.bench_function(concat!("libssz/", $name), |b| {
+                b.iter(|| <$ty as SszDecode>::from_ssz_bytes(black_box(&bytes)).unwrap())
+            });
+            group.bench_function(concat!("lighthouse/", $name), |b| {
+                b.iter(|| {
+                    <$ty as lighthouse_ssz::Decode>::from_ssz_bytes(black_box(&bytes)).unwrap()
+                })
+            });
         };
     }
 
@@ -126,7 +221,7 @@ fn diff_decode_primitives(c: &mut Criterion) {
     bench_decode!("u16", u16, 0xABCDu16);
     bench_decode!("u32", u32, 0xDEAD_BEEFu32);
     bench_decode!("u64", u64, 0x1234_5678_9ABC_DEF0u64);
-    bench_decode!("u128", u128, u128::MAX);
+    bench_decode_no_ssz_rs!("u128", u128, u128::MAX);
     group.finish();
 }
 
@@ -144,12 +239,29 @@ fn diff_decode_byte_arrays(c: &mut Criterion) {
                     <$ty as lighthouse_ssz::Decode>::from_ssz_bytes(black_box(&bytes)).unwrap()
                 })
             });
+            group.bench_function(concat!("ssz_rs/", $name), |b| {
+                b.iter(|| <$ty as ssz_rs::Deserialize>::deserialize(black_box(&bytes)).unwrap())
+            });
+        };
+    }
+
+    macro_rules! bench_decode_bytes_no_ssz_rs {
+        ($name:expr, $ty:ty, $val:expr) => {
+            let bytes = pre_encode(&$val);
+            group.bench_function(concat!("libssz/", $name), |b| {
+                b.iter(|| <$ty as SszDecode>::from_ssz_bytes(black_box(&bytes)).unwrap())
+            });
+            group.bench_function(concat!("lighthouse/", $name), |b| {
+                b.iter(|| {
+                    <$ty as lighthouse_ssz::Decode>::from_ssz_bytes(black_box(&bytes)).unwrap()
+                })
+            });
         };
     }
 
     bench_decode_bytes!("bytes32", [u8; 32], [0xABu8; 32]);
-    bench_decode_bytes!("bytes48", [u8; 48], [0xABu8; 48]);
-    bench_decode_bytes!("bytes96", [u8; 96], [0xABu8; 96]);
+    bench_decode_bytes_no_ssz_rs!("bytes48", [u8; 48], [0xABu8; 48]);
+    bench_decode_bytes_no_ssz_rs!("bytes96", [u8; 96], [0xABu8; 96]);
     group.finish();
 }
 
@@ -167,6 +279,14 @@ fn diff_decode_vec_u64(c: &mut Criterion) {
                 <Vec<u64> as lighthouse_ssz::Decode>::from_ssz_bytes(black_box(bytes)).unwrap()
             });
         });
+        group.bench_with_input(BenchmarkId::new("ssz_rs", size), &bytes, |b, bytes| {
+            b.iter(|| {
+                <ssz_rs::List<u64, 1_000_000> as ssz_rs::Deserialize>::deserialize(black_box(
+                    bytes,
+                ))
+                .unwrap()
+            });
+        });
     }
     group.finish();
 }
@@ -180,6 +300,9 @@ fn diff_decode_header(c: &mut Criterion) {
     });
     group.bench_function("lighthouse", |b| {
         b.iter(|| lighthouse_decode_header(black_box(&bytes)))
+    });
+    group.bench_function("ssz_rs", |b| {
+        b.iter(|| ssz_rs_decode_header(black_box(&bytes)))
     });
     group.finish();
 }
@@ -198,6 +321,12 @@ fn diff_htr(c: &mut Criterion) {
     group.bench_function("lighthouse/bool", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&true)).0)
     });
+    group.bench_function("ssz_rs/bool", |b| {
+        b.iter(|| {
+            let mut val = *black_box(&true);
+            ssz_rs::Merkleized::hash_tree_root(&mut val).unwrap()
+        })
+    });
 
     // u64
     let val_u64 = 0x1234_5678_9ABC_DEF0u64;
@@ -206,6 +335,12 @@ fn diff_htr(c: &mut Criterion) {
     });
     group.bench_function("lighthouse/u64", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&val_u64)).0)
+    });
+    group.bench_function("ssz_rs/u64", |b| {
+        b.iter(|| {
+            let mut val = *black_box(&val_u64);
+            ssz_rs::Merkleized::hash_tree_root(&mut val).unwrap()
+        })
     });
 
     // [u8; 32]
@@ -216,8 +351,14 @@ fn diff_htr(c: &mut Criterion) {
     group.bench_function("lighthouse/bytes32", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&val_bytes32)).0)
     });
+    group.bench_function("ssz_rs/bytes32", |b| {
+        b.iter(|| {
+            let mut val = *black_box(&val_bytes32);
+            ssz_rs::Merkleized::hash_tree_root(&mut val).unwrap()
+        })
+    });
 
-    // Note: tree_hash does NOT support u128, so we skip it for HTR.
+    // Note: tree_hash and ssz_rs do NOT support u128, so we skip it for HTR.
 
     group.finish();
 }

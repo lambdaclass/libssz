@@ -2,44 +2,81 @@
 
 A fast, modular [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus, written in Rust.
 
-Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Faster than Lighthouse on every benchmark. Fuzz-tested against the reference implementation.
+Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Faster than Lighthouse and ssz_rs on every encode benchmark. Fuzz-tested against both reference implementations.
 
 ## Performance
 
-Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_ssz` + `tree_hash`), `--release` with thin LTO.
+Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_ssz` + `tree_hash`) and [ssz_rs](https://github.com/ralexstokes/ssz-rs) v0.9, `--release` with thin LTO.
 
 ### Apple M3 Max (ARM)
 
-| Operation | libssz | Lighthouse | Speedup |
-|-----------|--------|-----------|---------|
-| Encode `BeaconBlockHeader` | 13.4 ns | 110 ns | **8.2x** |
-| Encode `Vec<u64>` (100K) | 10.3 µs | 55.6 µs | **5.4x** |
-| Encode `Vec<u64>` (1K) | 117 ns | 433 ns | **3.7x** |
-| Encode `[u8; 96]` | 12.1 ns | 16.1 ns | **1.3x** |
-| Decode `BeaconBlockHeader` | 12.6 ns | 12.2 ns | ~1x |
-| Decode `Vec<u64>` (1K) | 747 ns | 1.22 µs | **1.6x** |
-| HashTreeRoot `[u8; 32]` | 3.59 ns | 3.60 ns | ~1x |
+#### Encode
+
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `bool` | 214 ps | 3.9 ns | 29 ns |
+| `u64` | 235 ps | 4.0 ns | 29 ns |
+| `[u8; 32]` | 4.1 ns | 4.2 ns | 30 ns |
+| `BeaconBlockHeader` | 13.7 ns | 113 ns | 1.8 µs |
+| `Vec<u64>` (1K) | 118 ns | 433 ns | 14 µs |
+| `Vec<u64>` (100K) | 10.4 µs | 56 µs | 1.5 ms |
+
+#### Decode
+
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `bool` | 430 ps | 430 ps | 432 ps |
+| `u64` | 461 ps | 461 ps | 480 ps |
+| `[u8; 32]` | 4.1 ns | 3.8 ns | 66 ns |
+| `BeaconBlockHeader` | 12.7 ns | 12.3 ns | 207 ns |
+| `Vec<u64>` (1K) | 123 ns | 1.23 µs | 780 ns |
+| `Vec<u64>` (100K) | 10.3 µs | 154 µs | 112 µs |
+
+#### Hash Tree Root
+
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `bool` | 3.1 ns | 3.2 ns | 3.2 ns |
+| `u64` | 3.1 ns | 3.2 ns | 48.6 ns |
+| `[u8; 32]` | 3.6 ns | 3.6 ns | 88.3 ns |
 
 ### AMD Ryzen 9 9950X3D (x86_64)
 
-| Operation | libssz | Lighthouse | Speedup |
-|-----------|--------|-----------|---------|
-| Encode `BeaconBlockHeader` | 10.1 ns | 68.3 ns | **6.7x** |
-| Encode `Vec<u64>` (100K) | 9.44 µs | 28.4 µs | **3.0x** |
-| Encode `Vec<u64>` (1K) | 54.1 ns | 315 ns | **5.8x** |
-| Encode `u64` | 3.40 ns | 11.0 ns | **3.2x** |
-| Decode `BeaconBlockHeader` | 9.15 ns | 7.32 ns | ~1x |
-| Decode `Vec<u64>` (1K) | 518 ns | 813 ns | **1.6x** |
-| Decode `Vec<u64>` (100K) | 24.1 µs | 55.0 µs | **2.3x** |
-| HashTreeRoot `[u8; 32]` | 2.80 ns | 2.80 ns | ~1x |
+#### Encode
 
-libssz wins or ties on every benchmark across both platforms. Full results: `cargo bench --bench differential`.
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `u64` | 3.40 ns | 11.1 ns | 11.0 ns |
+| `[u8; 32]` | 3.49 ns | 11.3 ns | 501 ns |
+| `BeaconBlockHeader` | 10.1 ns | 77.5 ns | 1.52 µs |
+| `Vec<u64>` (1K) | 66.8 ns | 327 ns | 22.5 µs |
+| `Vec<u64>` (100K) | 9.54 µs | 30.0 µs | 2.27 ms |
+
+#### Decode
+
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `u64` | 312 ps | 312 ps | 358 ps |
+| `[u8; 32]` | 3.1 ns | 3.3 ns | 51 ns |
+| `BeaconBlockHeader` | 9.15 ns | 7.33 ns | 189 ns |
+| `Vec<u64>` (1K) | 609 ns | 799 ns | 522 ns |
+| `Vec<u64>` (100K) | 42.7 µs | 60.3 µs | 33.7 µs |
+
+#### Hash Tree Root
+
+| Type | libssz | Lighthouse | ssz_rs |
+|------|--------|------------|--------|
+| `bool` | 2.3 ns | 2.2 ns | 2.3 ns |
+| `u64` | 2.4 ns | 2.1 ns | 31 ns |
+| `[u8; 32]` | 2.80 ns | 2.80 ns | 57.8 ns |
+
+libssz is fastest on encode and `Vec<u64>` decode across the board — bulk memcpy on little-endian for both encode and decode. Full results: `cargo bench --bench differential`.
 
 <details>
 <summary>How</summary>
 
 - **All-fixed containers** bypass `ContainerEncoder`/`ContainerDecoder` entirely — the derive macro generates direct field-by-field append/decode when all fields are fixed-size, eliminating heap allocations and offset bookkeeping
-- **Bulk memcpy for integer vectors** — `Vec<u64>` encoding reinterprets the slice as bytes on little-endian platforms, replacing 100K individual `extend_from_slice` calls with a single copy
+- **Bulk memcpy for integer vectors** — both encode and decode of `Vec<u64>` use a single memcpy on little-endian platforms instead of per-element iteration
 - **Aggressive inlining** — `#[inline(always)]` on all trait impls that cross crate boundaries
 
 </details>
@@ -189,7 +226,7 @@ make bench         # criterion benchmarks
 make ci            # full CI pipeline locally
 ```
 
-The library is differential-fuzz-tested against Lighthouse across 19 fuzz targets, run nightly in CI.
+The library is differential-fuzz-tested against Lighthouse and ssz_rs across 19 fuzz targets, run nightly in CI.
 
 ## Documentation
 

@@ -1,7 +1,7 @@
 #![no_main]
 
-//! Differential encoding fuzzer: encode the same data with libssz and lighthouse_ssz,
-//! then assert byte-identical output.
+//! Differential encoding fuzzer: encode the same data with libssz, lighthouse_ssz,
+//! and ssz_rs, then assert byte-identical output.
 
 extern crate libssz as ssz;
 
@@ -39,8 +39,15 @@ fn lighthouse<T: lighthouse_ssz::Encode>(val: &T) -> Vec<u8> {
     val.as_ssz_bytes()
 }
 
+/// Encode with ssz_rs.
+fn ssz_rs_encode<T: ssz_rs::Serialize>(val: &T) -> Vec<u8> {
+    let mut buf = Vec::new();
+    val.serialize(&mut buf).unwrap();
+    buf
+}
+
 fuzz_target!(|input: FuzzInput| {
-    // -- Primitives --
+    // -- Primitives: ours vs lighthouse --
     assert_eq!(ours(&input.val_bool), lighthouse(&input.val_bool), "bool");
     assert_eq!(ours(&input.val_u8), lighthouse(&input.val_u8), "u8");
     assert_eq!(ours(&input.val_u16), lighthouse(&input.val_u16), "u16");
@@ -52,6 +59,16 @@ fuzz_target!(|input: FuzzInput| {
     assert_eq!(ours(&input.val_bytes20), lighthouse(&input.val_bytes20), "[u8;20]");
     assert_eq!(ours(&input.val_bytes48), lighthouse(&input.val_bytes48), "[u8;48]");
     assert_eq!(ours(&input.val_bytes96), lighthouse(&input.val_bytes96), "[u8;96]");
+
+    // -- Primitives: ours vs ssz_rs (skip u128; skip [u8;48] and [u8;96] — unsupported sizes) --
+    assert_eq!(ours(&input.val_bool), ssz_rs_encode(&input.val_bool), "bool ssz_rs");
+    assert_eq!(ours(&input.val_u8), ssz_rs_encode(&input.val_u8), "u8 ssz_rs");
+    assert_eq!(ours(&input.val_u16), ssz_rs_encode(&input.val_u16), "u16 ssz_rs");
+    assert_eq!(ours(&input.val_u32), ssz_rs_encode(&input.val_u32), "u32 ssz_rs");
+    assert_eq!(ours(&input.val_u64), ssz_rs_encode(&input.val_u64), "u64 ssz_rs");
+    assert_eq!(ours(&input.val_bytes32), ssz_rs_encode(&input.val_bytes32), "[u8;32] ssz_rs");
+    assert_eq!(ours(&input.val_bytes4), ssz_rs_encode(&input.val_bytes4), "[u8;4] ssz_rs");
+    assert_eq!(ours(&input.val_bytes20), ssz_rs_encode(&input.val_bytes20), "[u8;20] ssz_rs");
 
     // -- Container (BeaconBlockHeader — all fixed, encoding = concatenated fields) --
     let our_header = {
@@ -72,7 +89,17 @@ fuzz_target!(|input: FuzzInput| {
         <[u8; 32] as lighthouse_ssz::Encode>::ssz_append(&input.body_root, &mut buf);
         buf
     };
+    let ssz_rs_header = {
+        let mut buf = Vec::new();
+        ssz_rs::Serialize::serialize(&input.slot, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.proposer_index, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.parent_root, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.state_root, &mut buf).unwrap();
+        ssz_rs::Serialize::serialize(&input.body_root, &mut buf).unwrap();
+        buf
+    };
     assert_eq!(our_header, lh_header, "BeaconBlockHeader");
+    assert_eq!(our_header, ssz_rs_header, "BeaconBlockHeader ssz_rs");
 
     // -- Vec<u64> (cap for perf) --
     let vec: Vec<u64> = if input.vec_u64.len() > 1024 {
@@ -81,4 +108,8 @@ fuzz_target!(|input: FuzzInput| {
         input.vec_u64.clone()
     };
     assert_eq!(ours(&vec), lighthouse(&vec), "Vec<u64>");
+
+    // ssz_rs: encode as List<u64, 1024> and compare
+    let ssz_rs_list: ssz_rs::List<u64, 1024> = vec.clone().try_into().unwrap();
+    assert_eq!(ours(&vec), ssz_rs_encode(&ssz_rs_list), "Vec<u64> ssz_rs");
 });

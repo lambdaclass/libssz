@@ -22,9 +22,7 @@ libssz_derive = { package = "ssz-derive", path = "../crates/ssz-derive" }
 lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
 tree_hash = "0.12"
 
-# ssz_rs: excluded for now due to naming conflicts with derive macros.
-# Can be added later for container-level differential testing.
-# ssz_rs = "0.9"
+ssz_rs = "0.9"
 
 [workspace]
 members = ["."]

@@ -16,6 +16,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 iai-callgrind = "0.14"
 lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
 tree_hash = "0.12"
+ssz_rs = "0.9"
 
 [[bench]]
 name = "encode"

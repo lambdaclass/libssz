@@ -14,6 +14,19 @@ pub trait SszDecode: Sized {
 
     /// Decode from SSZ bytes.
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError>;
+
+    /// Bulk-decode a byte buffer into a `Vec` of fixed-size items.
+    ///
+    /// The default loops over chunks. Integer types override this with a single
+    /// memcpy on little-endian platforms.
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        let item_size = Self::fixed_size();
+        bytes
+            .chunks_exact(item_size)
+            .map(Self::from_ssz_bytes)
+            .collect()
+    }
 }
 
 // ── bool ──
@@ -67,6 +80,33 @@ macro_rules! impl_ssz_decode_uint {
                 let mut arr = [0u8; $size];
                 arr.copy_from_slice(bytes);
                 Ok(<$ty>::from_le_bytes(arr))
+            }
+
+            #[cfg(feature = "alloc")]
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+                #[cfg(target_endian = "little")]
+                {
+                    let count = bytes.len() / $size;
+                    let mut result = Vec::<$ty>::with_capacity(count);
+                    // SAFETY: on little-endian, SSZ integer encoding is the native
+                    // representation. We copy the bytes directly into the Vec buffer.
+                    unsafe {
+                        core::ptr::copy_nonoverlapping(
+                            bytes.as_ptr(),
+                            result.as_mut_ptr() as *mut u8,
+                            bytes.len(),
+                        );
+                        result.set_len(count);
+                    }
+                    Ok(result)
+                }
+                #[cfg(not(target_endian = "little"))]
+                {
+                    bytes
+                        .chunks_exact($size)
+                        .map(Self::from_ssz_bytes)
+                        .collect()
+                }
             }
         }
     };
@@ -139,10 +179,7 @@ impl<T: SszDecode> SszDecode for Vec<T> {
                     got: bytes.len(),
                 });
             }
-            bytes
-                .chunks_exact(item_size)
-                .map(T::from_ssz_bytes)
-                .collect()
+            T::ssz_decode_fixed_vec(bytes)
         } else {
             decode_variable_length_items(bytes)
         }
