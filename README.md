@@ -12,63 +12,63 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 
 #### Encode
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `bool` | 214 ps | 3.9 ns | 29 ns |
-| `u64` | 235 ps | 4.0 ns | 29 ns |
-| `[u8; 32]` | 4.1 ns | 4.2 ns | 30 ns |
-| `BeaconBlockHeader` | 13.7 ns | 113 ns | 1.8 µs |
-| `Vec<u64>` (1K) | 118 ns | 433 ns | 14 µs |
-| `Vec<u64>` (100K) | 10.4 µs | 56 µs | 1.5 ms |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `bool` | 214 ps | 3.9 ns | 29 ns | **18x** | **135x** |
+| `u64` | 235 ps | 4.0 ns | 29 ns | **17x** | **123x** |
+| `[u8; 32]` | 4.1 ns | 4.2 ns | 30 ns | ~1x | **7.3x** |
+| `BeaconBlockHeader` | 13.7 ns | 113 ns | 1.8 µs | **8.2x** | **131x** |
+| `Vec<u64>` (1K) | 118 ns | 433 ns | 14 µs | **3.7x** | **119x** |
+| `Vec<u64>` (100K) | 10.4 µs | 56 µs | 1.5 ms | **5.4x** | **144x** |
 
 #### Decode
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `bool` | 430 ps | 430 ps | 432 ps |
-| `u64` | 461 ps | 461 ps | 480 ps |
-| `[u8; 32]` | 4.1 ns | 3.8 ns | 66 ns |
-| `BeaconBlockHeader` | 12.7 ns | 12.3 ns | 207 ns |
-| `Vec<u64>` (1K) | 123 ns | 1.23 µs | 780 ns |
-| `Vec<u64>` (100K) | 10.3 µs | 154 µs | 112 µs |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `bool` | 430 ps | 430 ps | 432 ps | ~1x | ~1x |
+| `u64` | 461 ps | 461 ps | 480 ps | ~1x | ~1x |
+| `[u8; 32]` | 4.1 ns | 3.8 ns | 66 ns | ~1x | **16x** |
+| `BeaconBlockHeader` | 12.7 ns | 12.3 ns | 207 ns | ~1x | **16x** |
+| `Vec<u64>` (1K) | 123 ns | 1.23 µs | 780 ns | **10x** | **6.3x** |
+| `Vec<u64>` (100K) | 10.3 µs | 154 µs | 112 µs | **15x** | **10.9x** |
 
 #### Hash Tree Root
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `bool` | 3.1 ns | 3.2 ns | 3.2 ns |
-| `u64` | 3.1 ns | 3.2 ns | 48.6 ns |
-| `[u8; 32]` | 3.6 ns | 3.6 ns | 88.3 ns |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `bool` | 3.1 ns | 3.2 ns | 3.2 ns | ~1x | ~1x |
+| `u64` | 3.1 ns | 3.2 ns | 48.6 ns | ~1x | **15.7x** |
+| `[u8; 32]` | 3.6 ns | 3.6 ns | 88.3 ns | ~1x | **24.5x** |
 
 ### AMD Ryzen 9 9950X3D (x86_64)
 
 #### Encode
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `u64` | 3.40 ns | 11.1 ns | 11.0 ns |
-| `[u8; 32]` | 3.49 ns | 11.3 ns | 501 ns |
-| `BeaconBlockHeader` | 10.1 ns | 77.5 ns | 1.52 µs |
-| `Vec<u64>` (1K) | 66.8 ns | 327 ns | 22.5 µs |
-| `Vec<u64>` (100K) | 9.54 µs | 30.0 µs | 2.27 ms |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `u64` | 3.40 ns | 11.1 ns | 11.0 ns | **3.3x** | **3.2x** |
+| `[u8; 32]` | 3.49 ns | 11.3 ns | 501 ns | **3.2x** | **144x** |
+| `BeaconBlockHeader` | 10.1 ns | 77.5 ns | 1.52 µs | **7.7x** | **150x** |
+| `Vec<u64>` (1K) | 66.8 ns | 327 ns | 22.5 µs | **4.9x** | **337x** |
+| `Vec<u64>` (100K) | 9.54 µs | 30.0 µs | 2.27 ms | **3.1x** | **238x** |
 
 #### Decode
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `u64` | 312 ps | 312 ps | 358 ps |
-| `[u8; 32]` | 3.1 ns | 3.3 ns | 51 ns |
-| `BeaconBlockHeader` | 9.15 ns | 7.33 ns | 189 ns |
-| `Vec<u64>` (1K) | 609 ns | 799 ns | 522 ns |
-| `Vec<u64>` (100K) | 42.7 µs | 60.3 µs | 33.7 µs |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `u64` | 312 ps | 312 ps | 358 ps | ~1x | ~1x |
+| `[u8; 32]` | 3.1 ns | 3.3 ns | 51 ns | ~1x | **16x** |
+| `BeaconBlockHeader` | 9.15 ns | 7.33 ns | 189 ns | 0.8x | **21x** |
+| `Vec<u64>` (1K) | 609 ns | 799 ns | 522 ns | **1.3x** | 0.9x |
+| `Vec<u64>` (100K) | 42.7 µs | 60.3 µs | 33.7 µs | **1.4x** | 0.8x |
 
 #### Hash Tree Root
 
-| Type | libssz | Lighthouse | ssz_rs |
-|------|--------|------------|--------|
-| `bool` | 2.3 ns | 2.2 ns | 2.3 ns |
-| `u64` | 2.4 ns | 2.1 ns | 31 ns |
-| `[u8; 32]` | 2.80 ns | 2.80 ns | 57.8 ns |
+| Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|------|--------|------------|--------|---------------|-----------|
+| `bool` | 2.3 ns | 2.2 ns | 2.3 ns | ~1x | ~1x |
+| `u64` | 2.4 ns | 2.1 ns | 31 ns | ~1x | **13x** |
+| `[u8; 32]` | 2.80 ns | 2.80 ns | 57.8 ns | ~1x | **21x** |
 
 libssz is fastest on encode and `Vec<u64>` decode across the board — bulk memcpy on little-endian for both encode and decode. Full results: `cargo bench --bench differential`.
 
