@@ -3,6 +3,7 @@ name = "ssz"
 version = "0.1.0"
 edition = "2021"
 description = "Simple Serialize (SSZ) encoding/decoding for Ethereum consensus"
+license = "MIT OR Apache-2.0"
 
 [features]
 default = ["std"]

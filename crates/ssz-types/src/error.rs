@@ -30,3 +30,39 @@ impl std::fmt::Display for TypeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TypeError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_invalid_length() {
+        let err = TypeError::InvalidLength {
+            expected: 4,
+            got: 7,
+        };
+        let msg = format!("{err}");
+        assert_eq!(msg, "invalid length: expected 4, got 7");
+    }
+
+    #[test]
+    fn display_over_capacity() {
+        let err = TypeError::OverCapacity { max: 10, got: 15 };
+        let msg = format!("{err}");
+        assert_eq!(msg, "over capacity: max 10, got 15");
+    }
+
+    #[test]
+    fn display_custom() {
+        let err = TypeError::Custom("validator index out of range".into());
+        let msg = format!("{err}");
+        assert_eq!(msg, "validator index out of range");
+    }
+
+    #[test]
+    fn error_trait_impl() {
+        let err = TypeError::OverCapacity { max: 5, got: 6 };
+        let err_ref: &dyn std::error::Error = &err;
+        assert!(err_ref.to_string().contains("over capacity"));
+    }
+}

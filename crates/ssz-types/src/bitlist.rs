@@ -204,12 +204,13 @@ impl<const N: usize> SszDecode for SszBitlist<N> {
             });
         }
 
-        // Validate no bits are set above the delimiter
-        // The delimiter bit and everything above it in the last byte should be zero
-        // after we strip the delimiter.
-        let mask_above_delimiter = !((1u8 << (highest_bit + 1)) - 1);
-        if last_byte & mask_above_delimiter != 0 {
-            return Err(DecodeError::ExcessBitsNotZero);
+        // Validate no bits are set above the delimiter.
+        // When highest_bit == 7 the delimiter is the MSB — no bits above it to check.
+        if highest_bit < 7 {
+            let mask_above_delimiter = !((1u8 << (highest_bit + 1)) - 1);
+            if last_byte & mask_above_delimiter != 0 {
+                return Err(DecodeError::ExcessBitsNotZero);
+            }
         }
 
         // Copy bytes and clear the delimiter bit
@@ -399,5 +400,56 @@ mod tests {
     fn try_from_vec_bool_over_capacity() {
         let err = SszBitlist::<2>::try_from(vec![true, false, true]).unwrap_err();
         assert_eq!(err, TypeError::OverCapacity { max: 2, got: 3 });
+    }
+
+    #[test]
+    fn with_length_over_capacity() {
+        let err = SszBitlist::<4>::with_length(5).unwrap_err();
+        assert_eq!(err, TypeError::OverCapacity { max: 4, got: 5 });
+    }
+
+    #[test]
+    fn max_capacity_returns_n() {
+        let bl = SszBitlist::<128>::new();
+        assert_eq!(bl.max_capacity(), 128);
+    }
+
+    #[test]
+    fn default_creates_empty() {
+        let bl = SszBitlist::<16>::default();
+        assert!(bl.is_empty());
+        assert_eq!(bl.len(), 0);
+    }
+
+    #[test]
+    fn as_bytes_returns_raw_data() {
+        let mut bl = SszBitlist::<8>::with_length(4).unwrap();
+        bl.set(0, true);
+        bl.set(2, true);
+        // LSB-first: bits 0,2 set = 0b00000101 = 5
+        assert_eq!(bl.as_bytes(), &[5]);
+    }
+
+    #[test]
+    fn set_out_of_bounds_returns_false() {
+        let mut bl = SszBitlist::<8>::with_length(3).unwrap();
+        assert!(!bl.set(3, true)); // index == len
+        assert!(!bl.set(100, true)); // way past end
+    }
+
+    #[test]
+    fn push_false_bit_does_not_set() {
+        let mut bl = SszBitlist::<8>::new();
+        bl.push(false).unwrap();
+        bl.push(false).unwrap();
+        assert_eq!(bl.get(0), Some(false));
+        assert_eq!(bl.get(1), Some(false));
+        assert_eq!(bl.as_bytes(), &[0]);
+    }
+
+    #[test]
+    fn decode_is_always_variable() {
+        assert!(!<SszBitlist<8> as SszDecode>::is_fixed_size());
+        assert_eq!(<SszBitlist<8> as SszDecode>::fixed_size(), 0);
     }
 }

@@ -3,6 +3,7 @@ name = "ssz-merkle"
 version = "0.1.0"
 edition = "2021"
 description = "SSZ Merkleization: HashTreeRoot, merkleize, zero hashes"
+license = "MIT OR Apache-2.0"
 
 [features]
 default = ["std"]

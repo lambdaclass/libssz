@@ -37,7 +37,9 @@ fn main() {
 
     // ── Mixed fixed/variable container ──
     // Simulates: struct Transfer { sender: [u8; 20], amount: u64, memo: Vec<u8> }
-    println!("\n=== Mixed container: Transfer {{ sender: [u8;20], amount: u64, memo: Vec<u8> }} ===");
+    println!(
+        "\n=== Mixed container: Transfer {{ sender: [u8;20], amount: u64, memo: Vec<u8> }} ==="
+    );
     {
         let sender = [0xABu8; 20];
         let amount: u64 = 1_000_000;
@@ -45,9 +47,9 @@ fn main() {
 
         // Encode
         let mut encoder = ContainerEncoder::new();
-        encoder.append_fixed(&sender);   // 20 bytes
-        encoder.append_fixed(&amount);   // 8 bytes
-        encoder.append_variable(&memo);  // 4-byte offset + data
+        encoder.append_fixed(&sender); // 20 bytes
+        encoder.append_fixed(&amount); // 8 bytes
+        encoder.append_variable(&memo); // 4-byte offset + data
         let mut buf = Vec::new();
         encoder.finalize(&mut buf);
 
@@ -70,13 +72,18 @@ fn main() {
         assert_eq!(dec_sender, sender);
         assert_eq!(dec_amount, amount);
         assert_eq!(dec_memo, memo);
-        println!("  Decoded: sender={:02x?}..., amount={dec_amount}, memo={:?}",
-            &dec_sender[..4], String::from_utf8_lossy(&dec_memo));
+        println!(
+            "  Decoded: sender={:02x?}..., amount={dec_amount}, memo={:?}",
+            &dec_sender[..4],
+            String::from_utf8_lossy(&dec_memo)
+        );
     }
 
     // ── Multiple variable fields ──
     // Simulates: struct Message { from: Vec<u8>, to: Vec<u8>, tag: u16 }
-    println!("\n=== Multiple variable fields: Message {{ from: Vec<u8>, to: Vec<u8>, tag: u16 }} ===");
+    println!(
+        "\n=== Multiple variable fields: Message {{ from: Vec<u8>, to: Vec<u8>, tag: u16 }} ==="
+    );
     {
         let from: Vec<u8> = vec![1, 2, 3];
         let to: Vec<u8> = vec![4, 5];
@@ -84,9 +91,9 @@ fn main() {
 
         // Encode -- fields in declaration order
         let mut encoder = ContainerEncoder::new();
-        encoder.append_variable(&from);  // 4-byte offset
-        encoder.append_variable(&to);    // 4-byte offset
-        encoder.append_fixed(&tag);      // 2 bytes
+        encoder.append_variable(&from); // 4-byte offset
+        encoder.append_variable(&to); // 4-byte offset
+        encoder.append_fixed(&tag); // 2 bytes
         let mut buf = Vec::new();
         encoder.finalize(&mut buf);
 

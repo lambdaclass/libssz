@@ -1,0 +1,46 @@
+[package]
+name = "ssz-bench"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+ssz = { path = "../crates/ssz" }
+ssz-types = { path = "../crates/ssz-types" }
+ssz-merkle = { path = "../crates/ssz-merkle" }
+ssz-derive = { path = "../crates/ssz-derive" }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+iai-callgrind = "0.14"
+lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
+tree_hash = "0.12"
+
+[[bench]]
+name = "encode"
+harness = false
+
+[[bench]]
+name = "decode"
+harness = false
+
+[[bench]]
+name = "hash_tree_root"
+harness = false
+
+[[bench]]
+name = "merkle"
+harness = false
+
+[[bench]]
+name = "iai_merkle"
+harness = false
+
+[[bench]]
+name = "iai_encode_decode"
+harness = false
+
+[[bench]]
+name = "differential"
+harness = false

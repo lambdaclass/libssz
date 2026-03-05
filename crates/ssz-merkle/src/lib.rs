@@ -15,6 +15,7 @@ pub type Node = [u8; 32];
 include!(concat!(env!("OUT_DIR"), "/zero_hashes.rs"));
 
 /// Hash two nodes together: SHA256(a || b).
+#[inline]
 pub fn hash_nodes(a: &Node, b: &Node) -> Node {
     let mut hasher = Sha256::new();
     hasher.update(a);
@@ -92,11 +93,7 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
         let mut next = Vec::with_capacity(layer.len() / 2);
         for pair in layer.chunks(2) {
             let left = &pair[0];
-            let right = if pair.len() == 2 {
-                &pair[1]
-            } else {
-                zero_hash
-            };
+            let right = if pair.len() == 2 { &pair[1] } else { zero_hash };
             next.push(hash_nodes(left, right));
         }
         layer = next;
@@ -106,6 +103,7 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
 }
 
 /// Mix in a length value: hash_nodes(root, length_as_le_bytes_node).
+#[inline]
 pub fn mix_in_length(root: &Node, length: usize) -> Node {
     let mut length_node = [0u8; 32];
     length_node[..8].copy_from_slice(&(length as u64).to_le_bytes());
@@ -113,6 +111,7 @@ pub fn mix_in_length(root: &Node, length: usize) -> Node {
 }
 
 /// Mix in a selector value: hash_nodes(root, selector_as_le_bytes_node).
+#[inline]
 pub fn mix_in_selector(root: &Node, selector: u8) -> Node {
     let mut selector_node = [0u8; 32];
     selector_node[0] = selector;
@@ -127,6 +126,7 @@ pub trait HashTreeRoot {
 // ── bool ──
 
 impl HashTreeRoot for bool {
+    #[inline(always)]
     fn hash_tree_root(&self) -> Node {
         let mut node = [0u8; 32];
         node[0] = if *self { 1 } else { 0 };
@@ -139,6 +139,7 @@ impl HashTreeRoot for bool {
 macro_rules! impl_hash_tree_root_uint {
     ($ty:ty) => {
         impl HashTreeRoot for $ty {
+            #[inline(always)]
             fn hash_tree_root(&self) -> Node {
                 let mut node = [0u8; 32];
                 let bytes = self.to_le_bytes();
@@ -158,6 +159,7 @@ impl_hash_tree_root_uint!(u128);
 // ── [u8; 32] ──
 
 impl HashTreeRoot for [u8; 32] {
+    #[inline(always)]
     fn hash_tree_root(&self) -> Node {
         *self
     }
@@ -375,10 +377,7 @@ mod tests {
         let a = [1u8; 32];
         let b = [2u8; 32];
         // limit=2 with 2 chunks should give same result as no limit
-        assert_eq!(
-            merkleize(&[a, b], Some(2)),
-            merkleize(&[a, b], None)
-        );
+        assert_eq!(merkleize(&[a, b], Some(2)), merkleize(&[a, b], None));
     }
 
     #[test]

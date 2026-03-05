@@ -1,0 +1,79 @@
+#![no_main]
+
+//! Differential hash_tree_root fuzzer for containers and collections.
+//! tree_hash doesn't implement TreeHash for Vec, so collection tests are no-panic only.
+//! Differential testing is done for primitives and fixed arrays ([u8;32]).
+//! Also tests no-panic HTR for a BeaconBlockHeader container with our derive.
+
+extern crate libssz as ssz;
+extern crate libssz_merkle as ssz_merkle;
+
+use arbitrary::Arbitrary;
+use libfuzzer_sys::fuzz_target;
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+
+#[derive(Debug, SszEncode, SszDecode, HashTreeRoot)]
+struct OurHeader {
+    slot: u64,
+    proposer_index: u64,
+    parent_root: [u8; 32],
+    state_root: [u8; 32],
+    body_root: [u8; 32],
+}
+
+#[derive(Debug, Arbitrary)]
+struct FuzzInput {
+    vec_u64: Vec<u64>,
+    vec_bytes32: Vec<[u8; 32]>,
+    val_u64: u64,
+    val_bytes32: [u8; 32],
+    slot: u64,
+    proposer_index: u64,
+    parent_root: [u8; 32],
+    state_root: [u8; 32],
+    body_root: [u8; 32],
+}
+
+/// Hash with our library.
+fn ours<T: libssz_merkle::HashTreeRoot>(val: &T) -> [u8; 32] {
+    val.hash_tree_root()
+}
+
+/// Hash with Lighthouse's tree_hash.
+fn lighthouse<T: tree_hash::TreeHash>(val: &T) -> [u8; 32] {
+    val.tree_hash_root().0
+}
+
+fuzz_target!(|input: FuzzInput| {
+    // Differential: u64 HTR must match between our lib and lighthouse
+    assert_eq!(
+        ours(&input.val_u64),
+        lighthouse(&input.val_u64),
+        "u64 HTR mismatch"
+    );
+
+    // Differential: [u8;32] HTR must match between our lib and lighthouse
+    assert_eq!(
+        ours(&input.val_bytes32),
+        lighthouse(&input.val_bytes32),
+        "[u8;32] HTR mismatch"
+    );
+
+    // No-panic HTR for Vec<u64> collection (tree_hash doesn't implement TreeHash for Vec)
+    let vec_u64: Vec<u64> = input.vec_u64.into_iter().take(256).collect();
+    let _ = ours(&vec_u64);
+
+    // No-panic HTR for Vec<[u8;32]> collection
+    let vec_bytes32: Vec<[u8; 32]> = input.vec_bytes32.into_iter().take(256).collect();
+    let _ = ours(&vec_bytes32);
+
+    // No-panic HTR for BeaconBlockHeader container
+    let header = OurHeader {
+        slot: input.slot,
+        proposer_index: input.proposer_index,
+        parent_root: input.parent_root,
+        state_root: input.state_root,
+        body_root: input.body_root,
+    };
+    let _ = ours(&header);
+});

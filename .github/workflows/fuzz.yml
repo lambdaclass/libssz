@@ -1,0 +1,136 @@
+name: Fuzz
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fuzz-smoke:
+    if: github.event_name != 'schedule'
+    name: smoke / ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - decode_arbitrary
+          - roundtrip
+          - diff_encode
+          - diff_hash_tree_root
+          - hash_tree_root_fuzz
+          - merkle_primitives
+          - union_decode
+          - diff_decode
+          - variable_container
+          - nested_types
+          - diff_htr_container
+          - union_htr
+          - transparent
+          - all_variable
+          - wide_union
+          - deep_nesting
+          - many_fields
+          - offset_adversarial
+          - construction_api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            fuzz/target
+          key: fuzz-deps-${{ hashFiles('fuzz/Cargo.lock') }}
+          restore-keys: fuzz-deps-
+
+      - run: cargo install cargo-fuzz --locked
+
+      - name: Run fuzz target (60s)
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=60
+        working-directory: fuzz
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-${{ matrix.target }}
+          path: fuzz/artifacts/${{ matrix.target }}/
+
+  fuzz-nightly:
+    if: github.event_name == 'schedule'
+    name: nightly / ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 540
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - decode_arbitrary
+          - roundtrip
+          - diff_encode
+          - diff_hash_tree_root
+          - hash_tree_root_fuzz
+          - merkle_primitives
+          - union_decode
+          - diff_decode
+          - variable_container
+          - nested_types
+          - diff_htr_container
+          - union_htr
+          - transparent
+          - all_variable
+          - wide_union
+          - deep_nesting
+          - many_fields
+          - offset_adversarial
+          - construction_api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            fuzz/target
+          key: fuzz-deps-${{ hashFiles('fuzz/Cargo.lock') }}
+          restore-keys: fuzz-deps-
+
+      - run: cargo install cargo-fuzz --locked
+
+      - name: Restore corpus cache
+        uses: actions/cache/restore@v4
+        with:
+          path: fuzz/corpus/${{ matrix.target }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: fuzz-corpus-${{ matrix.target }}-
+
+      - name: Run fuzz target (8h)
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=28800
+        working-directory: fuzz
+
+      - name: Save corpus cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: fuzz/corpus/${{ matrix.target }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-${{ matrix.target }}
+          path: fuzz/artifacts/${{ matrix.target }}/

@@ -26,17 +26,38 @@ pub trait SszEncode {
         self.ssz_append(&mut buf);
         buf
     }
+
+    /// Bulk-append a slice of fixed-size items to `buf`.
+    ///
+    /// The default loops over items. Integer types override this with a single
+    /// memcpy on little-endian platforms.
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>)
+    where
+        Self: Sized,
+    {
+        buf.reserve(Self::fixed_size() * items.len());
+        for item in items {
+            item.ssz_append(buf);
+        }
+    }
 }
 
 // ── bool ──
 
 impl SszEncode for bool {
     #[inline(always)]
-    fn is_fixed_size() -> bool { true }
+    fn is_fixed_size() -> bool {
+        true
+    }
     #[inline(always)]
-    fn fixed_size() -> usize { 1 }
+    fn fixed_size() -> usize {
+        1
+    }
     #[inline(always)]
-    fn encoded_len(&self) -> usize { 1 }
+    fn encoded_len(&self) -> usize {
+        1
+    }
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.push(if *self { 1 } else { 0 });
@@ -49,14 +70,40 @@ macro_rules! impl_ssz_encode_uint {
     ($ty:ty, $size:literal) => {
         impl SszEncode for $ty {
             #[inline(always)]
-            fn is_fixed_size() -> bool { true }
+            fn is_fixed_size() -> bool {
+                true
+            }
             #[inline(always)]
-            fn fixed_size() -> usize { $size }
+            fn fixed_size() -> usize {
+                $size
+            }
             #[inline(always)]
-            fn encoded_len(&self) -> usize { $size }
+            fn encoded_len(&self) -> usize {
+                $size
+            }
             #[inline(always)]
             fn ssz_append(&self, buf: &mut Vec<u8>) {
                 buf.extend_from_slice(&self.to_le_bytes());
+            }
+            #[cfg(feature = "alloc")]
+            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+                #[cfg(target_endian = "little")]
+                {
+                    let byte_slice = unsafe {
+                        core::slice::from_raw_parts(
+                            items.as_ptr() as *const u8,
+                            items.len() * $size,
+                        )
+                    };
+                    buf.extend_from_slice(byte_slice);
+                }
+                #[cfg(not(target_endian = "little"))]
+                {
+                    buf.reserve($size * items.len());
+                    for item in items {
+                        item.ssz_append(buf);
+                    }
+                }
             }
         }
     };
@@ -74,11 +121,17 @@ macro_rules! impl_ssz_encode_byte_array {
     ($n:literal) => {
         impl SszEncode for [u8; $n] {
             #[inline(always)]
-            fn is_fixed_size() -> bool { true }
+            fn is_fixed_size() -> bool {
+                true
+            }
             #[inline(always)]
-            fn fixed_size() -> usize { $n }
+            fn fixed_size() -> usize {
+                $n
+            }
             #[inline(always)]
-            fn encoded_len(&self) -> usize { $n }
+            fn encoded_len(&self) -> usize {
+                $n
+            }
             #[inline(always)]
             fn ssz_append(&self, buf: &mut Vec<u8>) {
                 buf.extend_from_slice(self);
@@ -97,10 +150,14 @@ impl_ssz_encode_byte_array!(96);
 
 impl<T: SszEncode> SszEncode for Vec<T> {
     #[inline(always)]
-    fn is_fixed_size() -> bool { false }
+    fn is_fixed_size() -> bool {
+        false
+    }
 
     #[inline(always)]
-    fn fixed_size() -> usize { 0 }
+    fn fixed_size() -> usize {
+        0
+    }
 
     fn encoded_len(&self) -> usize {
         if T::is_fixed_size() {
@@ -114,9 +171,7 @@ impl<T: SszEncode> SszEncode for Vec<T> {
 
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         if T::is_fixed_size() {
-            for item in self {
-                item.ssz_append(buf);
-            }
+            T::ssz_append_fixed_slice(self, buf);
         } else {
             encode_variable_length_items(self.iter(), buf);
         }
@@ -181,7 +236,8 @@ impl ContainerEncoder {
     /// Append a variable-size field.
     pub fn append_variable<T: SszEncode>(&mut self, value: &T) {
         self.offset_positions.push(self.fixed_buf.len());
-        self.fixed_buf.extend_from_slice(&[0u8; BYTES_PER_LENGTH_OFFSET]);
+        self.fixed_buf
+            .extend_from_slice(&[0u8; BYTES_PER_LENGTH_OFFSET]);
         self.var_bufs.push(value.to_ssz());
     }
 
@@ -193,8 +249,7 @@ impl ContainerEncoder {
         // Patch placeholder offsets with actual values.
         for (i, pos) in self.offset_positions.iter().enumerate() {
             let offset_bytes = (offset as u32).to_le_bytes();
-            self.fixed_buf[*pos..*pos + BYTES_PER_LENGTH_OFFSET]
-                .copy_from_slice(&offset_bytes);
+            self.fixed_buf[*pos..*pos + BYTES_PER_LENGTH_OFFSET].copy_from_slice(&offset_bytes);
             offset += self.var_bufs[i].len();
         }
 

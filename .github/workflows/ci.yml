@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  actionlint:
+    name: GHA Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-actionlint@v1
+        with:
+          fail_level: error
+
+  license:
+    name: License Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - run: cargo deny check licenses
+
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: clippy-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: clippy-
+      - run: rustup component add clippy
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  build:
+    name: Build
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: build-
+      - run: cargo build --workspace --all-targets
+
+  test:
+    name: Test (${{ matrix.features }})
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - features: default
+            args: ""
+          - features: alloc-only
+            args: "--no-default-features --features alloc"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: build-
+      - run: cargo test --workspace ${{ matrix.args }}
+
+  doc:
+    name: Doc
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: doc-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: doc-
+      - run: cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
+  no-std-check:
+    name: no_std Check
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup target add thumbv7m-none-eabi
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: no-std-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: no-std-
+      - run: cargo check -p ssz -p ssz-types -p ssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
+
+  iai-bench:
+    name: iai-callgrind
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: iai-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: iai-
+      - run: sudo apt-get install -y valgrind
+      - run: cargo install iai-callgrind-runner
+      - run: cargo bench --workspace --bench iai_merkle --bench iai_encode_decode
+
+  coverage:
+    name: Coverage
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: coverage-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: coverage-
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - run: cargo llvm-cov --workspace --lcov --output-path lcov.info --fail-under-lines 70
+      - uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

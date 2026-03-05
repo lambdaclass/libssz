@@ -53,21 +53,30 @@ fn main() {
     assert_eq!(encoded.len(), 32);
     let decoded = <[u8; 32]>::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, val);
-    println!("[u8;32]: first={:#04x}, last={:#04x} -> (32 bytes) -> OK", val[0], val[31]);
+    println!(
+        "[u8;32]: first={:#04x}, last={:#04x} -> (32 bytes) -> OK",
+        val[0], val[31]
+    );
 
     // ── Vec<u16> (list of fixed-size elements) ──
     let val: Vec<u16> = vec![10, 20, 30];
     let encoded = val.to_ssz();
     let decoded = Vec::<u16>::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, val);
-    println!("Vec<u16>: {val:?} -> ({} bytes) -> {decoded:?}", encoded.len());
+    println!(
+        "Vec<u16>: {val:?} -> ({} bytes) -> {decoded:?}",
+        encoded.len()
+    );
 
     // ── Vec<Vec<u8>> (list of variable-size elements) ──
     let val: Vec<Vec<u8>> = vec![vec![1, 2], vec![3], vec![4, 5, 6]];
     let encoded = val.to_ssz();
     let decoded = Vec::<Vec<u8>>::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, val);
-    println!("Vec<Vec<u8>>: {val:?} -> ({} bytes) -> {decoded:?}", encoded.len());
+    println!(
+        "Vec<Vec<u8>>: {val:?} -> ({} bytes) -> {decoded:?}",
+        encoded.len()
+    );
 
     // ── Error handling ──
     let err = bool::from_ssz_bytes(&[2]);

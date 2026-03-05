@@ -1,4 +1,4 @@
-use ssz::{SszEncode, SszDecode, DecodeError, ContainerEncoder, ContainerDecoder};
+use ssz::{ContainerDecoder, ContainerEncoder, DecodeError, SszDecode, SszEncode};
 
 // ── bool ──
 
@@ -28,7 +28,10 @@ fn bool_invalid_byte() {
 fn bool_wrong_length() {
     assert_eq!(
         bool::from_ssz_bytes(&[0, 1]),
-        Err(DecodeError::InvalidFixedLength { expected: 1, got: 2 })
+        Err(DecodeError::InvalidFixedLength {
+            expected: 1,
+            got: 2
+        })
     );
 }
 
@@ -69,7 +72,10 @@ fn u32_round_trip() {
 fn u64_round_trip() {
     let val: u64 = 0x0102030405060708;
     let encoded = val.to_ssz();
-    assert_eq!(encoded, vec![0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01]);
+    assert_eq!(
+        encoded,
+        vec![0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01]
+    );
     assert_eq!(u64::from_ssz_bytes(&encoded).unwrap(), val);
 }
 
@@ -128,9 +134,9 @@ fn vec_of_vecs_round_trip() {
         12, 0, 0, 0, // offset to [1,2]
         14, 0, 0, 0, // offset to [3]
         15, 0, 0, 0, // offset to [4,5,6]
-        1, 2,        // data[0]
-        3,           // data[1]
-        4, 5, 6,     // data[2]
+        1, 2, // data[0]
+        3, // data[1]
+        4, 5, 6, // data[2]
     ];
     assert_eq!(encoded, expected);
     assert_eq!(Vec::<Vec<u8>>::from_ssz_bytes(&encoded).unwrap(), val);
@@ -167,12 +173,7 @@ fn container_mixed_round_trip() {
     // [10, 0, 0, 0]         offset to b's data (fixed part = 4+4+2 = 10)
     // [0xE8, 0x03]          c = 1000 (u16 LE)
     // [0xAA, 0xBB, 0xCC]    b's data
-    let expected = vec![
-        42, 0, 0, 0,
-        10, 0, 0, 0,
-        0xE8, 0x03,
-        0xAA, 0xBB, 0xCC,
-    ];
+    let expected = vec![42, 0, 0, 0, 10, 0, 0, 0, 0xE8, 0x03, 0xAA, 0xBB, 0xCC];
     assert_eq!(buf, expected);
 
     // Decode
@@ -243,7 +244,10 @@ fn encoded_len_matches_actual() {
 fn u32_wrong_length() {
     assert_eq!(
         u32::from_ssz_bytes(&[1, 2, 3]),
-        Err(DecodeError::InvalidFixedLength { expected: 4, got: 3 })
+        Err(DecodeError::InvalidFixedLength {
+            expected: 4,
+            got: 3
+        })
     );
 }
 
@@ -251,4 +255,236 @@ fn u32_wrong_length() {
 fn vec_u32_not_divisible() {
     // 5 bytes is not divisible by 4
     assert!(Vec::<u32>::from_ssz_bytes(&[1, 2, 3, 4, 5]).is_err());
+}
+
+// ── Byte array round trips (Ethereum-sized: pubkeys, signatures) ──
+
+#[test]
+fn byte_array_4_round_trip() {
+    let val = [0x01, 0x02, 0x03, 0x04];
+    let encoded = val.to_ssz();
+    assert_eq!(<[u8; 4]>::from_ssz_bytes(&encoded).unwrap(), val);
+}
+
+#[test]
+fn byte_array_20_round_trip() {
+    // Ethereum address size
+    let mut val = [0u8; 20];
+    val[0] = 0xDE;
+    val[19] = 0xAD;
+    let encoded = val.to_ssz();
+    assert_eq!(encoded.len(), 20);
+    assert_eq!(<[u8; 20]>::from_ssz_bytes(&encoded).unwrap(), val);
+}
+
+#[test]
+fn byte_array_48_round_trip() {
+    // BLS public key size
+    let mut val = [0u8; 48];
+    val[0] = 0xAB;
+    val[47] = 0xCD;
+    let encoded = val.to_ssz();
+    assert_eq!(encoded.len(), 48);
+    assert_eq!(<[u8; 48]>::from_ssz_bytes(&encoded).unwrap(), val);
+}
+
+#[test]
+fn byte_array_96_round_trip() {
+    // BLS signature size
+    let mut val = [0u8; 96];
+    val[0] = 0x01;
+    val[95] = 0xFF;
+    let encoded = val.to_ssz();
+    assert_eq!(encoded.len(), 96);
+    assert_eq!(<[u8; 96]>::from_ssz_bytes(&encoded).unwrap(), val);
+}
+
+#[test]
+fn byte_array_wrong_length() {
+    let err = <[u8; 48]>::from_ssz_bytes(&[0u8; 32]).unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidFixedLength {
+            expected: 48,
+            got: 32
+        }
+    );
+}
+
+// ── Variable-length decoding: malformed data from untrusted peers ──
+
+#[test]
+fn variable_list_truncated_offset_region() {
+    // Only 2 bytes when we need at least 4 for the first offset
+    let err = Vec::<Vec<u8>>::from_ssz_bytes(&[0x01, 0x02]).unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidByteLength {
+            expected: 4,
+            got: 2
+        }
+    );
+}
+
+#[test]
+fn variable_list_first_offset_not_aligned() {
+    // First offset = 5 (not a multiple of 4) — invalid
+    let bytes = 5u32.to_le_bytes();
+    let err = Vec::<Vec<u8>>::from_ssz_bytes(&bytes).unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidFirstOffset {
+            expected: 0,
+            got: 5
+        }
+    );
+}
+
+#[test]
+fn variable_list_offset_out_of_bounds() {
+    // Two items: first offset = 8 (correct), second offset = 255 (way past end)
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&8u32.to_le_bytes()); // offset[0] = 8
+    bytes.extend_from_slice(&255u32.to_le_bytes()); // offset[1] = 255 (out of bounds)
+    bytes.extend_from_slice(&[0xAA]); // some data
+    let err = Vec::<Vec<u8>>::from_ssz_bytes(&bytes).unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::OffsetOutOfBounds {
+            offset: 255,
+            length: 9
+        }
+    );
+}
+
+#[test]
+fn variable_list_offsets_not_monotonic() {
+    // Two items: first offset = 8, second offset = 7 (decreasing — corrupt)
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&8u32.to_le_bytes()); // offset[0] = 8
+    bytes.extend_from_slice(&7u32.to_le_bytes()); // offset[1] = 7 (not monotonic)
+    bytes.extend_from_slice(&[0xAA, 0xBB]); // data
+    let err = Vec::<Vec<u8>>::from_ssz_bytes(&bytes).unwrap_err();
+    assert_eq!(err, DecodeError::OffsetsAreNotMonotonicallyIncreasing);
+}
+
+#[test]
+fn variable_list_single_empty_item() {
+    // One variable-length item that is empty: offset[0] = 4, no data after offsets
+    let bytes = 4u32.to_le_bytes();
+    let decoded = Vec::<Vec<u8>>::from_ssz_bytes(&bytes).unwrap();
+    assert_eq!(decoded, vec![Vec::<u8>::new()]);
+}
+
+// ── ContainerDecoder edge cases ──
+
+#[test]
+fn container_decoder_bytes_too_short() {
+    // Fixed part expects 12 bytes, only give 8
+    let bytes = [0u8; 8];
+    match ContainerDecoder::new(&bytes, 12) {
+        Err(DecodeError::InvalidByteLength {
+            expected: 12,
+            got: 8,
+        }) => {}
+        Err(e) => panic!("unexpected error: {e:?}"),
+        Ok(_) => panic!("expected error"),
+    }
+}
+
+#[test]
+fn container_decoder_fixed_field_overflow() {
+    // Container with just a u64 field, but only 4 bytes available
+    let bytes = [0u8; 4];
+    let mut decoder = ContainerDecoder::new(&bytes, 4).unwrap();
+    let err = decoder.decode_fixed::<u64>().unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidByteLength {
+            expected: 8, // cursor(0) + size(8) = 8, but only 4 bytes
+            got: 4
+        }
+    );
+}
+
+#[test]
+fn container_decoder_variable_offset_out_of_bounds() {
+    // Simulate a container { x: Vec<u8> } where the offset points past the buffer
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&255u32.to_le_bytes()); // offset = 255, way past end
+    let mut decoder = ContainerDecoder::new(&bytes, 4).unwrap();
+    let err = decoder.read_variable_offset().unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::OffsetOutOfBounds {
+            offset: 255,
+            length: 4
+        }
+    );
+}
+
+#[test]
+fn container_decoder_variable_offsets_not_monotonic() {
+    // Container { a: Vec<u8>, b: Vec<u8> } with offsets [12, 8] — decreasing
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&12u32.to_le_bytes()); // offset a = 12
+    bytes.extend_from_slice(&8u32.to_le_bytes()); // offset b = 8 (not monotonic)
+    bytes.extend_from_slice(&[0u8; 4]); // padding to make it 12 bytes total
+    let mut decoder = ContainerDecoder::new(&bytes, 8).unwrap();
+    decoder.read_variable_offset().unwrap(); // offset a = 12, ok
+    let err = decoder.read_variable_offset().unwrap_err();
+    assert_eq!(err, DecodeError::OffsetsAreNotMonotonicallyIncreasing);
+}
+
+#[test]
+fn container_decoder_decode_variable_without_offsets() {
+    // Try to decode a variable field without having read any offsets
+    let bytes = [0u8; 8];
+    let mut decoder = ContainerDecoder::new(&bytes, 8).unwrap();
+    let err = decoder.decode_variable::<Vec<u8>>().unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidByteLength {
+            expected: 1,
+            got: 0
+        }
+    );
+}
+
+// ── Error Display ──
+
+#[test]
+fn decode_error_display_formats_correctly() {
+    use std::fmt::Write;
+
+    // Verify Display impl works (used in error reporting)
+    let err = DecodeError::InvalidFixedLength {
+        expected: 4,
+        got: 2,
+    };
+    let mut s = String::new();
+    write!(s, "{err}").unwrap();
+    assert!(s.contains("InvalidFixedLength"));
+    assert!(s.contains("4"));
+    assert!(s.contains("2"));
+
+    // Verify Error trait impl
+    let err_ref: &dyn std::error::Error = &err;
+    assert!(err_ref.to_string().contains("InvalidFixedLength"));
+}
+
+// ── ContainerEncoder default ──
+
+#[test]
+fn container_encoder_default() {
+    // Default and new should produce identical encoders
+    let mut enc_default = ContainerEncoder::default();
+    let mut enc_new = ContainerEncoder::new();
+    enc_default.append_fixed(&42u32);
+    enc_new.append_fixed(&42u32);
+    let mut buf1 = Vec::new();
+    let mut buf2 = Vec::new();
+    enc_default.finalize(&mut buf1);
+    enc_new.finalize(&mut buf2);
+    assert_eq!(buf1, buf2);
 }

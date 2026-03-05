@@ -292,4 +292,48 @@ mod tests {
         assert_eq!(<SszBitvector<9> as SszEncode>::fixed_size(), 2);
         assert_eq!(<SszBitvector<256> as SszEncode>::fixed_size(), 32);
     }
+
+    #[test]
+    fn default_creates_all_zeros() {
+        let bv = SszBitvector::<16>::default();
+        for i in 0..16 {
+            assert_eq!(bv.get(i), Some(false));
+        }
+    }
+
+    #[test]
+    fn is_empty_for_zero_length() {
+        let bv = SszBitvector::<0>::new();
+        assert!(bv.is_empty());
+        assert_eq!(bv.len(), 0);
+    }
+
+    #[test]
+    fn as_bytes_returns_raw_storage() {
+        let mut bv = SszBitvector::<16>::new();
+        bv.set(0, true);
+        bv.set(8, true);
+        // Byte 0: bit 0 set = 0x01, Byte 1: bit 0 set = 0x01
+        assert_eq!(bv.as_bytes(), &[0x01, 0x01]);
+    }
+
+    #[test]
+    fn decode_is_fixed_size() {
+        assert!(<SszBitvector<8> as SszDecode>::is_fixed_size());
+        assert_eq!(<SszBitvector<8> as SszDecode>::fixed_size(), 1);
+        assert_eq!(<SszBitvector<256> as SszDecode>::fixed_size(), 32);
+    }
+
+    #[test]
+    fn excess_bits_validated_on_non_byte_aligned() {
+        // N=3: only lower 3 bits valid. Byte with bit 3 set should fail.
+        let err = SszBitvector::<3>::from_ssz_bytes(&[0b0000_1000]).unwrap_err();
+        assert_eq!(err, DecodeError::ExcessBitsNotZero);
+
+        // Valid: only lower 3 bits set
+        let bv = SszBitvector::<3>::from_ssz_bytes(&[0b0000_0111]).unwrap();
+        assert_eq!(bv.get(0), Some(true));
+        assert_eq!(bv.get(1), Some(true));
+        assert_eq!(bv.get(2), Some(true));
+    }
 }

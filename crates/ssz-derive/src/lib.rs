@@ -59,14 +59,32 @@ pub fn derive_ssz_encode(input: TokenStream) -> TokenStream {
     let expanded = match &input.data {
         Data::Struct(data_struct) => {
             if is_transparent(&input) {
-                derive_encode_transparent(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_encode_transparent(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             } else {
-                derive_encode_struct(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_encode_struct(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             }
         }
         Data::Enum(data_enum) => {
             if is_union_enum(&input) {
-                derive_encode_union_enum(name, &impl_generics, &ty_generics, where_clause, data_enum)
+                derive_encode_union_enum(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_enum,
+                )
             } else {
                 panic!("SszEncode for enums requires #[ssz(enum_behaviour = \"union\")]")
             }
@@ -128,33 +146,55 @@ fn derive_encode_struct(
     });
 
     // fixed_size: sum of fixed sizes (only valid if is_fixed_size)
-    let fixed_size_terms: Vec<_> = field_types.iter().map(|ty| {
-        quote! { <#ty as ssz::SszEncode>::fixed_size() }
-    }).collect();
+    let fixed_size_terms: Vec<_> = field_types
+        .iter()
+        .map(|ty| {
+            quote! { <#ty as ssz::SszEncode>::fixed_size() }
+        })
+        .collect();
 
     // encoded_len — wrap in braces so `+` separator works between if-exprs
-    let encoded_len_terms: Vec<_> = field_names.iter().zip(field_types.iter()).map(|(fname, ty)| {
-        quote! {
-            {
-                if <#ty as ssz::SszEncode>::is_fixed_size() {
-                    <#ty as ssz::SszEncode>::fixed_size()
-                } else {
-                    4 + ssz::SszEncode::encoded_len(&self.#fname)
+    let encoded_len_terms: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                {
+                    if <#ty as ssz::SszEncode>::is_fixed_size() {
+                        <#ty as ssz::SszEncode>::fixed_size()
+                    } else {
+                        4 + ssz::SszEncode::encoded_len(&self.#fname)
+                    }
                 }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     // ssz_append: use ContainerEncoder
-    let append_stmts: Vec<_> = field_names.iter().zip(field_types.iter()).map(|(fname, ty)| {
-        quote! {
-            if <#ty as ssz::SszEncode>::is_fixed_size() {
-                encoder.append_fixed(&self.#fname);
-            } else {
-                encoder.append_variable(&self.#fname);
-            };
-        }
-    }).collect();
+    let append_stmts: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                if <#ty as ssz::SszEncode>::is_fixed_size() {
+                    encoder.append_fixed(&self.#fname);
+                } else {
+                    encoder.append_variable(&self.#fname);
+                };
+            }
+        })
+        .collect();
+
+    // Fast path for all-fixed containers: direct appends, no ContainerEncoder
+    let direct_append_stmts: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                <#ty as ssz::SszEncode>::ssz_append(&self.#fname, buf);
+            }
+        })
+        .collect();
 
     quote! {
         impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
@@ -175,9 +215,13 @@ fn derive_encode_struct(
             }
 
             fn ssz_append(&self, buf: &mut Vec<u8>) {
-                let mut encoder = ssz::ContainerEncoder::new();
-                #(#append_stmts)*
-                encoder.finalize(buf);
+                if <Self as ssz::SszEncode>::is_fixed_size() {
+                    #(#direct_append_stmts)*
+                } else {
+                    let mut encoder = ssz::ContainerEncoder::new();
+                    #(#append_stmts)*
+                    encoder.finalize(buf);
+                }
             }
         }
     }
@@ -190,45 +234,54 @@ fn derive_encode_union_enum(
     where_clause: Option<&syn::WhereClause>,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
-    let variant_arms: Vec<_> = data.variants.iter().enumerate().map(|(i, variant)| {
-        let variant_name = &variant.ident;
-        let selector = i as u8;
-        match &variant.fields {
-            Fields::Unnamed(f) if f.unnamed.len() == 1 => {
-                quote! {
-                    #name::#variant_name(inner) => {
-                        buf.push(#selector);
-                        ssz::SszEncode::ssz_append(inner, buf);
+    let variant_arms: Vec<_> = data
+        .variants
+        .iter()
+        .enumerate()
+        .map(|(i, variant)| {
+            let variant_name = &variant.ident;
+            let selector = i as u8;
+            match &variant.fields {
+                Fields::Unnamed(f) if f.unnamed.len() == 1 => {
+                    quote! {
+                        #name::#variant_name(inner) => {
+                            buf.push(#selector);
+                            ssz::SszEncode::ssz_append(inner, buf);
+                        }
                     }
                 }
-            }
-            Fields::Unit => {
-                quote! {
-                    #name::#variant_name => {
-                        buf.push(#selector);
+                Fields::Unit => {
+                    quote! {
+                        #name::#variant_name => {
+                            buf.push(#selector);
+                        }
                     }
                 }
+                _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
             }
-            _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
-        }
-    }).collect();
+        })
+        .collect();
 
-    let encoded_len_arms: Vec<_> = data.variants.iter().map(|variant| {
-        let variant_name = &variant.ident;
-        match &variant.fields {
-            Fields::Unnamed(_f) => {
-                quote! {
-                    #name::#variant_name(inner) => 1 + ssz::SszEncode::encoded_len(inner)
+    let encoded_len_arms: Vec<_> = data
+        .variants
+        .iter()
+        .map(|variant| {
+            let variant_name = &variant.ident;
+            match &variant.fields {
+                Fields::Unnamed(_f) => {
+                    quote! {
+                        #name::#variant_name(inner) => 1 + ssz::SszEncode::encoded_len(inner)
+                    }
                 }
-            }
-            Fields::Unit => {
-                quote! {
-                    #name::#variant_name => 1
+                Fields::Unit => {
+                    quote! {
+                        #name::#variant_name => 1
+                    }
                 }
+                _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
             }
-            _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! {
         impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
@@ -261,14 +314,32 @@ pub fn derive_ssz_decode(input: TokenStream) -> TokenStream {
     let expanded = match &input.data {
         Data::Struct(data_struct) => {
             if is_transparent(&input) {
-                derive_decode_transparent(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_decode_transparent(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             } else {
-                derive_decode_struct(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_decode_struct(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             }
         }
         Data::Enum(data_enum) => {
             if is_union_enum(&input) {
-                derive_decode_union_enum(name, &impl_generics, &ty_generics, where_clause, data_enum)
+                derive_decode_union_enum(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_enum,
+                )
             } else {
                 panic!("SszDecode for enums requires #[ssz(enum_behaviour = \"union\")]")
             }
@@ -336,47 +407,79 @@ fn derive_decode_struct(
     });
 
     // fixed_size
-    let fixed_size_terms: Vec<_> = field_types.iter().map(|ty| {
-        quote! { <#ty as ssz::SszDecode>::fixed_size() }
-    }).collect();
+    let fixed_size_terms: Vec<_> = field_types
+        .iter()
+        .map(|ty| {
+            quote! { <#ty as ssz::SszDecode>::fixed_size() }
+        })
+        .collect();
 
     // Compute fixed_part_len at runtime — wrap in braces for `+` separator
-    let fixed_part_len_terms: Vec<_> = field_types.iter().map(|ty| {
-        quote! {
-            {
-                if <#ty as ssz::SszDecode>::is_fixed_size() {
-                    <#ty as ssz::SszDecode>::fixed_size()
-                } else {
-                    4usize
+    let fixed_part_len_terms: Vec<_> = field_types
+        .iter()
+        .map(|ty| {
+            quote! {
+                {
+                    if <#ty as ssz::SszDecode>::is_fixed_size() {
+                        <#ty as ssz::SszDecode>::fixed_size()
+                    } else {
+                        4usize
+                    }
                 }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     // Fixed-part pass: decode_fixed for fixed fields, read_variable_offset for variable
-    let fixed_pass_stmts = field_names.iter().zip(field_types.iter()).map(|(fname, ty)| {
-        quote! {
-            let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
-                Some(decoder.decode_fixed::<#ty>()?)
-            } else {
-                decoder.read_variable_offset()?;
-                None
-            };
-        }
-    });
+    let fixed_pass_stmts = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
+                    Some(decoder.decode_fixed::<#ty>()?)
+                } else {
+                    decoder.read_variable_offset()?;
+                    None
+                };
+            }
+        });
 
     // Variable-part pass: decode_variable for variable fields
-    let variable_pass_stmts = field_names.iter().zip(field_types.iter()).map(|(fname, ty)| {
-        quote! {
-            let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
-                #fname.unwrap()
-            } else {
-                decoder.decode_variable::<#ty>()?
-            };
-        }
-    });
+    let variable_pass_stmts = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
+                    #fname.unwrap()
+                } else {
+                    decoder.decode_variable::<#ty>()?
+                };
+            }
+        });
 
     let field_constructs = field_names.iter().map(|fname| {
+        quote! { #fname }
+    });
+
+    // Fast path for all-fixed containers: direct decode from slices, no ContainerDecoder
+    let direct_decode_stmts: Vec<_> = field_names
+        .iter()
+        .zip(field_types.iter())
+        .map(|(fname, ty)| {
+            quote! {
+                let #fname = {
+                    let size = <#ty as ssz::SszDecode>::fixed_size();
+                    let val = <#ty as ssz::SszDecode>::from_ssz_bytes(&bytes[cursor..cursor + size])?;
+                    cursor += size;
+                    val
+                };
+            }
+        })
+        .collect();
+
+    let field_constructs_fixed = field_names.iter().map(|fname| {
         quote! { #fname }
     });
 
@@ -395,18 +498,30 @@ fn derive_decode_struct(
             }
 
             fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
-                let fixed_part_len: usize = 0 #(+ #fixed_part_len_terms)*;
-                let mut decoder = ssz::ContainerDecoder::new(bytes, fixed_part_len)?;
+                if <Self as ssz::SszDecode>::is_fixed_size() {
+                    let expected = <Self as ssz::SszDecode>::fixed_size();
+                    if bytes.len() != expected {
+                        return Err(ssz::DecodeError::InvalidFixedLength { expected, got: bytes.len() });
+                    }
+                    let mut cursor = 0usize;
+                    #(#direct_decode_stmts)*
+                    Ok(#name {
+                        #(#field_constructs_fixed,)*
+                    })
+                } else {
+                    let fixed_part_len: usize = 0 #(+ #fixed_part_len_terms)*;
+                    let mut decoder = ssz::ContainerDecoder::new(bytes, fixed_part_len)?;
 
-                // Fixed-part pass
-                #(#fixed_pass_stmts)*
+                    // Fixed-part pass
+                    #(#fixed_pass_stmts)*
 
-                // Variable-part pass
-                #(#variable_pass_stmts)*
+                    // Variable-part pass
+                    #(#variable_pass_stmts)*
 
-                Ok(#name {
-                    #(#field_constructs,)*
-                })
+                    Ok(#name {
+                        #(#field_constructs,)*
+                    })
+                }
             }
         }
     }
@@ -419,35 +534,40 @@ fn derive_decode_union_enum(
     where_clause: Option<&syn::WhereClause>,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
-    let variant_arms: Vec<_> = data.variants.iter().enumerate().map(|(i, variant)| {
-        let variant_name = &variant.ident;
-        let selector = i as u8;
-        match &variant.fields {
-            Fields::Unnamed(f) if f.unnamed.len() == 1 => {
-                let ty = &f.unnamed.first().unwrap().ty;
-                quote! {
-                    #selector => {
-                        let inner = <#ty as ssz::SszDecode>::from_ssz_bytes(&bytes[1..])?;
-                        Ok(#name::#variant_name(inner))
-                    }
-                }
-            }
-            Fields::Unit => {
-                quote! {
-                    #selector => {
-                        if bytes.len() != 1 {
-                            return Err(ssz::DecodeError::AdditionalBytes {
-                                expected: 1,
-                                got: bytes.len(),
-                            });
+    let variant_arms: Vec<_> = data
+        .variants
+        .iter()
+        .enumerate()
+        .map(|(i, variant)| {
+            let variant_name = &variant.ident;
+            let selector = i as u8;
+            match &variant.fields {
+                Fields::Unnamed(f) if f.unnamed.len() == 1 => {
+                    let ty = &f.unnamed.first().unwrap().ty;
+                    quote! {
+                        #selector => {
+                            let inner = <#ty as ssz::SszDecode>::from_ssz_bytes(&bytes[1..])?;
+                            Ok(#name::#variant_name(inner))
                         }
-                        Ok(#name::#variant_name)
                     }
                 }
+                Fields::Unit => {
+                    quote! {
+                        #selector => {
+                            if bytes.len() != 1 {
+                                return Err(ssz::DecodeError::AdditionalBytes {
+                                    expected: 1,
+                                    got: bytes.len(),
+                                });
+                            }
+                            Ok(#name::#variant_name)
+                        }
+                    }
+                }
+                _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
             }
-            _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! {
         impl #impl_generics ssz::SszDecode for #name #ty_generics #where_clause {
@@ -479,9 +599,21 @@ pub fn derive_hash_tree_root(input: TokenStream) -> TokenStream {
     let expanded = match &input.data {
         Data::Struct(data_struct) => {
             if is_transparent(&input) {
-                derive_htr_transparent(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_htr_transparent(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             } else {
-                derive_htr_struct(name, &impl_generics, &ty_generics, where_clause, data_struct)
+                derive_htr_struct(
+                    name,
+                    &impl_generics,
+                    &ty_generics,
+                    where_clause,
+                    data_struct,
+                )
             }
         }
         Data::Enum(data_enum) => {
@@ -555,29 +687,34 @@ fn derive_htr_union_enum(
     where_clause: Option<&syn::WhereClause>,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
-    let variant_arms: Vec<_> = data.variants.iter().enumerate().map(|(i, variant)| {
-        let variant_name = &variant.ident;
-        let selector = i as u8;
-        match &variant.fields {
-            Fields::Unnamed(_f) => {
-                quote! {
-                    #name::#variant_name(inner) => {
-                        let root = ssz_merkle::HashTreeRoot::hash_tree_root(inner);
-                        ssz_merkle::mix_in_selector(&root, #selector)
+    let variant_arms: Vec<_> = data
+        .variants
+        .iter()
+        .enumerate()
+        .map(|(i, variant)| {
+            let variant_name = &variant.ident;
+            let selector = i as u8;
+            match &variant.fields {
+                Fields::Unnamed(_f) => {
+                    quote! {
+                        #name::#variant_name(inner) => {
+                            let root = ssz_merkle::HashTreeRoot::hash_tree_root(inner);
+                            ssz_merkle::mix_in_selector(&root, #selector)
+                        }
                     }
                 }
-            }
-            Fields::Unit => {
-                quote! {
-                    #name::#variant_name => {
-                        let root = ssz_merkle::ZERO_HASHES[0];
-                        ssz_merkle::mix_in_selector(&root, #selector)
+                Fields::Unit => {
+                    quote! {
+                        #name::#variant_name => {
+                            let root = ssz_merkle::ZERO_HASHES[0];
+                            ssz_merkle::mix_in_selector(&root, #selector)
+                        }
                     }
                 }
+                _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
             }
-            _ => panic!("Union enum variants must have exactly 0 or 1 fields"),
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! {
         impl #impl_generics ssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {

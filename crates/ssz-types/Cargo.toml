@@ -3,6 +3,7 @@ name = "ssz-types"
 version = "0.1.0"
 edition = "2021"
 description = "Bounded SSZ collection types: Vector, List, Bitvector, Bitlist"
+license = "MIT OR Apache-2.0"
 
 [features]
 default = ["std"]

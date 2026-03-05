@@ -229,4 +229,54 @@ mod tests {
     fn vector_is_variable_size_when_element_is_variable() {
         assert!(!<SszVector<Vec<u8>, 3> as SszEncode>::is_fixed_size());
     }
+
+    #[test]
+    fn is_empty_always_false_for_nonzero_n() {
+        let v: SszVector<u8, 3> = SszVector::try_from(vec![1, 2, 3]).unwrap();
+        assert!(!v.is_empty());
+    }
+
+    #[test]
+    fn into_inner_returns_underlying_vec() {
+        let v: SszVector<u32, 3> = SszVector::try_from(vec![10, 20, 30]).unwrap();
+        let inner: Vec<u32> = v.into_inner();
+        assert_eq!(inner, vec![10, 20, 30]);
+    }
+
+    #[test]
+    fn ref_into_iter() {
+        let v: SszVector<u32, 4> = SszVector::try_from(vec![1, 2, 3, 4]).unwrap();
+        let sum: u32 = (&v).into_iter().sum();
+        assert_eq!(sum, 10);
+    }
+
+    #[test]
+    fn deref_allows_slice_methods() {
+        let v: SszVector<u32, 5> = SszVector::try_from(vec![3, 1, 4, 1, 5]).unwrap();
+        assert!(v.contains(&4));
+        assert_eq!(v.first(), Some(&3));
+    }
+
+    #[test]
+    fn variable_element_fixed_size_is_zero() {
+        assert_eq!(<SszVector<Vec<u8>, 3> as SszEncode>::fixed_size(), 0);
+    }
+
+    #[test]
+    fn variable_element_encoded_len() {
+        let inner: Vec<Vec<u8>> = vec![vec![1, 2], vec![3], vec![4, 5, 6]];
+        let v: SszVector<Vec<u8>, 3> = SszVector::try_from(inner).unwrap();
+        let encoded = v.to_ssz();
+        assert_eq!(v.encoded_len(), encoded.len());
+    }
+
+    #[test]
+    fn decode_fixed_size_and_variable_size_consistent() {
+        // Decode trait should agree with Encode trait
+        assert!(<SszVector<u64, 4> as SszDecode>::is_fixed_size());
+        assert_eq!(<SszVector<u64, 4> as SszDecode>::fixed_size(), 32);
+
+        assert!(!<SszVector<Vec<u8>, 3> as SszDecode>::is_fixed_size());
+        assert_eq!(<SszVector<Vec<u8>, 3> as SszDecode>::fixed_size(), 0);
+    }
 }

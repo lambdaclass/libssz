@@ -3,6 +3,7 @@ name = "ssz-derive"
 version = "0.1.0"
 edition = "2021"
 description = "Derive macros for SSZ encoding, decoding, and HashTreeRoot"
+license = "MIT OR Apache-2.0"
 
 [lib]
 proc-macro = true

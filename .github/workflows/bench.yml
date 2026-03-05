@@ -1,0 +1,42 @@
+name: Benchmarks
+
+on:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bench-regression:
+    name: Benchmark Regression Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: bench-
+      - name: Benchmark PR branch
+        run: cargo bench --workspace --bench encode --bench decode --bench hash_tree_root --bench merkle --bench differential -- --save-baseline pr
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          clean: false
+      - name: Benchmark base branch
+        run: cargo bench --workspace --bench encode --bench decode --bench hash_tree_root --bench merkle --bench differential -- --save-baseline base
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          clean: false
+      - name: Install critcmp
+        run: cargo install critcmp
+      - name: Compare benchmarks
+        run: critcmp base pr

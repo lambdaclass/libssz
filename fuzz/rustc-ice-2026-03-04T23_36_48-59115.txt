@@ -1,0 +1,20 @@
+delayed bug: no resolution for an import
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+delayed bug: could not resolve trait item being implemented
+disabled backtrace
+
+
+rustc version: 1.92.0-nightly (2300c2aef 2025-10-12)
+platform: aarch64-apple-darwin

@@ -250,4 +250,70 @@ mod tests {
         assert!(!<SszList<u64, 10> as SszEncode>::is_fixed_size());
         assert!(!<SszList<Vec<u8>, 5> as SszEncode>::is_fixed_size());
     }
+
+    #[test]
+    fn max_capacity() {
+        let list: SszList<u8, 42> = SszList::new();
+        assert_eq!(list.max_capacity(), 42);
+    }
+
+    #[test]
+    fn into_inner_returns_underlying_vec() {
+        let list: SszList<u16, 10> = SszList::try_from(vec![10, 20, 30]).unwrap();
+        let inner: Vec<u16> = list.into_inner();
+        assert_eq!(inner, vec![10, 20, 30]);
+    }
+
+    #[test]
+    fn default_creates_empty_list() {
+        let list: SszList<u32, 5> = SszList::default();
+        assert!(list.is_empty());
+        assert_eq!(list.len(), 0);
+    }
+
+    #[test]
+    fn deref_allows_slice_methods() {
+        let list: SszList<u32, 10> = SszList::try_from(vec![3, 1, 4, 1, 5]).unwrap();
+        // Deref to &[T] lets us use slice methods
+        assert!(list.contains(&4));
+        assert_eq!(list.first(), Some(&3));
+        assert_eq!(list.last(), Some(&5));
+    }
+
+    #[test]
+    fn index_with_range() {
+        let list: SszList<u16, 10> = SszList::try_from(vec![10, 20, 30, 40]).unwrap();
+        assert_eq!(list[0], 10);
+        assert_eq!(list[3], 40);
+        assert_eq!(&list[1..3], &[20, 30]);
+    }
+
+    #[test]
+    fn into_iter_owned() {
+        let list: SszList<u32, 5> = SszList::try_from(vec![1, 2, 3]).unwrap();
+        let collected: Vec<u32> = list.into_iter().collect();
+        assert_eq!(collected, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn into_iter_ref() {
+        let list: SszList<u32, 5> = SszList::try_from(vec![1, 2, 3]).unwrap();
+        let sum: u32 = (&list).into_iter().sum();
+        assert_eq!(sum, 6);
+    }
+
+    #[test]
+    fn encoded_len_variable_elements() {
+        // List of variable-length items: offsets + data
+        let inner = vec![vec![1u8, 2], vec![3]];
+        let list: SszList<Vec<u8>, 10> = SszList::try_from(inner).unwrap();
+        let encoded = list.to_ssz();
+        assert_eq!(list.encoded_len(), encoded.len());
+    }
+
+    #[test]
+    fn decode_is_always_variable_size() {
+        assert!(!<SszList<u32, 10> as SszDecode>::is_fixed_size());
+        assert_eq!(<SszList<u32, 10> as SszDecode>::fixed_size(), 0);
+    }
 }

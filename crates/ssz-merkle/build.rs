@@ -22,7 +22,7 @@ fn main() {
 
     let mut code = String::new();
     code.push_str("/// Precomputed zero hashes for SSZ Merkleization.\n");
-    code.push_str("/// ZERO_HASHES[i] = hash(ZERO_HASHES[i-1], ZERO_HASHES[i-1]), with ZERO_HASHES[0] = [0u8; 32].\n");
+    code.push_str("/// ZERO_HASHES\\[i\\] = hash(ZERO_HASHES\\[i-1\\], ZERO_HASHES\\[i-1\\]), with ZERO_HASHES\\[0\\] = \\[0u8; 32\\].\n");
     code.push_str(&format!(
         "pub static ZERO_HASHES: [[u8; 32]; {}] = [\n",
         MAX_DEPTH + 1

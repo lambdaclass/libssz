@@ -1,0 +1,125 @@
+[package]
+name = "ssz-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+# Our library (renamed to avoid collision with ethereum_ssz which also exports as "ssz")
+libssz = { package = "ssz", path = "../crates/ssz" }
+libssz_types = { package = "ssz-types", path = "../crates/ssz-types" }
+libssz_merkle = { package = "ssz-merkle", path = "../crates/ssz-merkle" }
+libssz_derive = { package = "ssz-derive", path = "../crates/ssz-derive" }
+
+# Lighthouse reference (encode/decode + hash tree root)
+# ethereum_ssz's lib name is "ssz", so we alias to avoid collision with our crate
+lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
+tree_hash = "0.12"
+
+# ssz_rs: excluded for now due to naming conflicts with derive macros.
+# Can be added later for container-level differential testing.
+# ssz_rs = "0.9"
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "decode_arbitrary"
+path = "fuzz_targets/decode_arbitrary.rs"
+doc = false
+
+[[bin]]
+name = "roundtrip"
+path = "fuzz_targets/roundtrip.rs"
+doc = false
+
+[[bin]]
+name = "diff_encode"
+path = "fuzz_targets/diff_encode.rs"
+doc = false
+
+[[bin]]
+name = "diff_hash_tree_root"
+path = "fuzz_targets/diff_hash_tree_root.rs"
+doc = false
+
+[[bin]]
+name = "hash_tree_root_fuzz"
+path = "fuzz_targets/hash_tree_root_fuzz.rs"
+doc = false
+
+[[bin]]
+name = "merkle_primitives"
+path = "fuzz_targets/merkle_primitives.rs"
+doc = false
+
+[[bin]]
+name = "union_decode"
+path = "fuzz_targets/union_decode.rs"
+doc = false
+
+[[bin]]
+name = "diff_decode"
+path = "fuzz_targets/diff_decode.rs"
+doc = false
+
+[[bin]]
+name = "variable_container"
+path = "fuzz_targets/variable_container.rs"
+doc = false
+
+[[bin]]
+name = "nested_types"
+path = "fuzz_targets/nested_types.rs"
+doc = false
+
+[[bin]]
+name = "diff_htr_container"
+path = "fuzz_targets/diff_htr_container.rs"
+doc = false
+
+[[bin]]
+name = "union_htr"
+path = "fuzz_targets/union_htr.rs"
+doc = false
+
+[[bin]]
+name = "transparent"
+path = "fuzz_targets/transparent.rs"
+doc = false
+
+[[bin]]
+name = "all_variable"
+path = "fuzz_targets/all_variable.rs"
+doc = false
+
+[[bin]]
+name = "wide_union"
+path = "fuzz_targets/wide_union.rs"
+doc = false
+
+[[bin]]
+name = "deep_nesting"
+path = "fuzz_targets/deep_nesting.rs"
+doc = false
+
+[[bin]]
+name = "many_fields"
+path = "fuzz_targets/many_fields.rs"
+doc = false
+
+[[bin]]
+name = "offset_adversarial"
+path = "fuzz_targets/offset_adversarial.rs"
+doc = false
+
+[[bin]]
+name = "construction_api"
+path = "fuzz_targets/construction_api.rs"
+doc = false

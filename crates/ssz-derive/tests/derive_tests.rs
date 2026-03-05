@@ -1,5 +1,5 @@
-use ssz::{SszEncode, SszDecode, DecodeError};
-use ssz_derive::{SszEncode, SszDecode, HashTreeRoot};
+use ssz::{DecodeError, SszDecode, SszEncode};
+use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
 use ssz_merkle::HashTreeRoot;
 
 // ── All-fixed struct ──
@@ -13,7 +13,11 @@ struct FixedStruct {
 
 #[test]
 fn fixed_struct_encode() {
-    let s = FixedStruct { a: 42, b: 100, c: true };
+    let s = FixedStruct {
+        a: 42,
+        b: 100,
+        c: true,
+    };
     let encoded = s.to_ssz();
     // 4 + 8 + 1 = 13 bytes
     assert_eq!(encoded.len(), 13);
@@ -24,7 +28,11 @@ fn fixed_struct_encode() {
 
 #[test]
 fn fixed_struct_decode_round_trip() {
-    let original = FixedStruct { a: 42, b: 100, c: true };
+    let original = FixedStruct {
+        a: 42,
+        b: 100,
+        c: true,
+    };
     let encoded = original.to_ssz();
     let decoded = FixedStruct::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, original);
@@ -47,7 +55,11 @@ struct MixedStruct {
 
 #[test]
 fn mixed_struct_encode() {
-    let s = MixedStruct { a: 7, b: vec![0xAA, 0xBB], c: 999 };
+    let s = MixedStruct {
+        a: 7,
+        b: vec![0xAA, 0xBB],
+        c: 999,
+    };
     let encoded = s.to_ssz();
 
     // Fixed part: 4 (u32) + 4 (offset) + 2 (u16) = 10
@@ -66,7 +78,11 @@ fn mixed_struct_encode() {
 
 #[test]
 fn mixed_struct_decode_round_trip() {
-    let original = MixedStruct { a: 7, b: vec![0xAA, 0xBB], c: 999 };
+    let original = MixedStruct {
+        a: 7,
+        b: vec![0xAA, 0xBB],
+        c: 999,
+    };
     let encoded = original.to_ssz();
     let decoded = MixedStruct::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, original);
@@ -102,7 +118,11 @@ fn multi_var_struct_round_trip() {
 
 #[test]
 fn mixed_struct_empty_variable() {
-    let original = MixedStruct { a: 0, b: vec![], c: 0 };
+    let original = MixedStruct {
+        a: 0,
+        b: vec![],
+        c: 0,
+    };
     let encoded = original.to_ssz();
     let decoded = MixedStruct::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, original);

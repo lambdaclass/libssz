@@ -3,12 +3,12 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod encode;
 mod decode;
+mod encode;
 mod error;
 
-pub use encode::{SszEncode, ContainerEncoder};
-pub use decode::{SszDecode, ContainerDecoder};
+pub use decode::{ContainerDecoder, SszDecode};
+pub use encode::{ContainerEncoder, SszEncode};
 pub use error::DecodeError;
 
 pub const BYTES_PER_LENGTH_OFFSET: usize = 4;

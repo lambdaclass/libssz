@@ -20,13 +20,20 @@ pub trait SszDecode: Sized {
 
 impl SszDecode for bool {
     #[inline(always)]
-    fn is_fixed_size() -> bool { true }
+    fn is_fixed_size() -> bool {
+        true
+    }
     #[inline(always)]
-    fn fixed_size() -> usize { 1 }
+    fn fixed_size() -> usize {
+        1
+    }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
         if bytes.len() != 1 {
-            return Err(DecodeError::InvalidFixedLength { expected: 1, got: bytes.len() });
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 1,
+                got: bytes.len(),
+            });
         }
         match bytes[0] {
             0 => Ok(false),
@@ -42,13 +49,20 @@ macro_rules! impl_ssz_decode_uint {
     ($ty:ty, $size:literal) => {
         impl SszDecode for $ty {
             #[inline(always)]
-            fn is_fixed_size() -> bool { true }
+            fn is_fixed_size() -> bool {
+                true
+            }
             #[inline(always)]
-            fn fixed_size() -> usize { $size }
+            fn fixed_size() -> usize {
+                $size
+            }
 
             fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
                 if bytes.len() != $size {
-                    return Err(DecodeError::InvalidFixedLength { expected: $size, got: bytes.len() });
+                    return Err(DecodeError::InvalidFixedLength {
+                        expected: $size,
+                        got: bytes.len(),
+                    });
                 }
                 let mut arr = [0u8; $size];
                 arr.copy_from_slice(bytes);
@@ -70,13 +84,20 @@ macro_rules! impl_ssz_decode_byte_array {
     ($n:literal) => {
         impl SszDecode for [u8; $n] {
             #[inline(always)]
-            fn is_fixed_size() -> bool { true }
+            fn is_fixed_size() -> bool {
+                true
+            }
             #[inline(always)]
-            fn fixed_size() -> usize { $n }
+            fn fixed_size() -> usize {
+                $n
+            }
 
             fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
                 if bytes.len() != $n {
-                    return Err(DecodeError::InvalidFixedLength { expected: $n, got: bytes.len() });
+                    return Err(DecodeError::InvalidFixedLength {
+                        expected: $n,
+                        got: bytes.len(),
+                    });
                 }
                 let mut arr = [0u8; $n];
                 arr.copy_from_slice(bytes);
@@ -96,10 +117,14 @@ impl_ssz_decode_byte_array!(96);
 
 impl<T: SszDecode> SszDecode for Vec<T> {
     #[inline(always)]
-    fn is_fixed_size() -> bool { false }
+    fn is_fixed_size() -> bool {
+        false
+    }
 
     #[inline(always)]
-    fn fixed_size() -> usize { 0 }
+    fn fixed_size() -> usize {
+        0
+    }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
         if bytes.is_empty() {
@@ -144,7 +169,10 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
 
     let num_items = first_offset / BYTES_PER_LENGTH_OFFSET;
     if num_items == 0 {
-        return Err(DecodeError::InvalidFirstOffset { expected: BYTES_PER_LENGTH_OFFSET, got: 0 });
+        return Err(DecodeError::InvalidFirstOffset {
+            expected: BYTES_PER_LENGTH_OFFSET,
+            got: 0,
+        });
     }
 
     // Read all offsets.
@@ -167,7 +195,11 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
     let mut items = Vec::with_capacity(num_items);
     for i in 0..num_items {
         let start = offsets[i];
-        let end = if i + 1 < num_items { offsets[i + 1] } else { bytes.len() };
+        let end = if i + 1 < num_items {
+            offsets[i + 1]
+        } else {
+            bytes.len()
+        };
         items.push(T::from_ssz_bytes(&bytes[start..end])?);
     }
 

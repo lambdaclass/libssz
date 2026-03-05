@@ -3,17 +3,17 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod error;
-mod vector;
-mod list;
-mod bitvector;
 mod bitlist;
-mod union;
+mod bitvector;
+mod error;
 mod hash_tree_root;
+mod list;
+mod union;
+mod vector;
 
-pub use error::TypeError;
-pub use vector::SszVector;
-pub use list::SszList;
-pub use bitvector::SszBitvector;
 pub use bitlist::SszBitlist;
-pub use union::{UnionSelector, split_union_bytes, join_union_bytes};
+pub use bitvector::SszBitvector;
+pub use error::TypeError;
+pub use list::SszList;
+pub use union::{join_union_bytes, split_union_bytes, UnionSelector};
+pub use vector::SszVector;

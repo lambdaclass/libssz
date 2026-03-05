@@ -4,8 +4,8 @@ use alloc::vec::Vec;
 use ssz::SszEncode;
 use ssz_merkle::{merkleize, mix_in_length, pack, pack_bits, HashTreeRoot, Node};
 
-use crate::bitvector::SszBitvector;
 use crate::bitlist::SszBitlist;
+use crate::bitvector::SszBitvector;
 use crate::list::SszList;
 use crate::vector::SszVector;
 
@@ -199,6 +199,40 @@ mod tests {
         let chunks = pack_bits(bl.as_bytes(), 0);
         let inner_root = merkleize(&chunks, Some(1));
         let expected = mix_in_length(&inner_root, 0);
+        assert_eq!(root, expected);
+    }
+
+    // ── Composite-element (variable-length) vectors and lists ──
+
+    #[test]
+    fn vector_of_variable_elements_hash_tree_root() {
+        // Vector<List<u8, 10>, 3> — composite elements use per-element hash_tree_root
+        let inner: Vec<SszList<u8, 10>> = vec![
+            vec![1u8, 2, 3].try_into().unwrap(),
+            vec![4u8, 5].try_into().unwrap(),
+            vec![6u8].try_into().unwrap(),
+        ];
+        let v: SszVector<SszList<u8, 10>, 3> = inner.try_into().unwrap();
+        let root = v.hash_tree_root();
+
+        // Composite path: collect roots and merkleize with limit = N
+        let roots: Vec<Node> = v.iter().map(|item| item.hash_tree_root()).collect();
+        let expected = merkleize(&roots, Some(3));
+        assert_eq!(root, expected);
+    }
+
+    #[test]
+    fn list_of_variable_elements_hash_tree_root() {
+        // List<List<u8, 10>, 5> — composite elements
+        let mut list: SszList<SszList<u8, 10>, 5> = SszList::new();
+        list.push(vec![1u8, 2].try_into().unwrap()).unwrap();
+        list.push(vec![3u8, 4, 5].try_into().unwrap()).unwrap();
+        let root = list.hash_tree_root();
+
+        // Composite path: collect roots, merkleize with limit = N, mix_in_length
+        let roots: Vec<Node> = list.iter().map(|item| item.hash_tree_root()).collect();
+        let inner_root = merkleize(&roots, Some(5));
+        let expected = mix_in_length(&inner_root, 2);
         assert_eq!(root, expected);
     }
 }
