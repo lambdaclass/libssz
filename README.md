@@ -34,16 +34,16 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 
 #### BeaconState (21 fields, variable-length)
 
-| Benchmark | Validators | libssz | Lighthouse | vs Lighthouse |
-|-----------|-----------|--------|------------|---------------|
-| Encode | 16K | 808 µs | 756 µs | ~1x |
-| Encode | 100K | 654 µs | 5.61 ms | **8.6x** |
-| Encode | 300K | 11.9 ms | 18.0 ms | **1.5x** |
-| Encode | 1M | 5.67 ms | 19.0 ms | **3.4x** |
-| Decode | 16K | 123 µs | 237 µs | **1.9x** |
-| Decode | 100K | 539 µs | 804 µs | **1.5x** |
-| Decode | 300K | 1.51 ms | 2.23 ms | **1.5x** |
-| Decode | 1M | 4.94 ms | 7.22 ms | **1.5x** |
+| Benchmark | Validators | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|-----------|-----------|--------|------------|--------|---------------|-----------|
+| Encode | 16K | 808 µs | 756 µs | 75.1 ms | ~1x | **93x** |
+| Encode | 100K | 654 µs | 5.61 ms | 215 ms | **8.6x** | **329x** |
+| Encode | 300K | 11.9 ms | 18.0 ms | 551 ms | **1.5x** | **46x** |
+| Encode | 1M | 5.67 ms | 19.0 ms | 1.73 s | **3.4x** | **305x** |
+| Decode | 16K | 123 µs | 237 µs | 9.16 ms | **1.9x** | **74x** |
+| Decode | 100K | 539 µs | 804 µs | 28.4 ms | **1.5x** | **53x** |
+| Decode | 300K | 1.51 ms | 2.23 ms | 76.1 ms | **1.5x** | **50x** |
+| Decode | 1M | 4.94 ms | 7.22 ms | 230 ms | **1.5x** | **47x** |
 
 #### Hash Tree Root
 
@@ -77,16 +77,16 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 
 #### BeaconState (21 fields, variable-length)
 
-| Benchmark | Validators | libssz | Lighthouse | vs Lighthouse |
-|-----------|-----------|--------|------------|---------------|
-| Encode | 16K | 139 µs | 170 µs | **1.2x** |
-| Encode | 100K | 433 µs | 854 µs | **2.0x** |
-| Encode | 300K | 3.54 ms | 6.53 ms | **1.8x** |
-| Encode | 1M | 11.4 ms | 24.3 ms | **2.1x** |
-| Decode | 16K | 76 µs | 190 µs | **2.5x** |
-| Decode | 100K | 335 µs | 849 µs | **2.5x** |
-| Decode | 300K | 3.09 ms | 4.04 ms | **1.3x** |
-| Decode | 1M | 11.1 ms | 14.3 ms | **1.3x** |
+| Benchmark | Validators | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
+|-----------|-----------|--------|------------|--------|---------------|-----------|
+| Encode | 16K | 139 µs | 170 µs | 70.0 ms | **1.2x** | **503x** |
+| Encode | 100K | 433 µs | 854 µs | 185 ms | **2.0x** | **427x** |
+| Encode | 300K | 3.54 ms | 6.53 ms | 475 ms | **1.8x** | **134x** |
+| Encode | 1M | 11.4 ms | 24.3 ms | 1.46 s | **2.1x** | **128x** |
+| Decode | 16K | 76 µs | 190 µs | 6.80 ms | **2.5x** | **89x** |
+| Decode | 100K | 335 µs | 849 µs | 19.7 ms | **2.5x** | **59x** |
+| Decode | 300K | 3.09 ms | 4.04 ms | 52.9 ms | **1.3x** | **17x** |
+| Decode | 1M | 11.1 ms | 14.3 ms | 167 ms | **1.3x** | **15x** |
 
 #### Hash Tree Root
 
