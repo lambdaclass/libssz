@@ -2,8 +2,8 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use ssz::{SszDecode, SszEncode};
 use ssz_bench::fixtures::{
     make_attestation_data, make_beacon_state, make_checkpoint, make_eth1_data, make_fork,
-    make_header, make_vec_u64, pre_encode,
-    AttestationData, BeaconBlockHeader, BeaconState, Checkpoint, Eth1Data, Fork,
+    make_header, make_vec_u64, pre_encode, AttestationData, BeaconBlockHeader, BeaconState,
+    Checkpoint, Eth1Data, Fork,
 };
 use ssz_merkle::HashTreeRoot;
 
@@ -34,7 +34,7 @@ mod lighthouse_types {
     use lighthouse_ssz_derive::{Decode, Encode};
     use lighthouse_ssz_types::{BitList, BitVector, FixedVector, VariableList};
     use tree_hash_derive::TreeHash;
-    use typenum::{U2048, U4, U4096, U8192, U16777216, U65536, U1099511627776};
+    use typenum::{U1099511627776, U16777216, U2048, U4, U4096, U65536, U8192};
 
     #[derive(Clone, Debug, Default, PartialEq, Encode, Decode, TreeHash)]
     pub struct Fork {
@@ -374,9 +374,7 @@ fn to_lighthouse_beacon_state(
     }
 }
 
-fn to_ssz_rs_beacon_state(
-    state: &ssz_bench::fixtures::BeaconState,
-) -> ssz_rs_types::BeaconState {
+fn to_ssz_rs_beacon_state(state: &ssz_bench::fixtures::BeaconState) -> ssz_rs_types::BeaconState {
     use ssz_rs::prelude::*;
 
     let validators: Vec<ssz_rs_types::Validator> = state
@@ -460,8 +458,9 @@ fn to_ssz_rs_beacon_state(
         })
         .collect();
 
-    let justification_bits_vec: Vec<bool> =
-        (0..4).map(|i| state.justification_bits.get(i).unwrap()).collect();
+    let justification_bits_vec: Vec<bool> = (0..4)
+        .map(|i| state.justification_bits.get(i).unwrap())
+        .collect();
 
     ssz_rs_types::BeaconState {
         genesis_time: state.genesis_time,
@@ -576,8 +575,10 @@ fn lighthouse_encode_fork(f: &Fork) -> Vec<u8> {
 }
 
 fn lighthouse_decode_fork(bytes: &[u8]) -> ([u8; 4], [u8; 4], u64) {
-    let previous_version = <[u8; 4] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[0..4]).unwrap();
-    let current_version = <[u8; 4] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[4..8]).unwrap();
+    let previous_version =
+        <[u8; 4] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[0..4]).unwrap();
+    let current_version =
+        <[u8; 4] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[4..8]).unwrap();
     let epoch = <u64 as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[8..16]).unwrap();
     (previous_version, current_version, epoch)
 }
@@ -622,15 +623,27 @@ fn lighthouse_encode_attestation_data(a: &AttestationData) -> Vec<u8> {
     buf
 }
 
-fn lighthouse_decode_attestation_data(bytes: &[u8]) -> (u64, u64, [u8; 32], u64, [u8; 32], u64, [u8; 32]) {
+fn lighthouse_decode_attestation_data(
+    bytes: &[u8],
+) -> (u64, u64, [u8; 32], u64, [u8; 32], u64, [u8; 32]) {
     let slot = <u64 as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[0..8]).unwrap();
     let index = <u64 as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[8..16]).unwrap();
-    let beacon_block_root = <[u8; 32] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[16..48]).unwrap();
+    let beacon_block_root =
+        <[u8; 32] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[16..48]).unwrap();
     let source_epoch = <u64 as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[48..56]).unwrap();
     let source_root = <[u8; 32] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[56..88]).unwrap();
     let target_epoch = <u64 as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[88..96]).unwrap();
-    let target_root = <[u8; 32] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[96..128]).unwrap();
-    (slot, index, beacon_block_root, source_epoch, source_root, target_epoch, target_root)
+    let target_root =
+        <[u8; 32] as lighthouse_ssz::Decode>::from_ssz_bytes(&bytes[96..128]).unwrap();
+    (
+        slot,
+        index,
+        beacon_block_root,
+        source_epoch,
+        source_root,
+        target_epoch,
+        target_root,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -692,7 +705,9 @@ fn ssz_rs_encode_attestation_data(a: &AttestationData) -> Vec<u8> {
     buf
 }
 
-fn ssz_rs_decode_attestation_data(bytes: &[u8]) -> (u64, u64, [u8; 32], u64, [u8; 32], u64, [u8; 32]) {
+fn ssz_rs_decode_attestation_data(
+    bytes: &[u8],
+) -> (u64, u64, [u8; 32], u64, [u8; 32], u64, [u8; 32]) {
     let slot = <u64 as ssz_rs::Deserialize>::deserialize(&bytes[0..8]).unwrap();
     let index = <u64 as ssz_rs::Deserialize>::deserialize(&bytes[8..16]).unwrap();
     let beacon_block_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[16..48]).unwrap();
@@ -700,7 +715,15 @@ fn ssz_rs_decode_attestation_data(bytes: &[u8]) -> (u64, u64, [u8; 32], u64, [u8
     let source_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[56..88]).unwrap();
     let target_epoch = <u64 as ssz_rs::Deserialize>::deserialize(&bytes[88..96]).unwrap();
     let target_root = <[u8; 32] as ssz_rs::Deserialize>::deserialize(&bytes[96..128]).unwrap();
-    (slot, index, beacon_block_root, source_epoch, source_root, target_epoch, target_root)
+    (
+        slot,
+        index,
+        beacon_block_root,
+        source_epoch,
+        source_root,
+        target_epoch,
+        target_root,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -804,17 +827,13 @@ fn diff_encode_vec_u64(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("lighthouse", size), &data, |b, data| {
             b.iter(|| lighthouse_ssz::Encode::as_ssz_bytes(black_box(data)));
         });
-        group.bench_with_input(
-            BenchmarkId::new("ssz_rs", size),
-            &ssz_rs_list,
-            |b, list| {
-                b.iter(|| {
-                    let mut buf = Vec::new();
-                    ssz_rs::Serialize::serialize(black_box(list), &mut buf).unwrap();
-                    buf
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("ssz_rs", size), &ssz_rs_list, |b, list| {
+            b.iter(|| {
+                let mut buf = Vec::new();
+                ssz_rs::Serialize::serialize(black_box(list), &mut buf).unwrap();
+                buf
+            });
+        });
     }
     group.finish();
 }
@@ -935,10 +954,8 @@ fn diff_decode_vec_u64(c: &mut Criterion) {
         });
         group.bench_with_input(BenchmarkId::new("ssz_rs", size), &bytes, |b, bytes| {
             b.iter(|| {
-                <ssz_rs::List<u64, 1_000_000> as ssz_rs::Deserialize>::deserialize(black_box(
-                    bytes,
-                ))
-                .unwrap()
+                <ssz_rs::List<u64, 1_000_000> as ssz_rs::Deserialize>::deserialize(black_box(bytes))
+                    .unwrap()
             });
         });
     }

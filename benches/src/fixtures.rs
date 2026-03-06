@@ -220,12 +220,15 @@ pub fn make_beacon_state(n_validators: usize) -> BeaconState {
     let state_roots: Vec<[u8; 32]> = (0..8192).map(|i| make_bytes32(i as u64 + 10000)).collect();
     let historical_roots: Vec<[u8; 32]> = (0..16).map(|i| make_bytes32(i as u64 + 20000)).collect();
     let eth1_data_votes: Vec<Eth1Data> = (0..16).map(|i| make_eth1_data(i as u64)).collect();
-    let validators: Vec<Validator> = (0..n_validators).map(|i| make_validator(i as u64)).collect();
+    let validators: Vec<Validator> = (0..n_validators)
+        .map(|i| make_validator(i as u64))
+        .collect();
     let balances: Vec<u64> = (0..n_validators).map(|_| 32_000_000_000u64).collect();
     let randao_mixes: Vec<[u8; 32]> = (0..65536).map(|i| make_bytes32(i as u64 + 30000)).collect();
     let slashings: Vec<u64> = vec![0u64; 8192];
-    let prev_attestations: Vec<PendingAttestation> =
-        (0..16).map(|i| make_pending_attestation(i as u64)).collect();
+    let prev_attestations: Vec<PendingAttestation> = (0..16)
+        .map(|i| make_pending_attestation(i as u64))
+        .collect();
     let cur_attestations: Vec<PendingAttestation> = (0..16)
         .map(|i| make_pending_attestation(i as u64 + 100))
         .collect();
