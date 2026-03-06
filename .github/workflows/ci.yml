@@ -142,7 +142,7 @@ jobs:
           key: iai-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: iai-
       - run: sudo apt-get install -y valgrind
-      - run: cargo install iai-callgrind-runner
+      - run: cargo install iai-callgrind-runner --version 0.14.2
       - run: cargo bench --workspace --bench iai_merkle --bench iai_encode_decode
 
   coverage:

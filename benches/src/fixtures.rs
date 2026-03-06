@@ -268,7 +268,7 @@ pub fn make_validator_list(n: usize) -> SszList<Validator, 1_048_576> {
     SszList::try_from(validators).expect("n <= 1_048_576")
 }
 
-/// Create a Vec<u64> of given length.
+/// Create a `Vec<u64>` of given length.
 pub fn make_vec_u64(n: usize) -> Vec<u64> {
     (0..n).map(|i| i as u64).collect()
 }
