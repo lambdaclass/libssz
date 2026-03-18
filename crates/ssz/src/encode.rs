@@ -66,93 +66,317 @@ impl SszEncode for bool {
 
 // ── Unsigned integers ──
 
-macro_rules! impl_ssz_encode_uint {
-    ($ty:ty, $size:literal) => {
-        impl SszEncode for $ty {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
-            #[inline(always)]
-            fn encoded_len(&self) -> usize {
-                $size
-            }
-            #[inline(always)]
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
-                buf.extend_from_slice(&self.to_le_bytes());
-            }
-            #[cfg(feature = "alloc")]
-            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-                #[cfg(target_endian = "little")]
-                {
-                    let byte_slice = unsafe {
-                        core::slice::from_raw_parts(
-                            items.as_ptr() as *const u8,
-                            items.len() * $size,
-                        )
-                    };
-                    buf.extend_from_slice(byte_slice);
-                }
-                #[cfg(not(target_endian = "little"))]
-                {
-                    buf.reserve($size * items.len());
-                    for item in items {
-                        item.ssz_append(buf);
-                    }
-                }
+impl SszEncode for u8 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        1
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        1
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_le_bytes());
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        #[cfg(target_endian = "little")]
+        {
+            let byte_slice = unsafe {
+                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 1)
+            };
+            buf.extend_from_slice(byte_slice);
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            buf.reserve(1 * items.len());
+            for item in items {
+                item.ssz_append(buf);
             }
         }
-    };
+    }
 }
 
-impl_ssz_encode_uint!(u8, 1);
-impl_ssz_encode_uint!(u16, 2);
-impl_ssz_encode_uint!(u32, 4);
-impl_ssz_encode_uint!(u64, 8);
-impl_ssz_encode_uint!(u128, 16);
+impl SszEncode for u16 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        2
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        2
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_le_bytes());
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        #[cfg(target_endian = "little")]
+        {
+            let byte_slice = unsafe {
+                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 2)
+            };
+            buf.extend_from_slice(byte_slice);
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            buf.reserve(2 * items.len());
+            for item in items {
+                item.ssz_append(buf);
+            }
+        }
+    }
+}
+
+impl SszEncode for u32 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        4
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        4
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_le_bytes());
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        #[cfg(target_endian = "little")]
+        {
+            let byte_slice = unsafe {
+                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 4)
+            };
+            buf.extend_from_slice(byte_slice);
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            buf.reserve(4 * items.len());
+            for item in items {
+                item.ssz_append(buf);
+            }
+        }
+    }
+}
+
+impl SszEncode for u64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        8
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_le_bytes());
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        #[cfg(target_endian = "little")]
+        {
+            let byte_slice = unsafe {
+                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 8)
+            };
+            buf.extend_from_slice(byte_slice);
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            buf.reserve(8 * items.len());
+            for item in items {
+                item.ssz_append(buf);
+            }
+        }
+    }
+}
+
+impl SszEncode for u128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        16
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_le_bytes());
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        #[cfg(target_endian = "little")]
+        {
+            let byte_slice = unsafe {
+                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 16)
+            };
+            buf.extend_from_slice(byte_slice);
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            buf.reserve(16 * items.len());
+            for item in items {
+                item.ssz_append(buf);
+            }
+        }
+    }
+}
 
 // ── Fixed-size byte arrays ──
 
-macro_rules! impl_ssz_encode_byte_array {
-    ($n:literal) => {
-        impl SszEncode for [u8; $n] {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $n
-            }
-            #[inline(always)]
-            fn encoded_len(&self) -> usize {
-                $n
-            }
-            #[inline(always)]
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
-                buf.extend_from_slice(self);
-            }
-            #[cfg(feature = "alloc")]
-            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-                // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-                let byte_slice = unsafe {
-                    core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * $n)
-                };
-                buf.extend_from_slice(byte_slice);
-            }
-        }
-    };
+impl SszEncode for [u8; 4] {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        4
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        4
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+        let byte_slice =
+            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 4) };
+        buf.extend_from_slice(byte_slice);
+    }
 }
 
-impl_ssz_encode_byte_array!(4);
-impl_ssz_encode_byte_array!(20);
-impl_ssz_encode_byte_array!(32);
-impl_ssz_encode_byte_array!(48);
-impl_ssz_encode_byte_array!(96);
+impl SszEncode for [u8; 20] {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        20
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        20
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+        let byte_slice =
+            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 20) };
+        buf.extend_from_slice(byte_slice);
+    }
+}
+
+impl SszEncode for [u8; 32] {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        32
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        32
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+        let byte_slice =
+            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 32) };
+        buf.extend_from_slice(byte_slice);
+    }
+}
+
+impl SszEncode for [u8; 48] {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        48
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        48
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+        let byte_slice =
+            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 48) };
+        buf.extend_from_slice(byte_slice);
+    }
+}
+
+impl SszEncode for [u8; 96] {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        96
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        96
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
+        let byte_slice =
+            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 96) };
+        buf.extend_from_slice(byte_slice);
+    }
+}
 
 // ── Vec<T> ──
 

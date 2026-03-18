@@ -219,29 +219,75 @@ impl HashTreeRoot for bool {
 
 // ── Unsigned integers ──
 
-macro_rules! impl_hash_tree_root_uint {
-    ($ty:ty) => {
-        impl HashTreeRoot for $ty {
-            #[inline(always)]
-            fn hash_tree_root(&self) -> Node {
-                let mut node = [0u8; 32];
-                let bytes = self.to_le_bytes();
-                node[..bytes.len()].copy_from_slice(&bytes);
-                node
-            }
+impl HashTreeRoot for u8 {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        let bytes = self.to_le_bytes();
+        node[..bytes.len()].copy_from_slice(&bytes);
+        node
+    }
 
-            fn is_basic_type() -> bool {
-                true
-            }
-        }
-    };
+    fn is_basic_type() -> bool {
+        true
+    }
 }
 
-impl_hash_tree_root_uint!(u8);
-impl_hash_tree_root_uint!(u16);
-impl_hash_tree_root_uint!(u32);
-impl_hash_tree_root_uint!(u64);
-impl_hash_tree_root_uint!(u128);
+impl HashTreeRoot for u16 {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        let bytes = self.to_le_bytes();
+        node[..bytes.len()].copy_from_slice(&bytes);
+        node
+    }
+
+    fn is_basic_type() -> bool {
+        true
+    }
+}
+
+impl HashTreeRoot for u32 {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        let bytes = self.to_le_bytes();
+        node[..bytes.len()].copy_from_slice(&bytes);
+        node
+    }
+
+    fn is_basic_type() -> bool {
+        true
+    }
+}
+
+impl HashTreeRoot for u64 {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        let bytes = self.to_le_bytes();
+        node[..bytes.len()].copy_from_slice(&bytes);
+        node
+    }
+
+    fn is_basic_type() -> bool {
+        true
+    }
+}
+
+impl HashTreeRoot for u128 {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        let bytes = self.to_le_bytes();
+        node[..bytes.len()].copy_from_slice(&bytes);
+        node
+    }
+
+    fn is_basic_type() -> bool {
+        true
+    }
+}
 
 // ── [u8; 32] ──
 
