@@ -9,5 +9,6 @@ pub mod electra;
 pub mod fulu;
 pub mod fulu_beacon;
 pub mod gloas;
+pub mod minimal;
 pub mod phase0;
 pub mod progressive_containers;
