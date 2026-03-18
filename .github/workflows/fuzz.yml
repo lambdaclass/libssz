@@ -44,7 +44,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -99,7 +99,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -111,7 +111,7 @@ jobs:
       - run: cargo install cargo-fuzz --locked
 
       - name: Restore corpus cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: fuzz/corpus/${{ matrix.target }}
           key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
@@ -123,7 +123,7 @@ jobs:
 
       - name: Save corpus cache
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: fuzz/corpus/${{ matrix.target }}
           key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
