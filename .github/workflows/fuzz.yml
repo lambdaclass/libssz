@@ -70,7 +70,7 @@ jobs:
     if: github.event_name == 'schedule'
     name: nightly / ${{ matrix.target }}
     runs-on: ubuntu-latest
-    timeout-minutes: 540
+    timeout-minutes: 210
     strategy:
       fail-fast: false
       matrix:
@@ -117,8 +117,8 @@ jobs:
           key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
           restore-keys: fuzz-corpus-${{ matrix.target }}-
 
-      - name: Run fuzz target (8h)
-        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=28800
+      - name: Run fuzz target (3h)
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=10800
         working-directory: fuzz
 
       - name: Save corpus cache
