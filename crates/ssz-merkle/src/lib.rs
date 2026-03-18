@@ -123,6 +123,54 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
     root
 }
 
+/// Progressive merkleization: a chain of progressively larger binary subtrees.
+///
+/// Creates a 0-terminated sequence of binary subtrees with increasing leaf count:
+/// `hash(merkleize(chunks[..1], 1), hash(merkleize(chunks[1..5], 4), hash(merkleize(chunks[5..21], 16), ...)))`
+///
+/// Leaf counts grow as: 1, 4, 16, 64, 256, ... (each 4x the previous).
+///
+/// Reference: EIP-7916 / consensus-specs simple-serialize.md
+#[cfg(feature = "alloc")]
+pub fn merkleize_progressive(chunks: &[Node]) -> Node {
+    merkleize_progressive_inner(chunks, 1)
+}
+
+#[cfg(feature = "alloc")]
+fn merkleize_progressive_inner(chunks: &[Node], num_leaves: usize) -> Node {
+    if chunks.is_empty() {
+        return [0u8; 32];
+    }
+
+    let take = core::cmp::min(num_leaves, chunks.len());
+    let subtree = merkleize(&chunks[..take], Some(num_leaves));
+    let rest = merkleize_progressive_inner(&chunks[take..], num_leaves * 4);
+    // Note: the tree layout places the progressive remainder on the left
+    // and the current subtree on the right, matching the reference implementation
+    // in ethereum/remerkleable (commit 667eab00).
+    hash_nodes(&rest, &subtree)
+}
+
+/// Mix in an active_fields bitvector: hash_nodes(root, pack_bits(active_fields)).
+#[cfg(feature = "alloc")]
+pub fn mix_in_active_fields(root: &Node, active_fields: &[bool]) -> Node {
+    // active_fields is at most 256 bits = 1 chunk
+    let mut bits_bytes = vec![0u8; active_fields.len().div_ceil(8)];
+    for (i, &active) in active_fields.iter().enumerate() {
+        if active {
+            bits_bytes[i / 8] |= 1 << (i % 8);
+        }
+    }
+    let chunks = pack_bits(&bits_bytes, active_fields.len());
+    // active_fields fits in one chunk (max 256 bits)
+    let af_node = if chunks.is_empty() {
+        [0u8; 32]
+    } else {
+        chunks[0]
+    };
+    hash_nodes(root, &af_node)
+}
+
 /// Mix in a length value: hash_nodes(root, length_as_le_bytes_node).
 #[inline]
 pub fn mix_in_length(root: &Node, length: usize) -> Node {
@@ -142,6 +190,16 @@ pub fn mix_in_selector(root: &Node, selector: u8) -> Node {
 /// Trait for types that can compute their SSZ hash tree root.
 pub trait HashTreeRoot {
     fn hash_tree_root(&self) -> Node;
+
+    /// Returns `true` for SSZ basic types (bool, uN, byte arrays).
+    /// Composite types (containers, vectors, lists) return `false`.
+    /// Used by Vector/List HTR to decide between packing and per-element hashing.
+    fn is_basic_type() -> bool
+    where
+        Self: Sized,
+    {
+        false
+    }
 }
 
 // ── bool ──
@@ -152,6 +210,10 @@ impl HashTreeRoot for bool {
         let mut node = [0u8; 32];
         node[0] = if *self { 1 } else { 0 };
         node
+    }
+
+    fn is_basic_type() -> bool {
+        true
     }
 }
 
@@ -166,6 +228,10 @@ macro_rules! impl_hash_tree_root_uint {
                 let bytes = self.to_le_bytes();
                 node[..bytes.len()].copy_from_slice(&bytes);
                 node
+            }
+
+            fn is_basic_type() -> bool {
+                true
             }
         }
     };
@@ -184,6 +250,25 @@ impl HashTreeRoot for [u8; 32] {
     fn hash_tree_root(&self) -> Node {
         *self
     }
+
+    fn is_basic_type() -> bool {
+        true
+    }
+}
+
+// ── [u8; 20] ──
+
+impl HashTreeRoot for [u8; 20] {
+    #[inline(always)]
+    fn hash_tree_root(&self) -> Node {
+        let mut node = [0u8; 32];
+        node[..20].copy_from_slice(self);
+        node
+    }
+
+    fn is_basic_type() -> bool {
+        true
+    }
 }
 
 // ── [u8; 4] ──
@@ -194,6 +279,10 @@ impl HashTreeRoot for [u8; 4] {
         let mut node = [0u8; 32];
         node[..4].copy_from_slice(self);
         node
+    }
+
+    fn is_basic_type() -> bool {
+        true
     }
 }
 
@@ -221,7 +310,7 @@ impl HashTreeRoot for [u8; 96] {
 impl<T: HashTreeRoot + SszEncode> HashTreeRoot for Vec<T> {
     fn hash_tree_root(&self) -> Node {
         let length = self.len();
-        if T::is_fixed_size() && T::fixed_size() <= 32 {
+        if T::is_basic_type() {
             // Basic type: pack serialized bytes
             let mut serialized = Vec::new();
             for item in self {

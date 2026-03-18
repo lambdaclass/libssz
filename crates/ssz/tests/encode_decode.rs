@@ -415,24 +415,24 @@ fn container_decoder_variable_offset_out_of_bounds() {
     bytes.extend_from_slice(&255u32.to_le_bytes()); // offset = 255, way past end
     let mut decoder = ContainerDecoder::new(&bytes, 4).unwrap();
     let err = decoder.read_variable_offset().unwrap_err();
+    // First offset (255) != fixed_part_len (4), caught before the out-of-bounds check
     assert_eq!(
         err,
-        DecodeError::OffsetOutOfBounds {
-            offset: 255,
-            length: 4
+        DecodeError::InvalidFirstOffset {
+            expected: 4,
+            got: 255
         }
     );
 }
 
 #[test]
 fn container_decoder_variable_offsets_not_monotonic() {
-    // Container { a: Vec<u8>, b: Vec<u8> } with offsets [12, 8] — decreasing
+    // Container { a: Vec<u8>, b: Vec<u8> } with offsets [8, 4] — decreasing
     let mut bytes = Vec::new();
-    bytes.extend_from_slice(&12u32.to_le_bytes()); // offset a = 12
-    bytes.extend_from_slice(&8u32.to_le_bytes()); // offset b = 8 (not monotonic)
-    bytes.extend_from_slice(&[0u8; 4]); // padding to make it 12 bytes total
+    bytes.extend_from_slice(&8u32.to_le_bytes()); // offset a = 8 = fixed_part_len, ok
+    bytes.extend_from_slice(&4u32.to_le_bytes()); // offset b = 4 (not monotonic)
     let mut decoder = ContainerDecoder::new(&bytes, 8).unwrap();
-    decoder.read_variable_offset().unwrap(); // offset a = 12, ok
+    decoder.read_variable_offset().unwrap(); // offset a = 8 = fixed_part_len, ok
     let err = decoder.read_variable_offset().unwrap_err();
     assert_eq!(err, DecodeError::OffsetsAreNotMonotonicallyIncreasing);
 }

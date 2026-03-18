@@ -281,6 +281,7 @@ fn read_offset(bytes: &[u8], pos: usize) -> Result<usize, DecodeError> {
 /// Parses the fixed part to extract field slices and variable-field offsets.
 pub struct ContainerDecoder<'a> {
     bytes: &'a [u8],
+    fixed_part_len: usize,
     cursor: usize,
     offsets: Vec<usize>,
     variable_index: usize,
@@ -297,10 +298,9 @@ impl<'a> ContainerDecoder<'a> {
             });
         }
 
-        // Extract all variable-field offsets from the fixed part.
-        // The caller will tell us which fields are variable via decode_variable.
         Ok(Self {
             bytes,
+            fixed_part_len,
             cursor: 0,
             offsets: Vec::new(),
             variable_index: 0,
@@ -326,7 +326,15 @@ impl<'a> ContainerDecoder<'a> {
     /// Call this for each variable field in order during the fixed-part pass.
     pub fn read_variable_offset(&mut self) -> Result<(), DecodeError> {
         let offset = read_offset(self.bytes, self.cursor)?;
-        if !self.offsets.is_empty() && offset < *self.offsets.last().unwrap() {
+        // First offset must point to the start of the variable part
+        if self.offsets.is_empty() {
+            if offset != self.fixed_part_len {
+                return Err(DecodeError::InvalidFirstOffset {
+                    expected: self.fixed_part_len,
+                    got: offset,
+                });
+            }
+        } else if offset < *self.offsets.last().unwrap() {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > self.bytes.len() {

@@ -14,7 +14,7 @@ use crate::vector::SszVector;
 
 impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszVector<T, N> {
     fn hash_tree_root(&self) -> Node {
-        if T::is_fixed_size() && T::fixed_size() <= 32 {
+        if T::is_basic_type() {
             // Basic type vector: pack serialized bytes, merkleize with limit = ceil(N * size / 32)
             let mut serialized = Vec::new();
             for item in self.iter() {
@@ -37,7 +37,7 @@ impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszVector<T, 
 impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszList<T, N> {
     fn hash_tree_root(&self) -> Node {
         let length = self.len();
-        if T::is_fixed_size() && T::fixed_size() <= 32 {
+        if T::is_basic_type() {
             // Basic type list: pack serialized bytes
             let mut serialized = Vec::new();
             for item in self.iter() {
