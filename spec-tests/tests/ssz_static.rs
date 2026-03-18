@@ -909,3 +909,264 @@ deneb_mainnet_test!(
     "LightClientOptimisticUpdate",
     deneb::LightClientOptimisticUpdate
 );
+
+// ── Electra mainnet ──
+
+macro_rules! electra_mainnet_test {
+    ($test_name:ident, $type_name:literal, $rust_type:ty) => {
+        #[test]
+        fn $test_name() {
+            run_ssz_static_type::<$rust_type>(Archive::Mainnet, "electra", $type_name);
+        }
+    };
+}
+
+use spec_tests::types::electra;
+
+// Unchanged
+electra_mainnet_test!(
+    electra_mainnet_attestation_data,
+    "AttestationData",
+    AttestationData
+);
+electra_mainnet_test!(
+    electra_mainnet_beacon_block_header,
+    "BeaconBlockHeader",
+    BeaconBlockHeader
+);
+electra_mainnet_test!(
+    electra_mainnet_blob_identifier,
+    "BlobIdentifier",
+    deneb::BlobIdentifier
+);
+electra_mainnet_test!(
+    electra_mainnet_blob_sidecar,
+    "BlobSidecar",
+    deneb::BlobSidecar
+);
+electra_mainnet_test!(
+    electra_mainnet_bls_to_execution_change,
+    "BLSToExecutionChange",
+    capella::BLSToExecutionChange
+);
+electra_mainnet_test!(electra_mainnet_checkpoint, "Checkpoint", Checkpoint);
+electra_mainnet_test!(
+    electra_mainnet_contribution_and_proof,
+    "ContributionAndProof",
+    altair::ContributionAndProof
+);
+electra_mainnet_test!(electra_mainnet_deposit, "Deposit", Deposit);
+electra_mainnet_test!(electra_mainnet_deposit_data, "DepositData", DepositData);
+electra_mainnet_test!(
+    electra_mainnet_deposit_message,
+    "DepositMessage",
+    DepositMessage
+);
+electra_mainnet_test!(electra_mainnet_eth1_block, "Eth1Block", Eth1Block);
+electra_mainnet_test!(electra_mainnet_eth1_data, "Eth1Data", Eth1Data);
+electra_mainnet_test!(electra_mainnet_fork, "Fork", Fork);
+electra_mainnet_test!(electra_mainnet_fork_data, "ForkData", ForkData);
+electra_mainnet_test!(
+    electra_mainnet_historical_batch,
+    "HistoricalBatch",
+    HistoricalBatch
+);
+electra_mainnet_test!(
+    electra_mainnet_historical_summary,
+    "HistoricalSummary",
+    capella::HistoricalSummary
+);
+electra_mainnet_test!(
+    electra_mainnet_pending_attestation,
+    "PendingAttestation",
+    PendingAttestation
+);
+electra_mainnet_test!(electra_mainnet_pow_block, "PowBlock", bellatrix::PowBlock);
+electra_mainnet_test!(
+    electra_mainnet_proposer_slashing,
+    "ProposerSlashing",
+    ProposerSlashing
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_beacon_block_header,
+    "SignedBeaconBlockHeader",
+    SignedBeaconBlockHeader
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_bls_to_execution_change,
+    "SignedBLSToExecutionChange",
+    capella::SignedBLSToExecutionChange
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_contribution_and_proof,
+    "SignedContributionAndProof",
+    altair::SignedContributionAndProof
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_voluntary_exit,
+    "SignedVoluntaryExit",
+    SignedVoluntaryExit
+);
+electra_mainnet_test!(electra_mainnet_signing_data, "SigningData", SigningData);
+electra_mainnet_test!(
+    electra_mainnet_sync_aggregate,
+    "SyncAggregate",
+    altair::SyncAggregate
+);
+electra_mainnet_test!(
+    electra_mainnet_sync_aggregator_selection_data,
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+electra_mainnet_test!(
+    electra_mainnet_sync_committee,
+    "SyncCommittee",
+    altair::SyncCommittee
+);
+electra_mainnet_test!(
+    electra_mainnet_sync_committee_contribution,
+    "SyncCommitteeContribution",
+    altair::SyncCommitteeContribution
+);
+electra_mainnet_test!(
+    electra_mainnet_sync_committee_message,
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+electra_mainnet_test!(electra_mainnet_validator, "Validator", Validator);
+electra_mainnet_test!(
+    electra_mainnet_voluntary_exit,
+    "VoluntaryExit",
+    VoluntaryExit
+);
+electra_mainnet_test!(
+    electra_mainnet_withdrawal,
+    "Withdrawal",
+    capella::Withdrawal
+);
+
+// New in electra
+electra_mainnet_test!(
+    electra_mainnet_consolidation_request,
+    "ConsolidationRequest",
+    electra::ConsolidationRequest
+);
+electra_mainnet_test!(
+    electra_mainnet_deposit_request,
+    "DepositRequest",
+    electra::DepositRequest
+);
+electra_mainnet_test!(
+    electra_mainnet_execution_requests,
+    "ExecutionRequests",
+    electra::ExecutionRequests
+);
+electra_mainnet_test!(
+    electra_mainnet_pending_consolidation,
+    "PendingConsolidation",
+    electra::PendingConsolidation
+);
+electra_mainnet_test!(
+    electra_mainnet_pending_deposit,
+    "PendingDeposit",
+    electra::PendingDeposit
+);
+electra_mainnet_test!(
+    electra_mainnet_pending_partial_withdrawal,
+    "PendingPartialWithdrawal",
+    electra::PendingPartialWithdrawal
+);
+electra_mainnet_test!(
+    electra_mainnet_single_attestation,
+    "SingleAttestation",
+    electra::SingleAttestation
+);
+electra_mainnet_test!(
+    electra_mainnet_withdrawal_request,
+    "WithdrawalRequest",
+    electra::WithdrawalRequest
+);
+
+// Modified in electra
+electra_mainnet_test!(
+    electra_mainnet_aggregate_and_proof,
+    "AggregateAndProof",
+    electra::AggregateAndProof
+);
+electra_mainnet_test!(
+    electra_mainnet_attestation,
+    "Attestation",
+    electra::Attestation
+);
+electra_mainnet_test!(
+    electra_mainnet_attester_slashing,
+    "AttesterSlashing",
+    electra::AttesterSlashing
+);
+electra_mainnet_test!(
+    electra_mainnet_indexed_attestation,
+    "IndexedAttestation",
+    electra::IndexedAttestation
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_aggregate_and_proof,
+    "SignedAggregateAndProof",
+    electra::SignedAggregateAndProof
+);
+electra_mainnet_test!(
+    electra_mainnet_execution_payload,
+    "ExecutionPayload",
+    electra::ExecutionPayload
+);
+electra_mainnet_test!(
+    electra_mainnet_execution_payload_header,
+    "ExecutionPayloadHeader",
+    electra::ExecutionPayloadHeader
+);
+electra_mainnet_test!(
+    electra_mainnet_beacon_block,
+    "BeaconBlock",
+    electra::BeaconBlock
+);
+electra_mainnet_test!(
+    electra_mainnet_beacon_block_body,
+    "BeaconBlockBody",
+    electra::BeaconBlockBody
+);
+electra_mainnet_test!(
+    electra_mainnet_signed_beacon_block,
+    "SignedBeaconBlock",
+    electra::SignedBeaconBlock
+);
+electra_mainnet_test!(
+    electra_mainnet_beacon_state,
+    "BeaconState",
+    electra::BeaconState
+);
+
+// Light client
+electra_mainnet_test!(
+    electra_mainnet_light_client_header,
+    "LightClientHeader",
+    electra::LightClientHeader
+);
+electra_mainnet_test!(
+    electra_mainnet_light_client_bootstrap,
+    "LightClientBootstrap",
+    electra::LightClientBootstrap
+);
+electra_mainnet_test!(
+    electra_mainnet_light_client_update,
+    "LightClientUpdate",
+    electra::LightClientUpdate
+);
+electra_mainnet_test!(
+    electra_mainnet_light_client_finality_update,
+    "LightClientFinalityUpdate",
+    electra::LightClientFinalityUpdate
+);
+electra_mainnet_test!(
+    electra_mainnet_light_client_optimistic_update,
+    "LightClientOptimisticUpdate",
+    electra::LightClientOptimisticUpdate
+);

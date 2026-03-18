@@ -4,5 +4,6 @@ pub mod capella;
 pub mod compatible_unions;
 pub mod containers;
 pub mod deneb;
+pub mod electra;
 pub mod phase0;
 pub mod progressive_containers;
