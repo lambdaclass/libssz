@@ -51,7 +51,7 @@ jobs:
           key: clippy-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: clippy-
       - run: rustup component add clippy
-      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --exclude spec-tests -- -D warnings
 
   build:
     name: Build
@@ -67,7 +67,7 @@ jobs:
             target
           key: build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: build-
-      - run: cargo build --workspace --all-targets
+      - run: cargo build --workspace --all-targets --exclude spec-tests
 
   test:
     name: Test (${{ matrix.features }})
@@ -90,7 +90,7 @@ jobs:
             target
           key: build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: build-
-      - run: cargo test --workspace ${{ matrix.args }}
+      - run: cargo test --workspace --exclude spec-tests ${{ matrix.args }}
 
   doc:
     name: Doc
@@ -106,7 +106,7 @@ jobs:
             target
           key: doc-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: doc-
-      - run: cargo doc --workspace --no-deps
+      - run: cargo doc --workspace --no-deps --exclude spec-tests
         env:
           RUSTDOCFLAGS: "-D warnings"
 
@@ -162,10 +162,31 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
-      - run: cargo llvm-cov --workspace --lcov --output-path lcov.info --fail-under-lines 70
+      - run: cargo llvm-cov --workspace --exclude spec-tests --lcov --output-path lcov.info --fail-under-lines 70
       - uses: codecov/codecov-action@v4
         with:
           files: lcov.info
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  spec-tests:
+    name: Spec Tests
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: spec-tests-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: spec-tests-build-
+      - uses: actions/cache@v4
+        with:
+          path: target/spec-tests
+          key: consensus-spec-vectors-v1.6.1
+      - run: cargo test -p spec-tests --test ssz_generic
+      - run: cargo test -p spec-tests --test ssz_static -- --test-threads=1
