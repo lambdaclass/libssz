@@ -4,7 +4,7 @@
 extern crate alloc;
 
 #[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use sha2::{Digest, Sha256};
 use ssz::SszEncode;
