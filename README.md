@@ -2,7 +2,7 @@
 
 A fast, modular [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus, written in Rust.
 
-Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Fuzz-tested against both reference implementations.
+Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
 
 ## Performance
 
@@ -187,7 +187,7 @@ let root = header.hash_tree_root();
 ### Bounded Collections
 
 ```rust
-use ssz_types::{SszVector, SszList, Bitvector, Bitlist};
+use ssz_types::{SszVector, SszList, SszBitvector, SszBitlist};
 
 // Vector: exactly 4 elements
 let v = SszVector::<u64, 4>::try_from(vec![1, 2, 3, 4]).unwrap();
@@ -197,10 +197,10 @@ let mut l = SszList::<u64, 1024>::default();
 l.push(42).unwrap();
 
 // Bitvector: exactly 8 bits
-let bv = Bitvector::<8>::default();
+let bv = SszBitvector::<8>::default();
 
 // Bitlist: at most 64 bits
-let mut bl = Bitlist::<64>::default();
+let mut bl = SszBitlist::<64>::default();
 bl.push(true).unwrap();
 ```
 
@@ -223,8 +223,8 @@ enum ExecutionPayload {
 | Crate | Description |
 |-------|-------------|
 | [`ssz`](crates/ssz) | Core `SszEncode` / `SszDecode` traits, primitive and container impls |
-| [`ssz-types`](crates/ssz-types) | Bounded collections: `SszVector`, `SszList`, `Bitvector`, `Bitlist` |
-| [`ssz-merkle`](crates/ssz-merkle) | `HashTreeRoot` trait, `merkleize`, precomputed zero hashes |
+| [`ssz-types`](crates/ssz-types) | Bounded collections: `SszVector`, `SszList`, `SszBitvector`, `SszBitlist`, `ProgressiveList`, `ProgressiveBitlist` |
+| [`ssz-merkle`](crates/ssz-merkle) | `HashTreeRoot` trait, `merkleize`, `merkleize_progressive`, precomputed zero hashes |
 | [`ssz-derive`](crates/ssz-derive) | `#[derive(SszEncode, SszDecode, HashTreeRoot)]` |
 
 Dependency graph: `ssz-derive` → `ssz-merkle` → `ssz` ← `ssz-types`
@@ -238,8 +238,10 @@ Dependency graph: `ssz-derive` → `ssz-merkle` → `ssz` ← `ssz-types`
 | `Bytes4`..`Bytes96` | `[u8; N]` | Y | Y | Y |
 | `Vector[T, N]` | `SszVector<T, N>` | Y | Y | Y |
 | `List[T, N]` | `SszList<T, N>` | Y | Y | Y |
-| `Bitvector[N]` | `Bitvector<N>` | Y | Y | Y |
-| `Bitlist[N]` | `Bitlist<N>` | Y | Y | Y |
+| `Bitvector[N]` | `SszBitvector<N>` | Y | Y | Y |
+| `Bitlist[N]` | `SszBitlist<N>` | Y | Y | Y |
+| `ProgressiveList[T]` | `ProgressiveList<T>` | Y | Y | Y |
+| `ProgressiveBitlist` | `ProgressiveBitlist` | Y | Y | Y |
 | Container | `struct` + derive | Y | Y | Y |
 | Union | `enum` + `#[ssz(enum_behaviour = "union")]` | Y | Y | Y |
 | Transparent | `struct` + `#[ssz(transparent)]` | Y | Y | Y |
@@ -247,14 +249,28 @@ Dependency graph: `ssz-derive` → `ssz-merkle` → `ssz` ← `ssz-types`
 ## Testing
 
 ```sh
-make test          # unit + integration tests
-make test-alloc    # no_std + alloc only
-make fuzz-quick    # 10s smoke fuzz per target (19 targets)
-make bench         # criterion benchmarks
-make ci            # full CI pipeline locally
+make test                  # unit + integration tests
+make test-alloc            # no_std + alloc only
+make download-spec-tests   # download consensus spec vectors (~1.25GB, cached)
+make spec-tests            # run 62,489 spec test cases (downloads if needed)
+make fuzz-quick            # 10s smoke fuzz per target (19 targets)
+make bench                 # criterion benchmarks
+make ci                    # full CI pipeline locally
 ```
 
-The library is differential-fuzz-tested against Lighthouse and ssz_rs across 19 fuzz targets, run nightly in CI.
+### Consensus Spec Tests
+
+The library is validated against the official [Ethereum consensus spec test vectors](https://github.com/ethereum/consensus-specs) (v1.6.1). This covers:
+
+- **ssz_generic**: all SSZ primitive types, vectors, lists, bitfields, containers, progressive types (EIP-7916), and compatible unions — valid and invalid cases
+- **ssz_static mainnet**: all Ethereum consensus types (BeaconState, BeaconBlock, Attestation, etc.) across 9 forks (phase0, altair, bellatrix, capella, deneb, electra, fulu, gloas, eip7805) at mainnet parameters
+- **ssz_static minimal**: same types at minimal preset parameters
+
+Each test case verifies decode, re-encode roundtrip, and hash tree root correctness.
+
+### Fuzzing
+
+Differential fuzz-tested against Lighthouse and ssz_rs across 19 fuzz targets, run nightly in CI.
 
 ## Documentation
 
