@@ -16,6 +16,3 @@ snap = "1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
 hex = "0.4"
-
-[dev-dependencies]
-paste = "1"
