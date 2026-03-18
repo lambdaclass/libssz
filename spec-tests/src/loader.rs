@@ -1,10 +1,7 @@
-use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::fs;
-use std::io::Read;
 use std::path::{Path, PathBuf};
 
-const RELEASE_URL: &str = "https://github.com/ethereum/consensus-specs/releases/download/v1.6.1";
 const VERSION: &str = "v1.6.1";
 
 /// The three test archives published by the consensus-specs repo.
@@ -16,25 +13,12 @@ pub enum Archive {
 }
 
 impl Archive {
-    pub fn filename(self) -> &'static str {
-        match self {
-            Archive::General => "general.tar.gz",
-            Archive::Mainnet => "mainnet.tar.gz",
-            Archive::Minimal => "minimal.tar.gz",
-        }
-    }
-
-    /// e.g. "general", "mainnet", "minimal" — matches the top-level dir inside the tarball.
     pub fn dir_name(self) -> &'static str {
         match self {
             Archive::General => "general",
             Archive::Mainnet => "mainnet",
             Archive::Minimal => "minimal",
         }
-    }
-
-    pub fn url(self) -> String {
-        format!("{}/{}", RELEASE_URL, self.filename())
     }
 }
 
@@ -47,7 +31,6 @@ pub fn cache_dir() -> PathBuf {
     if let Ok(dir) = std::env::var("SPEC_TESTS_DIR") {
         return PathBuf::from(dir);
     }
-    // Walk up from the manifest dir to find workspace target/
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     manifest
         .parent()
@@ -57,53 +40,27 @@ pub fn cache_dir() -> PathBuf {
         .join(VERSION)
 }
 
-/// Ensure that the given archive has been downloaded and extracted.
-/// Returns the path to the extracted `tests/` directory.
+/// Return the path to an extracted archive directory, panicking if not found.
 ///
-/// e.g. for `Archive::General` → `<cache>/general/tests/general/`
-pub fn ensure_archive(archive: Archive) -> PathBuf {
+/// Run `spec-tests/download-vectors.sh` before running the tests.
+pub fn archive_dir(archive: Archive) -> PathBuf {
     let root = cache_dir().join(archive.dir_name());
     let sentinel = root.join(".extracted");
-
-    if sentinel.exists() {
-        return root;
+    if !sentinel.exists() {
+        panic!(
+            "Spec test vectors not found at {}. Run:\n  ./spec-tests/download-vectors.sh",
+            root.display()
+        );
     }
-
-    eprintln!("Downloading {} ({})...", archive.filename(), archive.url());
-
-    // Download
-    let resp = ureq::get(&archive.url())
-        .call()
-        .unwrap_or_else(|e| panic!("Failed to download {}: {}", archive.url(), e));
-
-    let mut compressed = Vec::new();
-    resp.into_body()
-        .as_reader()
-        .read_to_end(&mut compressed)
-        .expect("read response body");
-
-    // Decompress + extract
-    let gz = GzDecoder::new(compressed.as_slice());
-    let mut archive_tar = tar::Archive::new(gz);
-
-    fs::create_dir_all(&root).expect("create cache dir");
-    archive_tar.unpack(&root).expect("extract tar.gz");
-
-    // Write sentinel
-    fs::write(&sentinel, "").expect("write sentinel");
-
-    eprintln!("Extracted to {}", root.display());
     root
 }
 
 // ── ssz_generic helpers ──
 
 /// Path to an ssz_generic handler directory.
-///
-/// e.g. `<cache>/general/tests/general/phase0/ssz_generic/boolean`
 pub fn ssz_generic_handler_path(handler: &str) -> PathBuf {
-    let root = ensure_archive(Archive::General);
-    root.join("tests")
+    archive_dir(Archive::General)
+        .join("tests")
         .join("general")
         .join("phase0")
         .join("ssz_generic")
@@ -111,7 +68,6 @@ pub fn ssz_generic_handler_path(handler: &str) -> PathBuf {
 }
 
 /// Iterate valid test cases for an ssz_generic handler.
-/// Returns `(case_path, case_name)` pairs.
 pub fn ssz_generic_valid_cases(handler: &str) -> Vec<(PathBuf, String)> {
     collect_cases(&ssz_generic_handler_path(handler).join("valid"))
 }
@@ -124,31 +80,26 @@ pub fn ssz_generic_invalid_cases(handler: &str) -> Vec<(PathBuf, String)> {
 // ── ssz_static helpers ──
 
 /// Path to an ssz_static type directory for a given network and fork.
-///
-/// e.g. `<cache>/mainnet/tests/mainnet/phase0/ssz_static/Validator`
 pub fn ssz_static_type_path(archive: Archive, fork: &str, type_name: &str) -> PathBuf {
-    let root = ensure_archive(archive);
-    root.join("tests")
+    archive_dir(archive)
+        .join("tests")
         .join(archive.dir_name())
         .join(fork)
         .join("ssz_static")
         .join(type_name)
 }
 
-/// Iterate test cases for an ssz_static type. Cases are nested under suite
-/// directories (e.g. `ssz_random/case_0/`).
+/// Iterate test cases for an ssz_static type.
 pub fn ssz_static_cases(archive: Archive, fork: &str, type_name: &str) -> Vec<(PathBuf, String)> {
     let type_dir = ssz_static_type_path(archive, fork, type_name);
     let mut cases = Vec::new();
     if !type_dir.exists() {
         return cases;
     }
-    // Each suite (ssz_random, etc.) contains case directories
     if let Ok(suites) = fs::read_dir(&type_dir) {
         for suite in suites.flatten() {
             if suite.file_type().map_or(false, |t| t.is_dir()) {
-                let suite_cases = collect_cases(&suite.path());
-                cases.extend(suite_cases);
+                cases.extend(collect_cases(&suite.path()));
             }
         }
     }
@@ -167,7 +118,6 @@ pub fn read_ssz_snappy(path: &Path) -> Vec<u8> {
 }
 
 /// Parse the `root` field from a `meta.yaml` or `roots.yaml` file.
-/// Returns the 32-byte hash tree root.
 pub fn parse_root(path: &Path) -> [u8; 32] {
     #[derive(Deserialize)]
     struct Meta {
@@ -185,7 +135,7 @@ pub fn parse_root(path: &Path) -> [u8; 32] {
     root
 }
 
-/// Read a scalar YAML value as a string (for boolean/uint test cases).
+/// Read a scalar YAML value (for boolean/uint test cases).
 pub fn read_yaml_value(path: &Path) -> serde_yaml::Value {
     let content =
         fs::read_to_string(path).unwrap_or_else(|e| panic!("read {}: {}", path.display(), e));

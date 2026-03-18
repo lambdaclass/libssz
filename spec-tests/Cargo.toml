@@ -11,13 +11,10 @@ ssz-types = { path = "../crates/ssz-types" }
 ssz-merkle = { path = "../crates/ssz-merkle" }
 ssz-derive = { path = "../crates/ssz-derive" }
 
-# Test vector loading
+# Test vector loading (vectors downloaded by spec-tests/download-vectors.sh)
 snap = "1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
-flate2 = "1"
-tar = "0.4"
-ureq = "3"
 hex = "0.4"
 
 [dev-dependencies]

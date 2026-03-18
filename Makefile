@@ -1,30 +1,36 @@
-.PHONY: ci fmt clippy build test test-alloc doc no-std-check coverage audit bench bench-baseline bench-compare fuzz fuzz-quick
+.PHONY: ci fmt clippy build test test-alloc doc no-std-check coverage audit bench bench-baseline bench-compare fuzz fuzz-quick download-spec-tests spec-tests
 
-ci: fmt clippy build test test-alloc doc no-std-check coverage audit ## Run the full CI pipeline locally
+ci: fmt clippy build test test-alloc doc no-std-check coverage audit spec-tests ## Run the full CI pipeline locally
 
 fmt: ## Check formatting
 	cargo fmt --all -- --check
 
 clippy: ## Run clippy with warnings as errors
-	cargo clippy --workspace --all-targets -- -D warnings
+	cargo clippy --workspace --all-targets --exclude spec-tests -- -D warnings
 
 build: ## Build all workspace targets
-	cargo build --workspace --all-targets
+	cargo build --workspace --all-targets --exclude spec-tests
 
 test: ## Run tests with default features
-	cargo test --workspace
+	cargo test --workspace --exclude spec-tests
 
 test-alloc: ## Run tests with alloc-only (no-std) features
-	cargo test --workspace --no-default-features --features alloc
+	cargo test --workspace --exclude spec-tests --no-default-features --features alloc
 
 doc: ## Check documentation builds without warnings
-	RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+	RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --exclude spec-tests
 
 no-std-check: ## Verify no_std compilation on thumbv7m-none-eabi
 	cargo check -p ssz -p ssz-types -p ssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
 
 coverage: ## Generate code coverage report (requires cargo-llvm-cov)
-	cargo llvm-cov --workspace --lcov --output-path lcov.info --fail-under-lines 70
+	cargo llvm-cov --workspace --exclude spec-tests --lcov --output-path lcov.info --fail-under-lines 70
+
+download-spec-tests: ## Download consensus spec test vectors (~1.25GB)
+	./spec-tests/download-vectors.sh
+
+spec-tests: download-spec-tests ## Run consensus spec tests (downloads vectors if needed)
+	cargo test -p spec-tests
 
 audit: ## Audit dependencies for known vulnerabilities (requires cargo-audit)
 	cargo audit
