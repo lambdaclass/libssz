@@ -33,1850 +33,1869 @@ fn run_ssz_static_type<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debug
     }
 }
 
-macro_rules! minimal_test {
-    ($test_name:ident, $fork:literal, $type_name:literal, $rust_type:ty) => {
-        #[test]
-        fn $test_name() {
-            run_ssz_static_type::<$rust_type>($fork, $type_name);
-        }
-    };
-}
-
 use spec_tests::types::minimal::*;
 use spec_tests::types::phase0;
 
 // Preset-independent types reused across ALL forks (same in mainnet and minimal)
-macro_rules! preset_independent_tests {
-    ($prefix:ident, $fork:literal) => {
-        paste::paste! {
-            minimal_test!([<$prefix _fork>], $fork, "Fork", phase0::Fork);
-            minimal_test!([<$prefix _fork_data>], $fork, "ForkData", phase0::ForkData);
-            minimal_test!([<$prefix _checkpoint>], $fork, "Checkpoint", phase0::Checkpoint);
-            minimal_test!([<$prefix _validator>], $fork, "Validator", phase0::Validator);
-            minimal_test!([<$prefix _attestation_data>], $fork, "AttestationData", phase0::AttestationData);
-            minimal_test!([<$prefix _eth1_data>], $fork, "Eth1Data", phase0::Eth1Data);
-            minimal_test!([<$prefix _eth1_block>], $fork, "Eth1Block", phase0::Eth1Block);
-            minimal_test!([<$prefix _deposit_message>], $fork, "DepositMessage", phase0::DepositMessage);
-            minimal_test!([<$prefix _deposit_data>], $fork, "DepositData", phase0::DepositData);
-            minimal_test!([<$prefix _deposit>], $fork, "Deposit", phase0::Deposit);
-            minimal_test!([<$prefix _beacon_block_header>], $fork, "BeaconBlockHeader", phase0::BeaconBlockHeader);
-            minimal_test!([<$prefix _signed_beacon_block_header>], $fork, "SignedBeaconBlockHeader", phase0::SignedBeaconBlockHeader);
-            minimal_test!([<$prefix _signing_data>], $fork, "SigningData", phase0::SigningData);
-            minimal_test!([<$prefix _voluntary_exit>], $fork, "VoluntaryExit", phase0::VoluntaryExit);
-            minimal_test!([<$prefix _signed_voluntary_exit>], $fork, "SignedVoluntaryExit", phase0::SignedVoluntaryExit);
-            minimal_test!([<$prefix _proposer_slashing>], $fork, "ProposerSlashing", phase0::ProposerSlashing);
-        }
-    };
-}
-
 // ── Phase 0 minimal ──
 
-preset_independent_tests!(phase0_minimal, "phase0");
+#[test]
+fn phase0_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("phase0", "Fork");
+}
+#[test]
+fn phase0_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("phase0", "ForkData");
+}
+#[test]
+fn phase0_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("phase0", "Checkpoint");
+}
+#[test]
+fn phase0_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("phase0", "Validator");
+}
+#[test]
+fn phase0_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("phase0", "AttestationData");
+}
+#[test]
+fn phase0_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("phase0", "Eth1Data");
+}
+#[test]
+fn phase0_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("phase0", "Eth1Block");
+}
+#[test]
+fn phase0_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("phase0", "DepositMessage");
+}
+#[test]
+fn phase0_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("phase0", "DepositData");
+}
+#[test]
+fn phase0_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("phase0", "Deposit");
+}
+#[test]
+fn phase0_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("phase0", "BeaconBlockHeader");
+}
+#[test]
+fn phase0_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("phase0", "SignedBeaconBlockHeader");
+}
+#[test]
+fn phase0_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("phase0", "SigningData");
+}
+#[test]
+fn phase0_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("phase0", "VoluntaryExit");
+}
+#[test]
+fn phase0_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("phase0", "SignedVoluntaryExit");
+}
+#[test]
+fn phase0_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("phase0", "ProposerSlashing");
+}
 
-minimal_test!(
-    phase0_minimal_historical_batch,
-    "phase0",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    phase0_minimal_indexed_attestation,
-    "phase0",
-    "IndexedAttestation",
-    IndexedAttestation
-);
-minimal_test!(
-    phase0_minimal_pending_attestation,
-    "phase0",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    phase0_minimal_attestation,
-    "phase0",
-    "Attestation",
-    Attestation
-);
-minimal_test!(
-    phase0_minimal_attester_slashing,
-    "phase0",
-    "AttesterSlashing",
-    AttesterSlashing
-);
-minimal_test!(
-    phase0_minimal_aggregate_and_proof,
-    "phase0",
-    "AggregateAndProof",
-    AggregateAndProof
-);
-minimal_test!(
-    phase0_minimal_signed_aggregate_and_proof,
-    "phase0",
-    "SignedAggregateAndProof",
-    SignedAggregateAndProof
-);
-minimal_test!(
-    phase0_minimal_beacon_block_body,
-    "phase0",
-    "BeaconBlockBody",
-    Phase0BeaconBlockBody
-);
-minimal_test!(
-    phase0_minimal_beacon_block,
-    "phase0",
-    "BeaconBlock",
-    Phase0BeaconBlock
-);
-minimal_test!(
-    phase0_minimal_signed_beacon_block,
-    "phase0",
-    "SignedBeaconBlock",
-    Phase0SignedBeaconBlock
-);
-minimal_test!(
-    phase0_minimal_beacon_state,
-    "phase0",
-    "BeaconState",
-    Phase0BeaconState
-);
+#[test]
+fn phase0_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("phase0", "HistoricalBatch");
+}
+#[test]
+fn phase0_minimal_indexed_attestation() {
+    run_ssz_static_type::<IndexedAttestation>("phase0", "IndexedAttestation");
+}
+#[test]
+fn phase0_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("phase0", "PendingAttestation");
+}
+#[test]
+fn phase0_minimal_attestation() {
+    run_ssz_static_type::<Attestation>("phase0", "Attestation");
+}
+#[test]
+fn phase0_minimal_attester_slashing() {
+    run_ssz_static_type::<AttesterSlashing>("phase0", "AttesterSlashing");
+}
+#[test]
+fn phase0_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<AggregateAndProof>("phase0", "AggregateAndProof");
+}
+#[test]
+fn phase0_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<SignedAggregateAndProof>("phase0", "SignedAggregateAndProof");
+}
+#[test]
+fn phase0_minimal_beacon_block_body() {
+    run_ssz_static_type::<Phase0BeaconBlockBody>("phase0", "BeaconBlockBody");
+}
+#[test]
+fn phase0_minimal_beacon_block() {
+    run_ssz_static_type::<Phase0BeaconBlock>("phase0", "BeaconBlock");
+}
+#[test]
+fn phase0_minimal_signed_beacon_block() {
+    run_ssz_static_type::<Phase0SignedBeaconBlock>("phase0", "SignedBeaconBlock");
+}
+#[test]
+fn phase0_minimal_beacon_state() {
+    run_ssz_static_type::<Phase0BeaconState>("phase0", "BeaconState");
+}
 
 // ── Altair minimal ──
 
-preset_independent_tests!(altair_minimal, "altair");
+#[test]
+fn altair_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("altair", "Fork");
+}
+#[test]
+fn altair_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("altair", "ForkData");
+}
+#[test]
+fn altair_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("altair", "Checkpoint");
+}
+#[test]
+fn altair_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("altair", "Validator");
+}
+#[test]
+fn altair_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("altair", "AttestationData");
+}
+#[test]
+fn altair_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("altair", "Eth1Data");
+}
+#[test]
+fn altair_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("altair", "Eth1Block");
+}
+#[test]
+fn altair_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("altair", "DepositMessage");
+}
+#[test]
+fn altair_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("altair", "DepositData");
+}
+#[test]
+fn altair_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("altair", "Deposit");
+}
+#[test]
+fn altair_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("altair", "BeaconBlockHeader");
+}
+#[test]
+fn altair_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("altair", "SignedBeaconBlockHeader");
+}
+#[test]
+fn altair_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("altair", "SigningData");
+}
+#[test]
+fn altair_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("altair", "VoluntaryExit");
+}
+#[test]
+fn altair_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("altair", "SignedVoluntaryExit");
+}
+#[test]
+fn altair_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("altair", "ProposerSlashing");
+}
 
-minimal_test!(
-    altair_minimal_historical_batch,
-    "altair",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    altair_minimal_indexed_attestation,
-    "altair",
-    "IndexedAttestation",
-    IndexedAttestation
-);
-minimal_test!(
-    altair_minimal_pending_attestation,
-    "altair",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    altair_minimal_attestation,
-    "altair",
-    "Attestation",
-    Attestation
-);
-minimal_test!(
-    altair_minimal_attester_slashing,
-    "altair",
-    "AttesterSlashing",
-    AttesterSlashing
-);
-minimal_test!(
-    altair_minimal_aggregate_and_proof,
-    "altair",
-    "AggregateAndProof",
-    AggregateAndProof
-);
-minimal_test!(
-    altair_minimal_signed_aggregate_and_proof,
-    "altair",
-    "SignedAggregateAndProof",
-    SignedAggregateAndProof
-);
+#[test]
+fn altair_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("altair", "HistoricalBatch");
+}
+#[test]
+fn altair_minimal_indexed_attestation() {
+    run_ssz_static_type::<IndexedAttestation>("altair", "IndexedAttestation");
+}
+#[test]
+fn altair_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("altair", "PendingAttestation");
+}
+#[test]
+fn altair_minimal_attestation() {
+    run_ssz_static_type::<Attestation>("altair", "Attestation");
+}
+#[test]
+fn altair_minimal_attester_slashing() {
+    run_ssz_static_type::<AttesterSlashing>("altair", "AttesterSlashing");
+}
+#[test]
+fn altair_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<AggregateAndProof>("altair", "AggregateAndProof");
+}
+#[test]
+fn altair_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<SignedAggregateAndProof>("altair", "SignedAggregateAndProof");
+}
 
 // Altair sync types (preset-dependent: SYNC_COMMITTEE_SIZE)
-minimal_test!(
-    altair_minimal_sync_aggregate,
-    "altair",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    altair_minimal_sync_committee,
-    "altair",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    altair_minimal_sync_committee_contribution,
-    "altair",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    altair_minimal_contribution_and_proof,
-    "altair",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    altair_minimal_signed_contribution_and_proof,
-    "altair",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
+#[test]
+fn altair_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("altair", "SyncAggregate");
+}
+#[test]
+fn altair_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("altair", "SyncCommittee");
+}
+#[test]
+fn altair_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("altair", "SyncCommitteeContribution");
+}
+#[test]
+fn altair_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("altair", "ContributionAndProof");
+}
+#[test]
+fn altair_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("altair", "SignedContributionAndProof");
+}
 
 // Altair preset-independent sync types
 use spec_tests::types::altair;
-minimal_test!(
-    altair_minimal_sync_committee_message,
-    "altair",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    altair_minimal_sync_aggregator_selection_data,
-    "altair",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
+#[test]
+fn altair_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("altair", "SyncCommitteeMessage");
+}
+#[test]
+fn altair_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "altair",
+        "SyncAggregatorSelectionData",
+    );
+}
 
 // Altair light client
-minimal_test!(
-    altair_minimal_light_client_header,
-    "altair",
-    "LightClientHeader",
-    AltairLightClientHeader
-);
-minimal_test!(
-    altair_minimal_light_client_bootstrap,
-    "altair",
-    "LightClientBootstrap",
-    AltairLightClientBootstrap
-);
-minimal_test!(
-    altair_minimal_light_client_update,
-    "altair",
-    "LightClientUpdate",
-    AltairLightClientUpdate
-);
-minimal_test!(
-    altair_minimal_light_client_finality_update,
-    "altair",
-    "LightClientFinalityUpdate",
-    AltairLightClientFinalityUpdate
-);
-minimal_test!(
-    altair_minimal_light_client_optimistic_update,
-    "altair",
-    "LightClientOptimisticUpdate",
-    AltairLightClientOptimisticUpdate
-);
+#[test]
+fn altair_minimal_light_client_header() {
+    run_ssz_static_type::<AltairLightClientHeader>("altair", "LightClientHeader");
+}
+#[test]
+fn altair_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<AltairLightClientBootstrap>("altair", "LightClientBootstrap");
+}
+#[test]
+fn altair_minimal_light_client_update() {
+    run_ssz_static_type::<AltairLightClientUpdate>("altair", "LightClientUpdate");
+}
+#[test]
+fn altair_minimal_light_client_finality_update() {
+    run_ssz_static_type::<AltairLightClientFinalityUpdate>("altair", "LightClientFinalityUpdate");
+}
+#[test]
+fn altair_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<AltairLightClientOptimisticUpdate>(
+        "altair",
+        "LightClientOptimisticUpdate",
+    );
+}
 
 // Altair block/state
-minimal_test!(
-    altair_minimal_beacon_block_body,
-    "altair",
-    "BeaconBlockBody",
-    AltairBeaconBlockBody
-);
-minimal_test!(
-    altair_minimal_beacon_block,
-    "altair",
-    "BeaconBlock",
-    AltairBeaconBlock
-);
-minimal_test!(
-    altair_minimal_signed_beacon_block,
-    "altair",
-    "SignedBeaconBlock",
-    AltairSignedBeaconBlock
-);
-minimal_test!(
-    altair_minimal_beacon_state,
-    "altair",
-    "BeaconState",
-    AltairBeaconState
-);
+#[test]
+fn altair_minimal_beacon_block_body() {
+    run_ssz_static_type::<AltairBeaconBlockBody>("altair", "BeaconBlockBody");
+}
+#[test]
+fn altair_minimal_beacon_block() {
+    run_ssz_static_type::<AltairBeaconBlock>("altair", "BeaconBlock");
+}
+#[test]
+fn altair_minimal_signed_beacon_block() {
+    run_ssz_static_type::<AltairSignedBeaconBlock>("altair", "SignedBeaconBlock");
+}
+#[test]
+fn altair_minimal_beacon_state() {
+    run_ssz_static_type::<AltairBeaconState>("altair", "BeaconState");
+}
 
 // ── Bellatrix minimal ──
-preset_independent_tests!(bellatrix_minimal, "bellatrix");
-minimal_test!(
-    bellatrix_minimal_historical_batch,
-    "bellatrix",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    bellatrix_minimal_indexed_attestation,
-    "bellatrix",
-    "IndexedAttestation",
-    IndexedAttestation
-);
-minimal_test!(
-    bellatrix_minimal_pending_attestation,
-    "bellatrix",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    bellatrix_minimal_attestation,
-    "bellatrix",
-    "Attestation",
-    Attestation
-);
-minimal_test!(
-    bellatrix_minimal_attester_slashing,
-    "bellatrix",
-    "AttesterSlashing",
-    AttesterSlashing
-);
-minimal_test!(
-    bellatrix_minimal_aggregate_and_proof,
-    "bellatrix",
-    "AggregateAndProof",
-    AggregateAndProof
-);
-minimal_test!(
-    bellatrix_minimal_signed_aggregate_and_proof,
-    "bellatrix",
-    "SignedAggregateAndProof",
-    SignedAggregateAndProof
-);
-minimal_test!(
-    bellatrix_minimal_sync_aggregate,
-    "bellatrix",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    bellatrix_minimal_sync_committee,
-    "bellatrix",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    bellatrix_minimal_sync_committee_contribution,
-    "bellatrix",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    bellatrix_minimal_contribution_and_proof,
-    "bellatrix",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    bellatrix_minimal_signed_contribution_and_proof,
-    "bellatrix",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    bellatrix_minimal_sync_committee_message,
-    "bellatrix",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    bellatrix_minimal_sync_aggregator_selection_data,
-    "bellatrix",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(
-    bellatrix_minimal_light_client_header,
-    "bellatrix",
-    "LightClientHeader",
-    AltairLightClientHeader
-);
-minimal_test!(
-    bellatrix_minimal_light_client_bootstrap,
-    "bellatrix",
-    "LightClientBootstrap",
-    AltairLightClientBootstrap
-);
-minimal_test!(
-    bellatrix_minimal_light_client_update,
-    "bellatrix",
-    "LightClientUpdate",
-    AltairLightClientUpdate
-);
-minimal_test!(
-    bellatrix_minimal_light_client_finality_update,
-    "bellatrix",
-    "LightClientFinalityUpdate",
-    AltairLightClientFinalityUpdate
-);
-minimal_test!(
-    bellatrix_minimal_light_client_optimistic_update,
-    "bellatrix",
-    "LightClientOptimisticUpdate",
-    AltairLightClientOptimisticUpdate
-);
-minimal_test!(
-    bellatrix_minimal_execution_payload,
-    "bellatrix",
-    "ExecutionPayload",
-    BellatrixExecutionPayload
-);
-minimal_test!(
-    bellatrix_minimal_execution_payload_header,
-    "bellatrix",
-    "ExecutionPayloadHeader",
-    BellatrixExecutionPayloadHeader
-);
-minimal_test!(
-    bellatrix_minimal_pow_block,
-    "bellatrix",
-    "PowBlock",
-    PowBlock
-);
-minimal_test!(
-    bellatrix_minimal_beacon_block_body,
-    "bellatrix",
-    "BeaconBlockBody",
-    BellatrixBeaconBlockBody
-);
-minimal_test!(
-    bellatrix_minimal_beacon_block,
-    "bellatrix",
-    "BeaconBlock",
-    BellatrixBeaconBlock
-);
-minimal_test!(
-    bellatrix_minimal_signed_beacon_block,
-    "bellatrix",
-    "SignedBeaconBlock",
-    BellatrixSignedBeaconBlock
-);
-minimal_test!(
-    bellatrix_minimal_beacon_state,
-    "bellatrix",
-    "BeaconState",
-    BellatrixBeaconState
-);
+#[test]
+fn bellatrix_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("bellatrix", "Fork");
+}
+#[test]
+fn bellatrix_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("bellatrix", "ForkData");
+}
+#[test]
+fn bellatrix_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("bellatrix", "Checkpoint");
+}
+#[test]
+fn bellatrix_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("bellatrix", "Validator");
+}
+#[test]
+fn bellatrix_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("bellatrix", "AttestationData");
+}
+#[test]
+fn bellatrix_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("bellatrix", "Eth1Data");
+}
+#[test]
+fn bellatrix_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("bellatrix", "Eth1Block");
+}
+#[test]
+fn bellatrix_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("bellatrix", "DepositMessage");
+}
+#[test]
+fn bellatrix_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("bellatrix", "DepositData");
+}
+#[test]
+fn bellatrix_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("bellatrix", "Deposit");
+}
+#[test]
+fn bellatrix_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("bellatrix", "BeaconBlockHeader");
+}
+#[test]
+fn bellatrix_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("bellatrix", "SignedBeaconBlockHeader");
+}
+#[test]
+fn bellatrix_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("bellatrix", "SigningData");
+}
+#[test]
+fn bellatrix_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("bellatrix", "VoluntaryExit");
+}
+#[test]
+fn bellatrix_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("bellatrix", "SignedVoluntaryExit");
+}
+#[test]
+fn bellatrix_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("bellatrix", "ProposerSlashing");
+}
+#[test]
+fn bellatrix_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("bellatrix", "HistoricalBatch");
+}
+#[test]
+fn bellatrix_minimal_indexed_attestation() {
+    run_ssz_static_type::<IndexedAttestation>("bellatrix", "IndexedAttestation");
+}
+#[test]
+fn bellatrix_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("bellatrix", "PendingAttestation");
+}
+#[test]
+fn bellatrix_minimal_attestation() {
+    run_ssz_static_type::<Attestation>("bellatrix", "Attestation");
+}
+#[test]
+fn bellatrix_minimal_attester_slashing() {
+    run_ssz_static_type::<AttesterSlashing>("bellatrix", "AttesterSlashing");
+}
+#[test]
+fn bellatrix_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<AggregateAndProof>("bellatrix", "AggregateAndProof");
+}
+#[test]
+fn bellatrix_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<SignedAggregateAndProof>("bellatrix", "SignedAggregateAndProof");
+}
+#[test]
+fn bellatrix_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("bellatrix", "SyncAggregate");
+}
+#[test]
+fn bellatrix_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("bellatrix", "SyncCommittee");
+}
+#[test]
+fn bellatrix_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("bellatrix", "SyncCommitteeContribution");
+}
+#[test]
+fn bellatrix_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("bellatrix", "ContributionAndProof");
+}
+#[test]
+fn bellatrix_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("bellatrix", "SignedContributionAndProof");
+}
+#[test]
+fn bellatrix_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("bellatrix", "SyncCommitteeMessage");
+}
+#[test]
+fn bellatrix_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "bellatrix",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn bellatrix_minimal_light_client_header() {
+    run_ssz_static_type::<AltairLightClientHeader>("bellatrix", "LightClientHeader");
+}
+#[test]
+fn bellatrix_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<AltairLightClientBootstrap>("bellatrix", "LightClientBootstrap");
+}
+#[test]
+fn bellatrix_minimal_light_client_update() {
+    run_ssz_static_type::<AltairLightClientUpdate>("bellatrix", "LightClientUpdate");
+}
+#[test]
+fn bellatrix_minimal_light_client_finality_update() {
+    run_ssz_static_type::<AltairLightClientFinalityUpdate>(
+        "bellatrix",
+        "LightClientFinalityUpdate",
+    );
+}
+#[test]
+fn bellatrix_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<AltairLightClientOptimisticUpdate>(
+        "bellatrix",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn bellatrix_minimal_execution_payload() {
+    run_ssz_static_type::<BellatrixExecutionPayload>("bellatrix", "ExecutionPayload");
+}
+#[test]
+fn bellatrix_minimal_execution_payload_header() {
+    run_ssz_static_type::<BellatrixExecutionPayloadHeader>("bellatrix", "ExecutionPayloadHeader");
+}
+#[test]
+fn bellatrix_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("bellatrix", "PowBlock");
+}
+#[test]
+fn bellatrix_minimal_beacon_block_body() {
+    run_ssz_static_type::<BellatrixBeaconBlockBody>("bellatrix", "BeaconBlockBody");
+}
+#[test]
+fn bellatrix_minimal_beacon_block() {
+    run_ssz_static_type::<BellatrixBeaconBlock>("bellatrix", "BeaconBlock");
+}
+#[test]
+fn bellatrix_minimal_signed_beacon_block() {
+    run_ssz_static_type::<BellatrixSignedBeaconBlock>("bellatrix", "SignedBeaconBlock");
+}
+#[test]
+fn bellatrix_minimal_beacon_state() {
+    run_ssz_static_type::<BellatrixBeaconState>("bellatrix", "BeaconState");
+}
 
 // ── Capella minimal ──
-preset_independent_tests!(capella_minimal, "capella");
-minimal_test!(
-    capella_minimal_historical_batch,
-    "capella",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    capella_minimal_indexed_attestation,
-    "capella",
-    "IndexedAttestation",
-    IndexedAttestation
-);
-minimal_test!(
-    capella_minimal_pending_attestation,
-    "capella",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    capella_minimal_attestation,
-    "capella",
-    "Attestation",
-    Attestation
-);
-minimal_test!(
-    capella_minimal_attester_slashing,
-    "capella",
-    "AttesterSlashing",
-    AttesterSlashing
-);
-minimal_test!(
-    capella_minimal_aggregate_and_proof,
-    "capella",
-    "AggregateAndProof",
-    AggregateAndProof
-);
-minimal_test!(
-    capella_minimal_signed_aggregate_and_proof,
-    "capella",
-    "SignedAggregateAndProof",
-    SignedAggregateAndProof
-);
-minimal_test!(
-    capella_minimal_sync_aggregate,
-    "capella",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    capella_minimal_sync_committee,
-    "capella",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    capella_minimal_sync_committee_contribution,
-    "capella",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    capella_minimal_contribution_and_proof,
-    "capella",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    capella_minimal_signed_contribution_and_proof,
-    "capella",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    capella_minimal_sync_committee_message,
-    "capella",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    capella_minimal_sync_aggregator_selection_data,
-    "capella",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(
-    capella_minimal_withdrawal,
-    "capella",
-    "Withdrawal",
-    Withdrawal
-);
-minimal_test!(
-    capella_minimal_bls_to_execution_change,
-    "capella",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    capella_minimal_signed_bls_to_execution_change,
-    "capella",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    capella_minimal_historical_summary,
-    "capella",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    capella_minimal_execution_payload,
-    "capella",
-    "ExecutionPayload",
-    CapellaExecutionPayload
-);
-minimal_test!(
-    capella_minimal_execution_payload_header,
-    "capella",
-    "ExecutionPayloadHeader",
-    CapellaExecutionPayloadHeader
-);
-minimal_test!(
-    capella_minimal_light_client_header,
-    "capella",
-    "LightClientHeader",
-    CapellaLightClientHeader
-);
-minimal_test!(
-    capella_minimal_light_client_bootstrap,
-    "capella",
-    "LightClientBootstrap",
-    CapellaLightClientBootstrap
-);
-minimal_test!(
-    capella_minimal_light_client_update,
-    "capella",
-    "LightClientUpdate",
-    CapellaLightClientUpdate
-);
-minimal_test!(
-    capella_minimal_light_client_finality_update,
-    "capella",
-    "LightClientFinalityUpdate",
-    CapellaLightClientFinalityUpdate
-);
-minimal_test!(
-    capella_minimal_light_client_optimistic_update,
-    "capella",
-    "LightClientOptimisticUpdate",
-    CapellaLightClientOptimisticUpdate
-);
-minimal_test!(
-    capella_minimal_beacon_block_body,
-    "capella",
-    "BeaconBlockBody",
-    CapellaBeaconBlockBody
-);
-minimal_test!(
-    capella_minimal_beacon_block,
-    "capella",
-    "BeaconBlock",
-    CapellaBeaconBlock
-);
-minimal_test!(
-    capella_minimal_signed_beacon_block,
-    "capella",
-    "SignedBeaconBlock",
-    CapellaSignedBeaconBlock
-);
-minimal_test!(
-    capella_minimal_beacon_state,
-    "capella",
-    "BeaconState",
-    CapellaBeaconState
-);
+#[test]
+fn capella_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("capella", "Fork");
+}
+#[test]
+fn capella_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("capella", "ForkData");
+}
+#[test]
+fn capella_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("capella", "Checkpoint");
+}
+#[test]
+fn capella_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("capella", "Validator");
+}
+#[test]
+fn capella_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("capella", "AttestationData");
+}
+#[test]
+fn capella_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("capella", "Eth1Data");
+}
+#[test]
+fn capella_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("capella", "Eth1Block");
+}
+#[test]
+fn capella_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("capella", "DepositMessage");
+}
+#[test]
+fn capella_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("capella", "DepositData");
+}
+#[test]
+fn capella_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("capella", "Deposit");
+}
+#[test]
+fn capella_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("capella", "BeaconBlockHeader");
+}
+#[test]
+fn capella_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("capella", "SignedBeaconBlockHeader");
+}
+#[test]
+fn capella_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("capella", "SigningData");
+}
+#[test]
+fn capella_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("capella", "VoluntaryExit");
+}
+#[test]
+fn capella_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("capella", "SignedVoluntaryExit");
+}
+#[test]
+fn capella_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("capella", "ProposerSlashing");
+}
+#[test]
+fn capella_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("capella", "HistoricalBatch");
+}
+#[test]
+fn capella_minimal_indexed_attestation() {
+    run_ssz_static_type::<IndexedAttestation>("capella", "IndexedAttestation");
+}
+#[test]
+fn capella_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("capella", "PendingAttestation");
+}
+#[test]
+fn capella_minimal_attestation() {
+    run_ssz_static_type::<Attestation>("capella", "Attestation");
+}
+#[test]
+fn capella_minimal_attester_slashing() {
+    run_ssz_static_type::<AttesterSlashing>("capella", "AttesterSlashing");
+}
+#[test]
+fn capella_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<AggregateAndProof>("capella", "AggregateAndProof");
+}
+#[test]
+fn capella_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<SignedAggregateAndProof>("capella", "SignedAggregateAndProof");
+}
+#[test]
+fn capella_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("capella", "SyncAggregate");
+}
+#[test]
+fn capella_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("capella", "SyncCommittee");
+}
+#[test]
+fn capella_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("capella", "SyncCommitteeContribution");
+}
+#[test]
+fn capella_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("capella", "ContributionAndProof");
+}
+#[test]
+fn capella_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("capella", "SignedContributionAndProof");
+}
+#[test]
+fn capella_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("capella", "SyncCommitteeMessage");
+}
+#[test]
+fn capella_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "capella",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn capella_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("capella", "Withdrawal");
+}
+#[test]
+fn capella_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("capella", "BLSToExecutionChange");
+}
+#[test]
+fn capella_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("capella", "SignedBLSToExecutionChange");
+}
+#[test]
+fn capella_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("capella", "HistoricalSummary");
+}
+#[test]
+fn capella_minimal_execution_payload() {
+    run_ssz_static_type::<CapellaExecutionPayload>("capella", "ExecutionPayload");
+}
+#[test]
+fn capella_minimal_execution_payload_header() {
+    run_ssz_static_type::<CapellaExecutionPayloadHeader>("capella", "ExecutionPayloadHeader");
+}
+#[test]
+fn capella_minimal_light_client_header() {
+    run_ssz_static_type::<CapellaLightClientHeader>("capella", "LightClientHeader");
+}
+#[test]
+fn capella_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<CapellaLightClientBootstrap>("capella", "LightClientBootstrap");
+}
+#[test]
+fn capella_minimal_light_client_update() {
+    run_ssz_static_type::<CapellaLightClientUpdate>("capella", "LightClientUpdate");
+}
+#[test]
+fn capella_minimal_light_client_finality_update() {
+    run_ssz_static_type::<CapellaLightClientFinalityUpdate>("capella", "LightClientFinalityUpdate");
+}
+#[test]
+fn capella_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<CapellaLightClientOptimisticUpdate>(
+        "capella",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn capella_minimal_beacon_block_body() {
+    run_ssz_static_type::<CapellaBeaconBlockBody>("capella", "BeaconBlockBody");
+}
+#[test]
+fn capella_minimal_beacon_block() {
+    run_ssz_static_type::<CapellaBeaconBlock>("capella", "BeaconBlock");
+}
+#[test]
+fn capella_minimal_signed_beacon_block() {
+    run_ssz_static_type::<CapellaSignedBeaconBlock>("capella", "SignedBeaconBlock");
+}
+#[test]
+fn capella_minimal_beacon_state() {
+    run_ssz_static_type::<CapellaBeaconState>("capella", "BeaconState");
+}
 
 // ── Deneb minimal ──
-preset_independent_tests!(deneb_minimal, "deneb");
-minimal_test!(
-    deneb_minimal_historical_batch,
-    "deneb",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    deneb_minimal_indexed_attestation,
-    "deneb",
-    "IndexedAttestation",
-    IndexedAttestation
-);
-minimal_test!(
-    deneb_minimal_pending_attestation,
-    "deneb",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    deneb_minimal_attestation,
-    "deneb",
-    "Attestation",
-    Attestation
-);
-minimal_test!(
-    deneb_minimal_attester_slashing,
-    "deneb",
-    "AttesterSlashing",
-    AttesterSlashing
-);
-minimal_test!(
-    deneb_minimal_aggregate_and_proof,
-    "deneb",
-    "AggregateAndProof",
-    AggregateAndProof
-);
-minimal_test!(
-    deneb_minimal_signed_aggregate_and_proof,
-    "deneb",
-    "SignedAggregateAndProof",
-    SignedAggregateAndProof
-);
-minimal_test!(
-    deneb_minimal_sync_aggregate,
-    "deneb",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    deneb_minimal_sync_committee,
-    "deneb",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    deneb_minimal_sync_committee_contribution,
-    "deneb",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    deneb_minimal_contribution_and_proof,
-    "deneb",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    deneb_minimal_signed_contribution_and_proof,
-    "deneb",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    deneb_minimal_sync_committee_message,
-    "deneb",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    deneb_minimal_sync_aggregator_selection_data,
-    "deneb",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(deneb_minimal_withdrawal, "deneb", "Withdrawal", Withdrawal);
-minimal_test!(
-    deneb_minimal_bls_to_execution_change,
-    "deneb",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    deneb_minimal_signed_bls_to_execution_change,
-    "deneb",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    deneb_minimal_historical_summary,
-    "deneb",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    deneb_minimal_blob_identifier,
-    "deneb",
-    "BlobIdentifier",
-    BlobIdentifier
-);
-minimal_test!(
-    deneb_minimal_blob_sidecar,
-    "deneb",
-    "BlobSidecar",
-    BlobSidecar
-);
-minimal_test!(
-    deneb_minimal_execution_payload,
-    "deneb",
-    "ExecutionPayload",
-    DenebExecutionPayload
-);
-minimal_test!(
-    deneb_minimal_execution_payload_header,
-    "deneb",
-    "ExecutionPayloadHeader",
-    DenebExecutionPayloadHeader
-);
-minimal_test!(
-    deneb_minimal_light_client_header,
-    "deneb",
-    "LightClientHeader",
-    DenebLightClientHeader
-);
-minimal_test!(
-    deneb_minimal_light_client_bootstrap,
-    "deneb",
-    "LightClientBootstrap",
-    DenebLightClientBootstrap
-);
-minimal_test!(
-    deneb_minimal_light_client_update,
-    "deneb",
-    "LightClientUpdate",
-    DenebLightClientUpdate
-);
-minimal_test!(
-    deneb_minimal_light_client_finality_update,
-    "deneb",
-    "LightClientFinalityUpdate",
-    DenebLightClientFinalityUpdate
-);
-minimal_test!(
-    deneb_minimal_light_client_optimistic_update,
-    "deneb",
-    "LightClientOptimisticUpdate",
-    DenebLightClientOptimisticUpdate
-);
-minimal_test!(
-    deneb_minimal_beacon_block_body,
-    "deneb",
-    "BeaconBlockBody",
-    DenebBeaconBlockBody
-);
-minimal_test!(
-    deneb_minimal_beacon_block,
-    "deneb",
-    "BeaconBlock",
-    DenebBeaconBlock
-);
-minimal_test!(
-    deneb_minimal_signed_beacon_block,
-    "deneb",
-    "SignedBeaconBlock",
-    DenebSignedBeaconBlock
-);
-minimal_test!(
-    deneb_minimal_beacon_state,
-    "deneb",
-    "BeaconState",
-    DenebBeaconState
-);
+#[test]
+fn deneb_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("deneb", "Fork");
+}
+#[test]
+fn deneb_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("deneb", "ForkData");
+}
+#[test]
+fn deneb_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("deneb", "Checkpoint");
+}
+#[test]
+fn deneb_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("deneb", "Validator");
+}
+#[test]
+fn deneb_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("deneb", "AttestationData");
+}
+#[test]
+fn deneb_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("deneb", "Eth1Data");
+}
+#[test]
+fn deneb_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("deneb", "Eth1Block");
+}
+#[test]
+fn deneb_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("deneb", "DepositMessage");
+}
+#[test]
+fn deneb_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("deneb", "DepositData");
+}
+#[test]
+fn deneb_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("deneb", "Deposit");
+}
+#[test]
+fn deneb_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("deneb", "BeaconBlockHeader");
+}
+#[test]
+fn deneb_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("deneb", "SignedBeaconBlockHeader");
+}
+#[test]
+fn deneb_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("deneb", "SigningData");
+}
+#[test]
+fn deneb_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("deneb", "VoluntaryExit");
+}
+#[test]
+fn deneb_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("deneb", "SignedVoluntaryExit");
+}
+#[test]
+fn deneb_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("deneb", "ProposerSlashing");
+}
+#[test]
+fn deneb_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("deneb", "HistoricalBatch");
+}
+#[test]
+fn deneb_minimal_indexed_attestation() {
+    run_ssz_static_type::<IndexedAttestation>("deneb", "IndexedAttestation");
+}
+#[test]
+fn deneb_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("deneb", "PendingAttestation");
+}
+#[test]
+fn deneb_minimal_attestation() {
+    run_ssz_static_type::<Attestation>("deneb", "Attestation");
+}
+#[test]
+fn deneb_minimal_attester_slashing() {
+    run_ssz_static_type::<AttesterSlashing>("deneb", "AttesterSlashing");
+}
+#[test]
+fn deneb_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<AggregateAndProof>("deneb", "AggregateAndProof");
+}
+#[test]
+fn deneb_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<SignedAggregateAndProof>("deneb", "SignedAggregateAndProof");
+}
+#[test]
+fn deneb_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("deneb", "SyncAggregate");
+}
+#[test]
+fn deneb_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("deneb", "SyncCommittee");
+}
+#[test]
+fn deneb_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("deneb", "SyncCommitteeContribution");
+}
+#[test]
+fn deneb_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("deneb", "ContributionAndProof");
+}
+#[test]
+fn deneb_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("deneb", "SignedContributionAndProof");
+}
+#[test]
+fn deneb_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("deneb", "SyncCommitteeMessage");
+}
+#[test]
+fn deneb_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "deneb",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn deneb_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("deneb", "Withdrawal");
+}
+#[test]
+fn deneb_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("deneb", "BLSToExecutionChange");
+}
+#[test]
+fn deneb_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("deneb", "SignedBLSToExecutionChange");
+}
+#[test]
+fn deneb_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("deneb", "HistoricalSummary");
+}
+#[test]
+fn deneb_minimal_blob_identifier() {
+    run_ssz_static_type::<BlobIdentifier>("deneb", "BlobIdentifier");
+}
+#[test]
+fn deneb_minimal_blob_sidecar() {
+    run_ssz_static_type::<BlobSidecar>("deneb", "BlobSidecar");
+}
+#[test]
+fn deneb_minimal_execution_payload() {
+    run_ssz_static_type::<DenebExecutionPayload>("deneb", "ExecutionPayload");
+}
+#[test]
+fn deneb_minimal_execution_payload_header() {
+    run_ssz_static_type::<DenebExecutionPayloadHeader>("deneb", "ExecutionPayloadHeader");
+}
+#[test]
+fn deneb_minimal_light_client_header() {
+    run_ssz_static_type::<DenebLightClientHeader>("deneb", "LightClientHeader");
+}
+#[test]
+fn deneb_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<DenebLightClientBootstrap>("deneb", "LightClientBootstrap");
+}
+#[test]
+fn deneb_minimal_light_client_update() {
+    run_ssz_static_type::<DenebLightClientUpdate>("deneb", "LightClientUpdate");
+}
+#[test]
+fn deneb_minimal_light_client_finality_update() {
+    run_ssz_static_type::<DenebLightClientFinalityUpdate>("deneb", "LightClientFinalityUpdate");
+}
+#[test]
+fn deneb_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<DenebLightClientOptimisticUpdate>("deneb", "LightClientOptimisticUpdate");
+}
+#[test]
+fn deneb_minimal_beacon_block_body() {
+    run_ssz_static_type::<DenebBeaconBlockBody>("deneb", "BeaconBlockBody");
+}
+#[test]
+fn deneb_minimal_beacon_block() {
+    run_ssz_static_type::<DenebBeaconBlock>("deneb", "BeaconBlock");
+}
+#[test]
+fn deneb_minimal_signed_beacon_block() {
+    run_ssz_static_type::<DenebSignedBeaconBlock>("deneb", "SignedBeaconBlock");
+}
+#[test]
+fn deneb_minimal_beacon_state() {
+    run_ssz_static_type::<DenebBeaconState>("deneb", "BeaconState");
+}
 
 // ── Electra minimal ──
-preset_independent_tests!(electra_minimal, "electra");
-minimal_test!(
-    electra_minimal_historical_batch,
-    "electra",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    electra_minimal_pending_attestation,
-    "electra",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    electra_minimal_sync_aggregate,
-    "electra",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    electra_minimal_sync_committee,
-    "electra",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    electra_minimal_sync_committee_contribution,
-    "electra",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    electra_minimal_contribution_and_proof,
-    "electra",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    electra_minimal_signed_contribution_and_proof,
-    "electra",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    electra_minimal_sync_committee_message,
-    "electra",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    electra_minimal_sync_aggregator_selection_data,
-    "electra",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(
-    electra_minimal_withdrawal,
-    "electra",
-    "Withdrawal",
-    Withdrawal
-);
-minimal_test!(
-    electra_minimal_bls_to_execution_change,
-    "electra",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    electra_minimal_signed_bls_to_execution_change,
-    "electra",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    electra_minimal_historical_summary,
-    "electra",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    electra_minimal_blob_identifier,
-    "electra",
-    "BlobIdentifier",
-    BlobIdentifier
-);
-minimal_test!(
-    electra_minimal_blob_sidecar,
-    "electra",
-    "BlobSidecar",
-    BlobSidecar
-);
-minimal_test!(electra_minimal_pow_block, "electra", "PowBlock", PowBlock);
-minimal_test!(
-    electra_minimal_consolidation_request,
-    "electra",
-    "ConsolidationRequest",
-    ConsolidationRequest
-);
-minimal_test!(
-    electra_minimal_deposit_request,
-    "electra",
-    "DepositRequest",
-    DepositRequest
-);
-minimal_test!(
-    electra_minimal_execution_requests,
-    "electra",
-    "ExecutionRequests",
-    ExecutionRequests
-);
-minimal_test!(
-    electra_minimal_pending_consolidation,
-    "electra",
-    "PendingConsolidation",
-    PendingConsolidation
-);
-minimal_test!(
-    electra_minimal_pending_deposit,
-    "electra",
-    "PendingDeposit",
-    PendingDeposit
-);
-minimal_test!(
-    electra_minimal_pending_partial_withdrawal,
-    "electra",
-    "PendingPartialWithdrawal",
-    PendingPartialWithdrawal
-);
-minimal_test!(
-    electra_minimal_single_attestation,
-    "electra",
-    "SingleAttestation",
-    SingleAttestation
-);
-minimal_test!(
-    electra_minimal_withdrawal_request,
-    "electra",
-    "WithdrawalRequest",
-    WithdrawalRequest
-);
-minimal_test!(
-    electra_minimal_attestation,
-    "electra",
-    "Attestation",
-    ElectraAttestation
-);
-minimal_test!(
-    electra_minimal_indexed_attestation,
-    "electra",
-    "IndexedAttestation",
-    ElectraIndexedAttestation
-);
-minimal_test!(
-    electra_minimal_attester_slashing,
-    "electra",
-    "AttesterSlashing",
-    ElectraAttesterSlashing
-);
-minimal_test!(
-    electra_minimal_aggregate_and_proof,
-    "electra",
-    "AggregateAndProof",
-    ElectraAggregateAndProof
-);
-minimal_test!(
-    electra_minimal_signed_aggregate_and_proof,
-    "electra",
-    "SignedAggregateAndProof",
-    ElectraSignedAggregateAndProof
-);
-minimal_test!(
-    electra_minimal_execution_payload,
-    "electra",
-    "ExecutionPayload",
-    DenebExecutionPayload
-);
-minimal_test!(
-    electra_minimal_execution_payload_header,
-    "electra",
-    "ExecutionPayloadHeader",
-    DenebExecutionPayloadHeader
-);
-minimal_test!(
-    electra_minimal_light_client_header,
-    "electra",
-    "LightClientHeader",
-    ElectraLightClientHeader
-);
-minimal_test!(
-    electra_minimal_light_client_bootstrap,
-    "electra",
-    "LightClientBootstrap",
-    ElectraLightClientBootstrap
-);
-minimal_test!(
-    electra_minimal_light_client_update,
-    "electra",
-    "LightClientUpdate",
-    ElectraLightClientUpdate
-);
-minimal_test!(
-    electra_minimal_light_client_finality_update,
-    "electra",
-    "LightClientFinalityUpdate",
-    ElectraLightClientFinalityUpdate
-);
-minimal_test!(
-    electra_minimal_light_client_optimistic_update,
-    "electra",
-    "LightClientOptimisticUpdate",
-    ElectraLightClientOptimisticUpdate
-);
-minimal_test!(
-    electra_minimal_beacon_block_body,
-    "electra",
-    "BeaconBlockBody",
-    ElectraBeaconBlockBody
-);
-minimal_test!(
-    electra_minimal_beacon_block,
-    "electra",
-    "BeaconBlock",
-    ElectraBeaconBlock
-);
-minimal_test!(
-    electra_minimal_signed_beacon_block,
-    "electra",
-    "SignedBeaconBlock",
-    ElectraSignedBeaconBlock
-);
-minimal_test!(
-    electra_minimal_beacon_state,
-    "electra",
-    "BeaconState",
-    ElectraBeaconState
-);
+#[test]
+fn electra_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("electra", "Fork");
+}
+#[test]
+fn electra_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("electra", "ForkData");
+}
+#[test]
+fn electra_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("electra", "Checkpoint");
+}
+#[test]
+fn electra_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("electra", "Validator");
+}
+#[test]
+fn electra_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("electra", "AttestationData");
+}
+#[test]
+fn electra_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("electra", "Eth1Data");
+}
+#[test]
+fn electra_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("electra", "Eth1Block");
+}
+#[test]
+fn electra_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("electra", "DepositMessage");
+}
+#[test]
+fn electra_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("electra", "DepositData");
+}
+#[test]
+fn electra_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("electra", "Deposit");
+}
+#[test]
+fn electra_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("electra", "BeaconBlockHeader");
+}
+#[test]
+fn electra_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("electra", "SignedBeaconBlockHeader");
+}
+#[test]
+fn electra_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("electra", "SigningData");
+}
+#[test]
+fn electra_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("electra", "VoluntaryExit");
+}
+#[test]
+fn electra_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("electra", "SignedVoluntaryExit");
+}
+#[test]
+fn electra_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("electra", "ProposerSlashing");
+}
+#[test]
+fn electra_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("electra", "HistoricalBatch");
+}
+#[test]
+fn electra_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("electra", "PendingAttestation");
+}
+#[test]
+fn electra_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("electra", "SyncAggregate");
+}
+#[test]
+fn electra_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("electra", "SyncCommittee");
+}
+#[test]
+fn electra_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("electra", "SyncCommitteeContribution");
+}
+#[test]
+fn electra_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("electra", "ContributionAndProof");
+}
+#[test]
+fn electra_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("electra", "SignedContributionAndProof");
+}
+#[test]
+fn electra_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("electra", "SyncCommitteeMessage");
+}
+#[test]
+fn electra_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "electra",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn electra_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("electra", "Withdrawal");
+}
+#[test]
+fn electra_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("electra", "BLSToExecutionChange");
+}
+#[test]
+fn electra_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("electra", "SignedBLSToExecutionChange");
+}
+#[test]
+fn electra_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("electra", "HistoricalSummary");
+}
+#[test]
+fn electra_minimal_blob_identifier() {
+    run_ssz_static_type::<BlobIdentifier>("electra", "BlobIdentifier");
+}
+#[test]
+fn electra_minimal_blob_sidecar() {
+    run_ssz_static_type::<BlobSidecar>("electra", "BlobSidecar");
+}
+#[test]
+fn electra_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("electra", "PowBlock");
+}
+#[test]
+fn electra_minimal_consolidation_request() {
+    run_ssz_static_type::<ConsolidationRequest>("electra", "ConsolidationRequest");
+}
+#[test]
+fn electra_minimal_deposit_request() {
+    run_ssz_static_type::<DepositRequest>("electra", "DepositRequest");
+}
+#[test]
+fn electra_minimal_execution_requests() {
+    run_ssz_static_type::<ExecutionRequests>("electra", "ExecutionRequests");
+}
+#[test]
+fn electra_minimal_pending_consolidation() {
+    run_ssz_static_type::<PendingConsolidation>("electra", "PendingConsolidation");
+}
+#[test]
+fn electra_minimal_pending_deposit() {
+    run_ssz_static_type::<PendingDeposit>("electra", "PendingDeposit");
+}
+#[test]
+fn electra_minimal_pending_partial_withdrawal() {
+    run_ssz_static_type::<PendingPartialWithdrawal>("electra", "PendingPartialWithdrawal");
+}
+#[test]
+fn electra_minimal_single_attestation() {
+    run_ssz_static_type::<SingleAttestation>("electra", "SingleAttestation");
+}
+#[test]
+fn electra_minimal_withdrawal_request() {
+    run_ssz_static_type::<WithdrawalRequest>("electra", "WithdrawalRequest");
+}
+#[test]
+fn electra_minimal_attestation() {
+    run_ssz_static_type::<ElectraAttestation>("electra", "Attestation");
+}
+#[test]
+fn electra_minimal_indexed_attestation() {
+    run_ssz_static_type::<ElectraIndexedAttestation>("electra", "IndexedAttestation");
+}
+#[test]
+fn electra_minimal_attester_slashing() {
+    run_ssz_static_type::<ElectraAttesterSlashing>("electra", "AttesterSlashing");
+}
+#[test]
+fn electra_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraAggregateAndProof>("electra", "AggregateAndProof");
+}
+#[test]
+fn electra_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraSignedAggregateAndProof>("electra", "SignedAggregateAndProof");
+}
+#[test]
+fn electra_minimal_execution_payload() {
+    run_ssz_static_type::<DenebExecutionPayload>("electra", "ExecutionPayload");
+}
+#[test]
+fn electra_minimal_execution_payload_header() {
+    run_ssz_static_type::<DenebExecutionPayloadHeader>("electra", "ExecutionPayloadHeader");
+}
+#[test]
+fn electra_minimal_light_client_header() {
+    run_ssz_static_type::<ElectraLightClientHeader>("electra", "LightClientHeader");
+}
+#[test]
+fn electra_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<ElectraLightClientBootstrap>("electra", "LightClientBootstrap");
+}
+#[test]
+fn electra_minimal_light_client_update() {
+    run_ssz_static_type::<ElectraLightClientUpdate>("electra", "LightClientUpdate");
+}
+#[test]
+fn electra_minimal_light_client_finality_update() {
+    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("electra", "LightClientFinalityUpdate");
+}
+#[test]
+fn electra_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
+        "electra",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn electra_minimal_beacon_block_body() {
+    run_ssz_static_type::<ElectraBeaconBlockBody>("electra", "BeaconBlockBody");
+}
+#[test]
+fn electra_minimal_beacon_block() {
+    run_ssz_static_type::<ElectraBeaconBlock>("electra", "BeaconBlock");
+}
+#[test]
+fn electra_minimal_signed_beacon_block() {
+    run_ssz_static_type::<ElectraSignedBeaconBlock>("electra", "SignedBeaconBlock");
+}
+#[test]
+fn electra_minimal_beacon_state() {
+    run_ssz_static_type::<ElectraBeaconState>("electra", "BeaconState");
+}
 
 // ── Fulu minimal ──
 // Same as electra but with DataColumn types and modified BeaconState
-preset_independent_tests!(fulu_minimal, "fulu");
-minimal_test!(
-    fulu_minimal_historical_batch,
-    "fulu",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    fulu_minimal_pending_attestation,
-    "fulu",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    fulu_minimal_sync_aggregate,
-    "fulu",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    fulu_minimal_sync_committee,
-    "fulu",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    fulu_minimal_sync_committee_contribution,
-    "fulu",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    fulu_minimal_contribution_and_proof,
-    "fulu",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    fulu_minimal_signed_contribution_and_proof,
-    "fulu",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    fulu_minimal_sync_committee_message,
-    "fulu",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    fulu_minimal_sync_aggregator_selection_data,
-    "fulu",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(fulu_minimal_withdrawal, "fulu", "Withdrawal", Withdrawal);
-minimal_test!(
-    fulu_minimal_bls_to_execution_change,
-    "fulu",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    fulu_minimal_signed_bls_to_execution_change,
-    "fulu",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    fulu_minimal_historical_summary,
-    "fulu",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    fulu_minimal_blob_identifier,
-    "fulu",
-    "BlobIdentifier",
-    BlobIdentifier
-);
-minimal_test!(
-    fulu_minimal_blob_sidecar,
-    "fulu",
-    "BlobSidecar",
-    BlobSidecar
-);
-minimal_test!(fulu_minimal_pow_block, "fulu", "PowBlock", PowBlock);
-minimal_test!(
-    fulu_minimal_consolidation_request,
-    "fulu",
-    "ConsolidationRequest",
-    ConsolidationRequest
-);
-minimal_test!(
-    fulu_minimal_deposit_request,
-    "fulu",
-    "DepositRequest",
-    DepositRequest
-);
-minimal_test!(
-    fulu_minimal_execution_requests,
-    "fulu",
-    "ExecutionRequests",
-    ExecutionRequests
-);
-minimal_test!(
-    fulu_minimal_pending_consolidation,
-    "fulu",
-    "PendingConsolidation",
-    PendingConsolidation
-);
-minimal_test!(
-    fulu_minimal_pending_deposit,
-    "fulu",
-    "PendingDeposit",
-    PendingDeposit
-);
-minimal_test!(
-    fulu_minimal_pending_partial_withdrawal,
-    "fulu",
-    "PendingPartialWithdrawal",
-    PendingPartialWithdrawal
-);
-minimal_test!(
-    fulu_minimal_single_attestation,
-    "fulu",
-    "SingleAttestation",
-    SingleAttestation
-);
-minimal_test!(
-    fulu_minimal_withdrawal_request,
-    "fulu",
-    "WithdrawalRequest",
-    WithdrawalRequest
-);
-minimal_test!(
-    fulu_minimal_attestation,
-    "fulu",
-    "Attestation",
-    ElectraAttestation
-);
-minimal_test!(
-    fulu_minimal_indexed_attestation,
-    "fulu",
-    "IndexedAttestation",
-    ElectraIndexedAttestation
-);
-minimal_test!(
-    fulu_minimal_attester_slashing,
-    "fulu",
-    "AttesterSlashing",
-    ElectraAttesterSlashing
-);
-minimal_test!(
-    fulu_minimal_aggregate_and_proof,
-    "fulu",
-    "AggregateAndProof",
-    ElectraAggregateAndProof
-);
-minimal_test!(
-    fulu_minimal_signed_aggregate_and_proof,
-    "fulu",
-    "SignedAggregateAndProof",
-    ElectraSignedAggregateAndProof
-);
-minimal_test!(
-    fulu_minimal_execution_payload,
-    "fulu",
-    "ExecutionPayload",
-    DenebExecutionPayload
-);
-minimal_test!(
-    fulu_minimal_execution_payload_header,
-    "fulu",
-    "ExecutionPayloadHeader",
-    DenebExecutionPayloadHeader
-);
-minimal_test!(
-    fulu_minimal_light_client_header,
-    "fulu",
-    "LightClientHeader",
-    ElectraLightClientHeader
-);
-minimal_test!(
-    fulu_minimal_light_client_bootstrap,
-    "fulu",
-    "LightClientBootstrap",
-    ElectraLightClientBootstrap
-);
-minimal_test!(
-    fulu_minimal_light_client_update,
-    "fulu",
-    "LightClientUpdate",
-    ElectraLightClientUpdate
-);
-minimal_test!(
-    fulu_minimal_light_client_finality_update,
-    "fulu",
-    "LightClientFinalityUpdate",
-    ElectraLightClientFinalityUpdate
-);
-minimal_test!(
-    fulu_minimal_light_client_optimistic_update,
-    "fulu",
-    "LightClientOptimisticUpdate",
-    ElectraLightClientOptimisticUpdate
-);
-minimal_test!(
-    fulu_minimal_beacon_block_body,
-    "fulu",
-    "BeaconBlockBody",
-    ElectraBeaconBlockBody
-);
-minimal_test!(
-    fulu_minimal_beacon_block,
-    "fulu",
-    "BeaconBlock",
-    ElectraBeaconBlock
-);
-minimal_test!(
-    fulu_minimal_signed_beacon_block,
-    "fulu",
-    "SignedBeaconBlock",
-    ElectraSignedBeaconBlock
-);
-minimal_test!(
-    fulu_minimal_data_column_sidecar,
-    "fulu",
-    "DataColumnSidecar",
-    DataColumnSidecar
-);
-minimal_test!(
-    fulu_minimal_data_columns_by_root_identifier,
-    "fulu",
-    "DataColumnsByRootIdentifier",
-    DataColumnsByRootIdentifier
-);
-minimal_test!(
-    fulu_minimal_matrix_entry,
-    "fulu",
-    "MatrixEntry",
-    MatrixEntry
-);
-minimal_test!(
-    fulu_minimal_beacon_state,
-    "fulu",
-    "BeaconState",
-    FuluBeaconState
-);
+#[test]
+fn fulu_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("fulu", "Fork");
+}
+#[test]
+fn fulu_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("fulu", "ForkData");
+}
+#[test]
+fn fulu_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("fulu", "Checkpoint");
+}
+#[test]
+fn fulu_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("fulu", "Validator");
+}
+#[test]
+fn fulu_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("fulu", "AttestationData");
+}
+#[test]
+fn fulu_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("fulu", "Eth1Data");
+}
+#[test]
+fn fulu_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("fulu", "Eth1Block");
+}
+#[test]
+fn fulu_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("fulu", "DepositMessage");
+}
+#[test]
+fn fulu_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("fulu", "DepositData");
+}
+#[test]
+fn fulu_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("fulu", "Deposit");
+}
+#[test]
+fn fulu_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("fulu", "BeaconBlockHeader");
+}
+#[test]
+fn fulu_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("fulu", "SignedBeaconBlockHeader");
+}
+#[test]
+fn fulu_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("fulu", "SigningData");
+}
+#[test]
+fn fulu_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("fulu", "VoluntaryExit");
+}
+#[test]
+fn fulu_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("fulu", "SignedVoluntaryExit");
+}
+#[test]
+fn fulu_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("fulu", "ProposerSlashing");
+}
+#[test]
+fn fulu_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("fulu", "HistoricalBatch");
+}
+#[test]
+fn fulu_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("fulu", "PendingAttestation");
+}
+#[test]
+fn fulu_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("fulu", "SyncAggregate");
+}
+#[test]
+fn fulu_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("fulu", "SyncCommittee");
+}
+#[test]
+fn fulu_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("fulu", "SyncCommitteeContribution");
+}
+#[test]
+fn fulu_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("fulu", "ContributionAndProof");
+}
+#[test]
+fn fulu_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("fulu", "SignedContributionAndProof");
+}
+#[test]
+fn fulu_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("fulu", "SyncCommitteeMessage");
+}
+#[test]
+fn fulu_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "fulu",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn fulu_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("fulu", "Withdrawal");
+}
+#[test]
+fn fulu_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("fulu", "BLSToExecutionChange");
+}
+#[test]
+fn fulu_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("fulu", "SignedBLSToExecutionChange");
+}
+#[test]
+fn fulu_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("fulu", "HistoricalSummary");
+}
+#[test]
+fn fulu_minimal_blob_identifier() {
+    run_ssz_static_type::<BlobIdentifier>("fulu", "BlobIdentifier");
+}
+#[test]
+fn fulu_minimal_blob_sidecar() {
+    run_ssz_static_type::<BlobSidecar>("fulu", "BlobSidecar");
+}
+#[test]
+fn fulu_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("fulu", "PowBlock");
+}
+#[test]
+fn fulu_minimal_consolidation_request() {
+    run_ssz_static_type::<ConsolidationRequest>("fulu", "ConsolidationRequest");
+}
+#[test]
+fn fulu_minimal_deposit_request() {
+    run_ssz_static_type::<DepositRequest>("fulu", "DepositRequest");
+}
+#[test]
+fn fulu_minimal_execution_requests() {
+    run_ssz_static_type::<ExecutionRequests>("fulu", "ExecutionRequests");
+}
+#[test]
+fn fulu_minimal_pending_consolidation() {
+    run_ssz_static_type::<PendingConsolidation>("fulu", "PendingConsolidation");
+}
+#[test]
+fn fulu_minimal_pending_deposit() {
+    run_ssz_static_type::<PendingDeposit>("fulu", "PendingDeposit");
+}
+#[test]
+fn fulu_minimal_pending_partial_withdrawal() {
+    run_ssz_static_type::<PendingPartialWithdrawal>("fulu", "PendingPartialWithdrawal");
+}
+#[test]
+fn fulu_minimal_single_attestation() {
+    run_ssz_static_type::<SingleAttestation>("fulu", "SingleAttestation");
+}
+#[test]
+fn fulu_minimal_withdrawal_request() {
+    run_ssz_static_type::<WithdrawalRequest>("fulu", "WithdrawalRequest");
+}
+#[test]
+fn fulu_minimal_attestation() {
+    run_ssz_static_type::<ElectraAttestation>("fulu", "Attestation");
+}
+#[test]
+fn fulu_minimal_indexed_attestation() {
+    run_ssz_static_type::<ElectraIndexedAttestation>("fulu", "IndexedAttestation");
+}
+#[test]
+fn fulu_minimal_attester_slashing() {
+    run_ssz_static_type::<ElectraAttesterSlashing>("fulu", "AttesterSlashing");
+}
+#[test]
+fn fulu_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraAggregateAndProof>("fulu", "AggregateAndProof");
+}
+#[test]
+fn fulu_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraSignedAggregateAndProof>("fulu", "SignedAggregateAndProof");
+}
+#[test]
+fn fulu_minimal_execution_payload() {
+    run_ssz_static_type::<DenebExecutionPayload>("fulu", "ExecutionPayload");
+}
+#[test]
+fn fulu_minimal_execution_payload_header() {
+    run_ssz_static_type::<DenebExecutionPayloadHeader>("fulu", "ExecutionPayloadHeader");
+}
+#[test]
+fn fulu_minimal_light_client_header() {
+    run_ssz_static_type::<ElectraLightClientHeader>("fulu", "LightClientHeader");
+}
+#[test]
+fn fulu_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<ElectraLightClientBootstrap>("fulu", "LightClientBootstrap");
+}
+#[test]
+fn fulu_minimal_light_client_update() {
+    run_ssz_static_type::<ElectraLightClientUpdate>("fulu", "LightClientUpdate");
+}
+#[test]
+fn fulu_minimal_light_client_finality_update() {
+    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("fulu", "LightClientFinalityUpdate");
+}
+#[test]
+fn fulu_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
+        "fulu",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn fulu_minimal_beacon_block_body() {
+    run_ssz_static_type::<ElectraBeaconBlockBody>("fulu", "BeaconBlockBody");
+}
+#[test]
+fn fulu_minimal_beacon_block() {
+    run_ssz_static_type::<ElectraBeaconBlock>("fulu", "BeaconBlock");
+}
+#[test]
+fn fulu_minimal_signed_beacon_block() {
+    run_ssz_static_type::<ElectraSignedBeaconBlock>("fulu", "SignedBeaconBlock");
+}
+#[test]
+fn fulu_minimal_data_column_sidecar() {
+    run_ssz_static_type::<DataColumnSidecar>("fulu", "DataColumnSidecar");
+}
+#[test]
+fn fulu_minimal_data_columns_by_root_identifier() {
+    run_ssz_static_type::<DataColumnsByRootIdentifier>("fulu", "DataColumnsByRootIdentifier");
+}
+#[test]
+fn fulu_minimal_matrix_entry() {
+    run_ssz_static_type::<MatrixEntry>("fulu", "MatrixEntry");
+}
+#[test]
+fn fulu_minimal_beacon_state() {
+    run_ssz_static_type::<FuluBeaconState>("fulu", "BeaconState");
+}
 
 // ── Gloas minimal ──
-preset_independent_tests!(gloas_minimal, "gloas");
-minimal_test!(
-    gloas_minimal_historical_batch,
-    "gloas",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    gloas_minimal_pending_attestation,
-    "gloas",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    gloas_minimal_sync_aggregate,
-    "gloas",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    gloas_minimal_sync_committee,
-    "gloas",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    gloas_minimal_sync_committee_contribution,
-    "gloas",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    gloas_minimal_contribution_and_proof,
-    "gloas",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    gloas_minimal_signed_contribution_and_proof,
-    "gloas",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    gloas_minimal_sync_committee_message,
-    "gloas",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    gloas_minimal_sync_aggregator_selection_data,
-    "gloas",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(gloas_minimal_withdrawal, "gloas", "Withdrawal", Withdrawal);
-minimal_test!(
-    gloas_minimal_bls_to_execution_change,
-    "gloas",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    gloas_minimal_signed_bls_to_execution_change,
-    "gloas",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    gloas_minimal_historical_summary,
-    "gloas",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    gloas_minimal_blob_identifier,
-    "gloas",
-    "BlobIdentifier",
-    BlobIdentifier
-);
-minimal_test!(
-    gloas_minimal_blob_sidecar,
-    "gloas",
-    "BlobSidecar",
-    BlobSidecar
-);
-minimal_test!(gloas_minimal_pow_block, "gloas", "PowBlock", PowBlock);
-minimal_test!(
-    gloas_minimal_consolidation_request,
-    "gloas",
-    "ConsolidationRequest",
-    ConsolidationRequest
-);
-minimal_test!(
-    gloas_minimal_deposit_request,
-    "gloas",
-    "DepositRequest",
-    DepositRequest
-);
-minimal_test!(
-    gloas_minimal_execution_requests,
-    "gloas",
-    "ExecutionRequests",
-    ExecutionRequests
-);
-minimal_test!(
-    gloas_minimal_pending_consolidation,
-    "gloas",
-    "PendingConsolidation",
-    PendingConsolidation
-);
-minimal_test!(
-    gloas_minimal_pending_deposit,
-    "gloas",
-    "PendingDeposit",
-    PendingDeposit
-);
-minimal_test!(
-    gloas_minimal_pending_partial_withdrawal,
-    "gloas",
-    "PendingPartialWithdrawal",
-    PendingPartialWithdrawal
-);
-minimal_test!(
-    gloas_minimal_single_attestation,
-    "gloas",
-    "SingleAttestation",
-    SingleAttestation
-);
-minimal_test!(
-    gloas_minimal_withdrawal_request,
-    "gloas",
-    "WithdrawalRequest",
-    WithdrawalRequest
-);
-minimal_test!(
-    gloas_minimal_attestation,
-    "gloas",
-    "Attestation",
-    ElectraAttestation
-);
-minimal_test!(
-    gloas_minimal_indexed_attestation,
-    "gloas",
-    "IndexedAttestation",
-    ElectraIndexedAttestation
-);
-minimal_test!(
-    gloas_minimal_attester_slashing,
-    "gloas",
-    "AttesterSlashing",
-    ElectraAttesterSlashing
-);
-minimal_test!(
-    gloas_minimal_aggregate_and_proof,
-    "gloas",
-    "AggregateAndProof",
-    ElectraAggregateAndProof
-);
-minimal_test!(
-    gloas_minimal_signed_aggregate_and_proof,
-    "gloas",
-    "SignedAggregateAndProof",
-    ElectraSignedAggregateAndProof
-);
-minimal_test!(
-    gloas_minimal_execution_payload,
-    "gloas",
-    "ExecutionPayload",
-    DenebExecutionPayload
-);
-minimal_test!(
-    gloas_minimal_execution_payload_header,
-    "gloas",
-    "ExecutionPayloadHeader",
-    DenebExecutionPayloadHeader
-);
-minimal_test!(
-    gloas_minimal_light_client_header,
-    "gloas",
-    "LightClientHeader",
-    ElectraLightClientHeader
-);
-minimal_test!(
-    gloas_minimal_light_client_bootstrap,
-    "gloas",
-    "LightClientBootstrap",
-    ElectraLightClientBootstrap
-);
-minimal_test!(
-    gloas_minimal_light_client_update,
-    "gloas",
-    "LightClientUpdate",
-    ElectraLightClientUpdate
-);
-minimal_test!(
-    gloas_minimal_light_client_finality_update,
-    "gloas",
-    "LightClientFinalityUpdate",
-    ElectraLightClientFinalityUpdate
-);
-minimal_test!(
-    gloas_minimal_light_client_optimistic_update,
-    "gloas",
-    "LightClientOptimisticUpdate",
-    ElectraLightClientOptimisticUpdate
-);
-minimal_test!(
-    gloas_minimal_data_columns_by_root_identifier,
-    "gloas",
-    "DataColumnsByRootIdentifier",
-    DataColumnsByRootIdentifier
-);
-minimal_test!(
-    gloas_minimal_builder_pending_payment,
-    "gloas",
-    "BuilderPendingPayment",
-    BuilderPendingPayment
-);
-minimal_test!(
-    gloas_minimal_builder_pending_withdrawal,
-    "gloas",
-    "BuilderPendingWithdrawal",
-    BuilderPendingWithdrawal
-);
-minimal_test!(
-    gloas_minimal_execution_payload_bid,
-    "gloas",
-    "ExecutionPayloadBid",
-    ExecutionPayloadBid
-);
-minimal_test!(
-    gloas_minimal_execution_payload_envelope,
-    "gloas",
-    "ExecutionPayloadEnvelope",
-    GloasExecutionPayloadEnvelope
-);
-minimal_test!(
-    gloas_minimal_fork_choice_node,
-    "gloas",
-    "ForkChoiceNode",
-    ForkChoiceNode
-);
-minimal_test!(
-    gloas_minimal_payload_attestation,
-    "gloas",
-    "PayloadAttestation",
-    GloasPayloadAttestation
-);
-minimal_test!(
-    gloas_minimal_indexed_payload_attestation,
-    "gloas",
-    "IndexedPayloadAttestation",
-    GloasIndexedPayloadAttestation
-);
-minimal_test!(
-    gloas_minimal_payload_attestation_data,
-    "gloas",
-    "PayloadAttestationData",
-    PayloadAttestationData
-);
-minimal_test!(
-    gloas_minimal_payload_attestation_message,
-    "gloas",
-    "PayloadAttestationMessage",
-    PayloadAttestationMessage
-);
-minimal_test!(
-    gloas_minimal_signed_execution_payload_bid,
-    "gloas",
-    "SignedExecutionPayloadBid",
-    SignedExecutionPayloadBid
-);
-minimal_test!(
-    gloas_minimal_signed_execution_payload_envelope,
-    "gloas",
-    "SignedExecutionPayloadEnvelope",
-    GloasSignedExecutionPayloadEnvelope
-);
-minimal_test!(
-    gloas_minimal_data_column_sidecar,
-    "gloas",
-    "DataColumnSidecar",
-    GloasDataColumnSidecar
-);
-minimal_test!(
-    gloas_minimal_beacon_block_body,
-    "gloas",
-    "BeaconBlockBody",
-    GloasBeaconBlockBody
-);
-minimal_test!(
-    gloas_minimal_beacon_block,
-    "gloas",
-    "BeaconBlock",
-    GloasBeaconBlock
-);
-minimal_test!(
-    gloas_minimal_signed_beacon_block,
-    "gloas",
-    "SignedBeaconBlock",
-    GloasSignedBeaconBlock
-);
-minimal_test!(
-    gloas_minimal_beacon_state,
-    "gloas",
-    "BeaconState",
-    GloasBeaconState
-);
+#[test]
+fn gloas_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("gloas", "Fork");
+}
+#[test]
+fn gloas_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("gloas", "ForkData");
+}
+#[test]
+fn gloas_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("gloas", "Checkpoint");
+}
+#[test]
+fn gloas_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("gloas", "Validator");
+}
+#[test]
+fn gloas_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("gloas", "AttestationData");
+}
+#[test]
+fn gloas_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("gloas", "Eth1Data");
+}
+#[test]
+fn gloas_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("gloas", "Eth1Block");
+}
+#[test]
+fn gloas_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("gloas", "DepositMessage");
+}
+#[test]
+fn gloas_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("gloas", "DepositData");
+}
+#[test]
+fn gloas_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("gloas", "Deposit");
+}
+#[test]
+fn gloas_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("gloas", "BeaconBlockHeader");
+}
+#[test]
+fn gloas_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("gloas", "SignedBeaconBlockHeader");
+}
+#[test]
+fn gloas_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("gloas", "SigningData");
+}
+#[test]
+fn gloas_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("gloas", "VoluntaryExit");
+}
+#[test]
+fn gloas_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("gloas", "SignedVoluntaryExit");
+}
+#[test]
+fn gloas_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("gloas", "ProposerSlashing");
+}
+#[test]
+fn gloas_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("gloas", "HistoricalBatch");
+}
+#[test]
+fn gloas_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("gloas", "PendingAttestation");
+}
+#[test]
+fn gloas_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("gloas", "SyncAggregate");
+}
+#[test]
+fn gloas_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("gloas", "SyncCommittee");
+}
+#[test]
+fn gloas_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("gloas", "SyncCommitteeContribution");
+}
+#[test]
+fn gloas_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("gloas", "ContributionAndProof");
+}
+#[test]
+fn gloas_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("gloas", "SignedContributionAndProof");
+}
+#[test]
+fn gloas_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("gloas", "SyncCommitteeMessage");
+}
+#[test]
+fn gloas_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "gloas",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn gloas_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("gloas", "Withdrawal");
+}
+#[test]
+fn gloas_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("gloas", "BLSToExecutionChange");
+}
+#[test]
+fn gloas_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("gloas", "SignedBLSToExecutionChange");
+}
+#[test]
+fn gloas_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("gloas", "HistoricalSummary");
+}
+#[test]
+fn gloas_minimal_blob_identifier() {
+    run_ssz_static_type::<BlobIdentifier>("gloas", "BlobIdentifier");
+}
+#[test]
+fn gloas_minimal_blob_sidecar() {
+    run_ssz_static_type::<BlobSidecar>("gloas", "BlobSidecar");
+}
+#[test]
+fn gloas_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("gloas", "PowBlock");
+}
+#[test]
+fn gloas_minimal_consolidation_request() {
+    run_ssz_static_type::<ConsolidationRequest>("gloas", "ConsolidationRequest");
+}
+#[test]
+fn gloas_minimal_deposit_request() {
+    run_ssz_static_type::<DepositRequest>("gloas", "DepositRequest");
+}
+#[test]
+fn gloas_minimal_execution_requests() {
+    run_ssz_static_type::<ExecutionRequests>("gloas", "ExecutionRequests");
+}
+#[test]
+fn gloas_minimal_pending_consolidation() {
+    run_ssz_static_type::<PendingConsolidation>("gloas", "PendingConsolidation");
+}
+#[test]
+fn gloas_minimal_pending_deposit() {
+    run_ssz_static_type::<PendingDeposit>("gloas", "PendingDeposit");
+}
+#[test]
+fn gloas_minimal_pending_partial_withdrawal() {
+    run_ssz_static_type::<PendingPartialWithdrawal>("gloas", "PendingPartialWithdrawal");
+}
+#[test]
+fn gloas_minimal_single_attestation() {
+    run_ssz_static_type::<SingleAttestation>("gloas", "SingleAttestation");
+}
+#[test]
+fn gloas_minimal_withdrawal_request() {
+    run_ssz_static_type::<WithdrawalRequest>("gloas", "WithdrawalRequest");
+}
+#[test]
+fn gloas_minimal_attestation() {
+    run_ssz_static_type::<ElectraAttestation>("gloas", "Attestation");
+}
+#[test]
+fn gloas_minimal_indexed_attestation() {
+    run_ssz_static_type::<ElectraIndexedAttestation>("gloas", "IndexedAttestation");
+}
+#[test]
+fn gloas_minimal_attester_slashing() {
+    run_ssz_static_type::<ElectraAttesterSlashing>("gloas", "AttesterSlashing");
+}
+#[test]
+fn gloas_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraAggregateAndProof>("gloas", "AggregateAndProof");
+}
+#[test]
+fn gloas_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraSignedAggregateAndProof>("gloas", "SignedAggregateAndProof");
+}
+#[test]
+fn gloas_minimal_execution_payload() {
+    run_ssz_static_type::<DenebExecutionPayload>("gloas", "ExecutionPayload");
+}
+#[test]
+fn gloas_minimal_execution_payload_header() {
+    run_ssz_static_type::<DenebExecutionPayloadHeader>("gloas", "ExecutionPayloadHeader");
+}
+#[test]
+fn gloas_minimal_light_client_header() {
+    run_ssz_static_type::<ElectraLightClientHeader>("gloas", "LightClientHeader");
+}
+#[test]
+fn gloas_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<ElectraLightClientBootstrap>("gloas", "LightClientBootstrap");
+}
+#[test]
+fn gloas_minimal_light_client_update() {
+    run_ssz_static_type::<ElectraLightClientUpdate>("gloas", "LightClientUpdate");
+}
+#[test]
+fn gloas_minimal_light_client_finality_update() {
+    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("gloas", "LightClientFinalityUpdate");
+}
+#[test]
+fn gloas_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
+        "gloas",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn gloas_minimal_data_columns_by_root_identifier() {
+    run_ssz_static_type::<DataColumnsByRootIdentifier>("gloas", "DataColumnsByRootIdentifier");
+}
+#[test]
+fn gloas_minimal_builder_pending_payment() {
+    run_ssz_static_type::<BuilderPendingPayment>("gloas", "BuilderPendingPayment");
+}
+#[test]
+fn gloas_minimal_builder_pending_withdrawal() {
+    run_ssz_static_type::<BuilderPendingWithdrawal>("gloas", "BuilderPendingWithdrawal");
+}
+#[test]
+fn gloas_minimal_execution_payload_bid() {
+    run_ssz_static_type::<ExecutionPayloadBid>("gloas", "ExecutionPayloadBid");
+}
+#[test]
+fn gloas_minimal_execution_payload_envelope() {
+    run_ssz_static_type::<GloasExecutionPayloadEnvelope>("gloas", "ExecutionPayloadEnvelope");
+}
+#[test]
+fn gloas_minimal_fork_choice_node() {
+    run_ssz_static_type::<ForkChoiceNode>("gloas", "ForkChoiceNode");
+}
+#[test]
+fn gloas_minimal_payload_attestation() {
+    run_ssz_static_type::<GloasPayloadAttestation>("gloas", "PayloadAttestation");
+}
+#[test]
+fn gloas_minimal_indexed_payload_attestation() {
+    run_ssz_static_type::<GloasIndexedPayloadAttestation>("gloas", "IndexedPayloadAttestation");
+}
+#[test]
+fn gloas_minimal_payload_attestation_data() {
+    run_ssz_static_type::<PayloadAttestationData>("gloas", "PayloadAttestationData");
+}
+#[test]
+fn gloas_minimal_payload_attestation_message() {
+    run_ssz_static_type::<PayloadAttestationMessage>("gloas", "PayloadAttestationMessage");
+}
+#[test]
+fn gloas_minimal_signed_execution_payload_bid() {
+    run_ssz_static_type::<SignedExecutionPayloadBid>("gloas", "SignedExecutionPayloadBid");
+}
+#[test]
+fn gloas_minimal_signed_execution_payload_envelope() {
+    run_ssz_static_type::<GloasSignedExecutionPayloadEnvelope>(
+        "gloas",
+        "SignedExecutionPayloadEnvelope",
+    );
+}
+#[test]
+fn gloas_minimal_data_column_sidecar() {
+    run_ssz_static_type::<GloasDataColumnSidecar>("gloas", "DataColumnSidecar");
+}
+#[test]
+fn gloas_minimal_beacon_block_body() {
+    run_ssz_static_type::<GloasBeaconBlockBody>("gloas", "BeaconBlockBody");
+}
+#[test]
+fn gloas_minimal_beacon_block() {
+    run_ssz_static_type::<GloasBeaconBlock>("gloas", "BeaconBlock");
+}
+#[test]
+fn gloas_minimal_signed_beacon_block() {
+    run_ssz_static_type::<GloasSignedBeaconBlock>("gloas", "SignedBeaconBlock");
+}
+#[test]
+fn gloas_minimal_beacon_state() {
+    run_ssz_static_type::<GloasBeaconState>("gloas", "BeaconState");
+}
 
 // ── EIP7805 minimal ──
-preset_independent_tests!(eip7805_minimal, "eip7805");
-minimal_test!(
-    eip7805_minimal_historical_batch,
-    "eip7805",
-    "HistoricalBatch",
-    HistoricalBatch
-);
-minimal_test!(
-    eip7805_minimal_pending_attestation,
-    "eip7805",
-    "PendingAttestation",
-    PendingAttestation
-);
-minimal_test!(
-    eip7805_minimal_sync_aggregate,
-    "eip7805",
-    "SyncAggregate",
-    SyncAggregate
-);
-minimal_test!(
-    eip7805_minimal_sync_committee,
-    "eip7805",
-    "SyncCommittee",
-    SyncCommittee
-);
-minimal_test!(
-    eip7805_minimal_sync_committee_contribution,
-    "eip7805",
-    "SyncCommitteeContribution",
-    SyncCommitteeContribution
-);
-minimal_test!(
-    eip7805_minimal_contribution_and_proof,
-    "eip7805",
-    "ContributionAndProof",
-    ContributionAndProof
-);
-minimal_test!(
-    eip7805_minimal_signed_contribution_and_proof,
-    "eip7805",
-    "SignedContributionAndProof",
-    SignedContributionAndProof
-);
-minimal_test!(
-    eip7805_minimal_sync_committee_message,
-    "eip7805",
-    "SyncCommitteeMessage",
-    altair::SyncCommitteeMessage
-);
-minimal_test!(
-    eip7805_minimal_sync_aggregator_selection_data,
-    "eip7805",
-    "SyncAggregatorSelectionData",
-    altair::SyncAggregatorSelectionData
-);
-minimal_test!(
-    eip7805_minimal_withdrawal,
-    "eip7805",
-    "Withdrawal",
-    Withdrawal
-);
-minimal_test!(
-    eip7805_minimal_bls_to_execution_change,
-    "eip7805",
-    "BLSToExecutionChange",
-    BLSToExecutionChange
-);
-minimal_test!(
-    eip7805_minimal_signed_bls_to_execution_change,
-    "eip7805",
-    "SignedBLSToExecutionChange",
-    SignedBLSToExecutionChange
-);
-minimal_test!(
-    eip7805_minimal_historical_summary,
-    "eip7805",
-    "HistoricalSummary",
-    HistoricalSummary
-);
-minimal_test!(
-    eip7805_minimal_blob_identifier,
-    "eip7805",
-    "BlobIdentifier",
-    BlobIdentifier
-);
-minimal_test!(
-    eip7805_minimal_blob_sidecar,
-    "eip7805",
-    "BlobSidecar",
-    BlobSidecar
-);
-minimal_test!(eip7805_minimal_pow_block, "eip7805", "PowBlock", PowBlock);
-minimal_test!(
-    eip7805_minimal_consolidation_request,
-    "eip7805",
-    "ConsolidationRequest",
-    ConsolidationRequest
-);
-minimal_test!(
-    eip7805_minimal_deposit_request,
-    "eip7805",
-    "DepositRequest",
-    DepositRequest
-);
-minimal_test!(
-    eip7805_minimal_execution_requests,
-    "eip7805",
-    "ExecutionRequests",
-    ExecutionRequests
-);
-minimal_test!(
-    eip7805_minimal_pending_consolidation,
-    "eip7805",
-    "PendingConsolidation",
-    PendingConsolidation
-);
-minimal_test!(
-    eip7805_minimal_pending_deposit,
-    "eip7805",
-    "PendingDeposit",
-    PendingDeposit
-);
-minimal_test!(
-    eip7805_minimal_pending_partial_withdrawal,
-    "eip7805",
-    "PendingPartialWithdrawal",
-    PendingPartialWithdrawal
-);
-minimal_test!(
-    eip7805_minimal_single_attestation,
-    "eip7805",
-    "SingleAttestation",
-    SingleAttestation
-);
-minimal_test!(
-    eip7805_minimal_withdrawal_request,
-    "eip7805",
-    "WithdrawalRequest",
-    WithdrawalRequest
-);
-minimal_test!(
-    eip7805_minimal_attestation,
-    "eip7805",
-    "Attestation",
-    ElectraAttestation
-);
-minimal_test!(
-    eip7805_minimal_indexed_attestation,
-    "eip7805",
-    "IndexedAttestation",
-    ElectraIndexedAttestation
-);
-minimal_test!(
-    eip7805_minimal_attester_slashing,
-    "eip7805",
-    "AttesterSlashing",
-    ElectraAttesterSlashing
-);
-minimal_test!(
-    eip7805_minimal_aggregate_and_proof,
-    "eip7805",
-    "AggregateAndProof",
-    ElectraAggregateAndProof
-);
-minimal_test!(
-    eip7805_minimal_signed_aggregate_and_proof,
-    "eip7805",
-    "SignedAggregateAndProof",
-    ElectraSignedAggregateAndProof
-);
-minimal_test!(
-    eip7805_minimal_execution_payload,
-    "eip7805",
-    "ExecutionPayload",
-    DenebExecutionPayload
-);
-minimal_test!(
-    eip7805_minimal_execution_payload_header,
-    "eip7805",
-    "ExecutionPayloadHeader",
-    DenebExecutionPayloadHeader
-);
-minimal_test!(
-    eip7805_minimal_light_client_header,
-    "eip7805",
-    "LightClientHeader",
-    ElectraLightClientHeader
-);
-minimal_test!(
-    eip7805_minimal_light_client_bootstrap,
-    "eip7805",
-    "LightClientBootstrap",
-    ElectraLightClientBootstrap
-);
-minimal_test!(
-    eip7805_minimal_light_client_update,
-    "eip7805",
-    "LightClientUpdate",
-    ElectraLightClientUpdate
-);
-minimal_test!(
-    eip7805_minimal_light_client_finality_update,
-    "eip7805",
-    "LightClientFinalityUpdate",
-    ElectraLightClientFinalityUpdate
-);
-minimal_test!(
-    eip7805_minimal_light_client_optimistic_update,
-    "eip7805",
-    "LightClientOptimisticUpdate",
-    ElectraLightClientOptimisticUpdate
-);
-minimal_test!(
-    eip7805_minimal_beacon_block_body,
-    "eip7805",
-    "BeaconBlockBody",
-    ElectraBeaconBlockBody
-);
-minimal_test!(
-    eip7805_minimal_beacon_block,
-    "eip7805",
-    "BeaconBlock",
-    ElectraBeaconBlock
-);
-minimal_test!(
-    eip7805_minimal_signed_beacon_block,
-    "eip7805",
-    "SignedBeaconBlock",
-    ElectraSignedBeaconBlock
-);
-minimal_test!(
-    eip7805_minimal_data_column_sidecar,
-    "eip7805",
-    "DataColumnSidecar",
-    DataColumnSidecar
-);
-minimal_test!(
-    eip7805_minimal_data_columns_by_root_identifier,
-    "eip7805",
-    "DataColumnsByRootIdentifier",
-    DataColumnsByRootIdentifier
-);
-minimal_test!(
-    eip7805_minimal_matrix_entry,
-    "eip7805",
-    "MatrixEntry",
-    MatrixEntry
-);
-minimal_test!(
-    eip7805_minimal_inclusion_list,
-    "eip7805",
-    "InclusionList",
-    InclusionList
-);
-minimal_test!(
-    eip7805_minimal_signed_inclusion_list,
-    "eip7805",
-    "SignedInclusionList",
-    SignedInclusionList
-);
-minimal_test!(
-    eip7805_minimal_beacon_state,
-    "eip7805",
-    "BeaconState",
-    FuluBeaconState
-);
+#[test]
+fn eip7805_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("eip7805", "Fork");
+}
+#[test]
+fn eip7805_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("eip7805", "ForkData");
+}
+#[test]
+fn eip7805_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("eip7805", "Checkpoint");
+}
+#[test]
+fn eip7805_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("eip7805", "Validator");
+}
+#[test]
+fn eip7805_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("eip7805", "AttestationData");
+}
+#[test]
+fn eip7805_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("eip7805", "Eth1Data");
+}
+#[test]
+fn eip7805_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("eip7805", "Eth1Block");
+}
+#[test]
+fn eip7805_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("eip7805", "DepositMessage");
+}
+#[test]
+fn eip7805_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("eip7805", "DepositData");
+}
+#[test]
+fn eip7805_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("eip7805", "Deposit");
+}
+#[test]
+fn eip7805_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("eip7805", "BeaconBlockHeader");
+}
+#[test]
+fn eip7805_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("eip7805", "SignedBeaconBlockHeader");
+}
+#[test]
+fn eip7805_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("eip7805", "SigningData");
+}
+#[test]
+fn eip7805_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("eip7805", "VoluntaryExit");
+}
+#[test]
+fn eip7805_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("eip7805", "SignedVoluntaryExit");
+}
+#[test]
+fn eip7805_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("eip7805", "ProposerSlashing");
+}
+#[test]
+fn eip7805_minimal_historical_batch() {
+    run_ssz_static_type::<HistoricalBatch>("eip7805", "HistoricalBatch");
+}
+#[test]
+fn eip7805_minimal_pending_attestation() {
+    run_ssz_static_type::<PendingAttestation>("eip7805", "PendingAttestation");
+}
+#[test]
+fn eip7805_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("eip7805", "SyncAggregate");
+}
+#[test]
+fn eip7805_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("eip7805", "SyncCommittee");
+}
+#[test]
+fn eip7805_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("eip7805", "SyncCommitteeContribution");
+}
+#[test]
+fn eip7805_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("eip7805", "ContributionAndProof");
+}
+#[test]
+fn eip7805_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("eip7805", "SignedContributionAndProof");
+}
+#[test]
+fn eip7805_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("eip7805", "SyncCommitteeMessage");
+}
+#[test]
+fn eip7805_minimal_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        "eip7805",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn eip7805_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("eip7805", "Withdrawal");
+}
+#[test]
+fn eip7805_minimal_bls_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("eip7805", "BLSToExecutionChange");
+}
+#[test]
+fn eip7805_minimal_signed_bls_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("eip7805", "SignedBLSToExecutionChange");
+}
+#[test]
+fn eip7805_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("eip7805", "HistoricalSummary");
+}
+#[test]
+fn eip7805_minimal_blob_identifier() {
+    run_ssz_static_type::<BlobIdentifier>("eip7805", "BlobIdentifier");
+}
+#[test]
+fn eip7805_minimal_blob_sidecar() {
+    run_ssz_static_type::<BlobSidecar>("eip7805", "BlobSidecar");
+}
+#[test]
+fn eip7805_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("eip7805", "PowBlock");
+}
+#[test]
+fn eip7805_minimal_consolidation_request() {
+    run_ssz_static_type::<ConsolidationRequest>("eip7805", "ConsolidationRequest");
+}
+#[test]
+fn eip7805_minimal_deposit_request() {
+    run_ssz_static_type::<DepositRequest>("eip7805", "DepositRequest");
+}
+#[test]
+fn eip7805_minimal_execution_requests() {
+    run_ssz_static_type::<ExecutionRequests>("eip7805", "ExecutionRequests");
+}
+#[test]
+fn eip7805_minimal_pending_consolidation() {
+    run_ssz_static_type::<PendingConsolidation>("eip7805", "PendingConsolidation");
+}
+#[test]
+fn eip7805_minimal_pending_deposit() {
+    run_ssz_static_type::<PendingDeposit>("eip7805", "PendingDeposit");
+}
+#[test]
+fn eip7805_minimal_pending_partial_withdrawal() {
+    run_ssz_static_type::<PendingPartialWithdrawal>("eip7805", "PendingPartialWithdrawal");
+}
+#[test]
+fn eip7805_minimal_single_attestation() {
+    run_ssz_static_type::<SingleAttestation>("eip7805", "SingleAttestation");
+}
+#[test]
+fn eip7805_minimal_withdrawal_request() {
+    run_ssz_static_type::<WithdrawalRequest>("eip7805", "WithdrawalRequest");
+}
+#[test]
+fn eip7805_minimal_attestation() {
+    run_ssz_static_type::<ElectraAttestation>("eip7805", "Attestation");
+}
+#[test]
+fn eip7805_minimal_indexed_attestation() {
+    run_ssz_static_type::<ElectraIndexedAttestation>("eip7805", "IndexedAttestation");
+}
+#[test]
+fn eip7805_minimal_attester_slashing() {
+    run_ssz_static_type::<ElectraAttesterSlashing>("eip7805", "AttesterSlashing");
+}
+#[test]
+fn eip7805_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraAggregateAndProof>("eip7805", "AggregateAndProof");
+}
+#[test]
+fn eip7805_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<ElectraSignedAggregateAndProof>("eip7805", "SignedAggregateAndProof");
+}
+#[test]
+fn eip7805_minimal_execution_payload() {
+    run_ssz_static_type::<DenebExecutionPayload>("eip7805", "ExecutionPayload");
+}
+#[test]
+fn eip7805_minimal_execution_payload_header() {
+    run_ssz_static_type::<DenebExecutionPayloadHeader>("eip7805", "ExecutionPayloadHeader");
+}
+#[test]
+fn eip7805_minimal_light_client_header() {
+    run_ssz_static_type::<ElectraLightClientHeader>("eip7805", "LightClientHeader");
+}
+#[test]
+fn eip7805_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<ElectraLightClientBootstrap>("eip7805", "LightClientBootstrap");
+}
+#[test]
+fn eip7805_minimal_light_client_update() {
+    run_ssz_static_type::<ElectraLightClientUpdate>("eip7805", "LightClientUpdate");
+}
+#[test]
+fn eip7805_minimal_light_client_finality_update() {
+    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("eip7805", "LightClientFinalityUpdate");
+}
+#[test]
+fn eip7805_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
+        "eip7805",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn eip7805_minimal_beacon_block_body() {
+    run_ssz_static_type::<ElectraBeaconBlockBody>("eip7805", "BeaconBlockBody");
+}
+#[test]
+fn eip7805_minimal_beacon_block() {
+    run_ssz_static_type::<ElectraBeaconBlock>("eip7805", "BeaconBlock");
+}
+#[test]
+fn eip7805_minimal_signed_beacon_block() {
+    run_ssz_static_type::<ElectraSignedBeaconBlock>("eip7805", "SignedBeaconBlock");
+}
+#[test]
+fn eip7805_minimal_data_column_sidecar() {
+    run_ssz_static_type::<DataColumnSidecar>("eip7805", "DataColumnSidecar");
+}
+#[test]
+fn eip7805_minimal_data_columns_by_root_identifier() {
+    run_ssz_static_type::<DataColumnsByRootIdentifier>("eip7805", "DataColumnsByRootIdentifier");
+}
+#[test]
+fn eip7805_minimal_matrix_entry() {
+    run_ssz_static_type::<MatrixEntry>("eip7805", "MatrixEntry");
+}
+#[test]
+fn eip7805_minimal_inclusion_list() {
+    run_ssz_static_type::<InclusionList>("eip7805", "InclusionList");
+}
+#[test]
+fn eip7805_minimal_signed_inclusion_list() {
+    run_ssz_static_type::<SignedInclusionList>("eip7805", "SignedInclusionList");
+}
+#[test]
+fn eip7805_minimal_beacon_state() {
+    run_ssz_static_type::<FuluBeaconState>("eip7805", "BeaconState");
+}
