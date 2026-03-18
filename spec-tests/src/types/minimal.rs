@@ -305,3 +305,718 @@ pub struct AltairBeaconState {
     pub current_sync_committee: SyncCommittee,
     pub next_sync_committee: SyncCommittee,
 }
+
+// ── Bellatrix types ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct BellatrixExecutionPayload {
+    pub parent_hash: [u8; 32],
+    pub fee_recipient: [u8; 20],
+    pub state_root: [u8; 32],
+    pub receipts_root: [u8; 32],
+    pub logs_bloom: SszVector<u8, BYTES_PER_LOGS_BLOOM>,
+    pub prev_randao: [u8; 32],
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: SszList<u8, MAX_EXTRA_DATA_BYTES>,
+    pub base_fee_per_gas: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub transactions: SszList<SszList<u8, MAX_BYTES_PER_TRANSACTION>, MAX_TRANSACTIONS_PER_PAYLOAD>,
+}
+
+pub use super::bellatrix::ExecutionPayloadHeader as BellatrixExecutionPayloadHeader;
+pub use super::bellatrix::PowBlock;
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct BellatrixBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
+    pub attester_slashings: SszList<AttesterSlashing, MAX_ATTESTER_SLASHINGS>,
+    pub attestations: SszList<Attestation, MAX_ATTESTATIONS>,
+    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
+    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub sync_aggregate: SyncAggregate,
+    pub execution_payload: BellatrixExecutionPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct BellatrixBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: BellatrixBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct BellatrixSignedBeaconBlock {
+    pub message: BellatrixBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct BellatrixBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_header: BellatrixExecutionPayloadHeader,
+}
+
+// ── Capella types ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaExecutionPayload {
+    pub parent_hash: [u8; 32],
+    pub fee_recipient: [u8; 20],
+    pub state_root: [u8; 32],
+    pub receipts_root: [u8; 32],
+    pub logs_bloom: SszVector<u8, BYTES_PER_LOGS_BLOOM>,
+    pub prev_randao: [u8; 32],
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: SszList<u8, MAX_EXTRA_DATA_BYTES>,
+    pub base_fee_per_gas: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub transactions: SszList<SszList<u8, MAX_BYTES_PER_TRANSACTION>, MAX_TRANSACTIONS_PER_PAYLOAD>,
+    pub withdrawals: SszList<Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaExecutionPayloadHeader {
+    pub parent_hash: [u8; 32],
+    pub fee_recipient: [u8; 20],
+    pub state_root: [u8; 32],
+    pub receipts_root: [u8; 32],
+    pub logs_bloom: SszVector<u8, BYTES_PER_LOGS_BLOOM>,
+    pub prev_randao: [u8; 32],
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: SszList<u8, MAX_EXTRA_DATA_BYTES>,
+    pub base_fee_per_gas: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub transactions_root: [u8; 32],
+    pub withdrawals_root: [u8; 32],
+}
+
+// Capella light client
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaLightClientHeader {
+    pub beacon: BeaconBlockHeader,
+    pub execution: CapellaExecutionPayloadHeader,
+    pub execution_branch: SszVector<[u8; 32], 4>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaLightClientBootstrap {
+    pub header: CapellaLightClientHeader,
+    pub current_sync_committee: SyncCommittee,
+    pub current_sync_committee_branch: SszVector<[u8; 32], 5>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaLightClientUpdate {
+    pub attested_header: CapellaLightClientHeader,
+    pub next_sync_committee: SyncCommittee,
+    pub next_sync_committee_branch: SszVector<[u8; 32], 5>,
+    pub finalized_header: CapellaLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 6>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaLightClientFinalityUpdate {
+    pub attested_header: CapellaLightClientHeader,
+    pub finalized_header: CapellaLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 6>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaLightClientOptimisticUpdate {
+    pub attested_header: CapellaLightClientHeader,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
+    pub attester_slashings: SszList<AttesterSlashing, MAX_ATTESTER_SLASHINGS>,
+    pub attestations: SszList<Attestation, MAX_ATTESTATIONS>,
+    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
+    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub sync_aggregate: SyncAggregate,
+    pub execution_payload: CapellaExecutionPayload,
+    pub bls_to_execution_changes: SszList<SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: CapellaBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaSignedBeaconBlock {
+    pub message: CapellaBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct CapellaBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_header: CapellaExecutionPayloadHeader,
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+}
+
+// ── Deneb types ──
+// ExecutionPayload/Header add blob_gas_used + excess_blob_gas, BeaconBlockBody adds blob_kzg_commitments
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebExecutionPayload {
+    pub parent_hash: [u8; 32],
+    pub fee_recipient: [u8; 20],
+    pub state_root: [u8; 32],
+    pub receipts_root: [u8; 32],
+    pub logs_bloom: SszVector<u8, BYTES_PER_LOGS_BLOOM>,
+    pub prev_randao: [u8; 32],
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: SszList<u8, MAX_EXTRA_DATA_BYTES>,
+    pub base_fee_per_gas: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub transactions: SszList<SszList<u8, MAX_BYTES_PER_TRANSACTION>, MAX_TRANSACTIONS_PER_PAYLOAD>,
+    pub withdrawals: SszList<Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD>,
+    pub blob_gas_used: u64,
+    pub excess_blob_gas: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebExecutionPayloadHeader {
+    pub parent_hash: [u8; 32],
+    pub fee_recipient: [u8; 20],
+    pub state_root: [u8; 32],
+    pub receipts_root: [u8; 32],
+    pub logs_bloom: SszVector<u8, BYTES_PER_LOGS_BLOOM>,
+    pub prev_randao: [u8; 32],
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: SszList<u8, MAX_EXTRA_DATA_BYTES>,
+    pub base_fee_per_gas: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub transactions_root: [u8; 32],
+    pub withdrawals_root: [u8; 32],
+    pub blob_gas_used: u64,
+    pub excess_blob_gas: u64,
+}
+
+// BlobSidecar reuses mainnet (no preset-dependent fields)
+pub use super::deneb::BlobIdentifier;
+pub use super::deneb::BlobSidecar;
+
+// Deneb light client (same branch lengths as capella, but with deneb exec header)
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebLightClientHeader {
+    pub beacon: BeaconBlockHeader,
+    pub execution: DenebExecutionPayloadHeader,
+    pub execution_branch: SszVector<[u8; 32], 4>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebLightClientBootstrap {
+    pub header: DenebLightClientHeader,
+    pub current_sync_committee: SyncCommittee,
+    pub current_sync_committee_branch: SszVector<[u8; 32], 5>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebLightClientUpdate {
+    pub attested_header: DenebLightClientHeader,
+    pub next_sync_committee: SyncCommittee,
+    pub next_sync_committee_branch: SszVector<[u8; 32], 5>,
+    pub finalized_header: DenebLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 6>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebLightClientFinalityUpdate {
+    pub attested_header: DenebLightClientHeader,
+    pub finalized_header: DenebLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 6>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebLightClientOptimisticUpdate {
+    pub attested_header: DenebLightClientHeader,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
+    pub attester_slashings: SszList<AttesterSlashing, MAX_ATTESTER_SLASHINGS>,
+    pub attestations: SszList<Attestation, MAX_ATTESTATIONS>,
+    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
+    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub sync_aggregate: SyncAggregate,
+    pub execution_payload: DenebExecutionPayload,
+    pub bls_to_execution_changes: SszList<SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES>,
+    pub blob_kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: DenebBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebSignedBeaconBlock {
+    pub message: DenebBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct DenebBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_header: DenebExecutionPayloadHeader,
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+}
+
+// ── Electra types ──
+// Attestation changes: committee_bits, wider bitlists; new ExecutionRequests; BeaconState additions
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraAttestation {
+    pub aggregation_bits: SszBitlist<MAX_VALIDATORS_X_COMMITTEES>,
+    pub data: AttestationData,
+    pub signature: [u8; 96],
+    pub committee_bits: SszBitvector<MAX_COMMITTEES_PER_SLOT>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraIndexedAttestation {
+    pub attesting_indices: SszList<u64, MAX_VALIDATORS_X_COMMITTEES>,
+    pub data: AttestationData,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraAttesterSlashing {
+    pub attestation_1: ElectraIndexedAttestation,
+    pub attestation_2: ElectraIndexedAttestation,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraAggregateAndProof {
+    pub aggregator_index: u64,
+    pub aggregate: ElectraAttestation,
+    pub selection_proof: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraSignedAggregateAndProof {
+    pub message: ElectraAggregateAndProof,
+    pub signature: [u8; 96],
+}
+
+pub use super::electra::{
+    ExecutionRequests, SingleAttestation, MAX_CONSOLIDATION_REQUESTS_PER_PAYLOAD,
+    MAX_DEPOSIT_REQUESTS_PER_PAYLOAD, MAX_WITHDRAWAL_REQUESTS_PER_PAYLOAD,
+};
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
+    pub attester_slashings: SszList<ElectraAttesterSlashing, MAX_ATTESTER_SLASHINGS_ELECTRA>,
+    pub attestations: SszList<ElectraAttestation, MAX_ATTESTATIONS_ELECTRA>,
+    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
+    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub sync_aggregate: SyncAggregate,
+    pub execution_payload: DenebExecutionPayload,
+    pub bls_to_execution_changes: SszList<SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES>,
+    pub blob_kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub execution_requests: ExecutionRequests,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: ElectraBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraSignedBeaconBlock {
+    pub message: ElectraBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+// Electra light client — updated branch lengths for larger BeaconState
+// floorlog2(169) = 7, floorlog2(86) = 6, floorlog2(87) = 6
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraLightClientHeader {
+    pub beacon: BeaconBlockHeader,
+    pub execution: DenebExecutionPayloadHeader,
+    pub execution_branch: SszVector<[u8; 32], 4>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraLightClientBootstrap {
+    pub header: ElectraLightClientHeader,
+    pub current_sync_committee: SyncCommittee,
+    pub current_sync_committee_branch: SszVector<[u8; 32], 6>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraLightClientUpdate {
+    pub attested_header: ElectraLightClientHeader,
+    pub next_sync_committee: SyncCommittee,
+    pub next_sync_committee_branch: SszVector<[u8; 32], 6>,
+    pub finalized_header: ElectraLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 7>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraLightClientFinalityUpdate {
+    pub attested_header: ElectraLightClientHeader,
+    pub finalized_header: ElectraLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], 7>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraLightClientOptimisticUpdate {
+    pub attested_header: ElectraLightClientHeader,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct ElectraBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_header: DenebExecutionPayloadHeader,
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+    pub deposit_requests_start_index: u64,
+    pub deposit_balance_to_consume: u64,
+    pub exit_balance_to_consume: u64,
+    pub earliest_exit_epoch: u64,
+    pub consolidation_balance_to_consume: u64,
+    pub earliest_consolidation_epoch: u64,
+    pub pending_deposits: SszList<PendingDeposit, PENDING_DEPOSITS_LIMIT>,
+    pub pending_partial_withdrawals:
+        SszList<PendingPartialWithdrawal, PENDING_PARTIAL_WITHDRAWALS_LIMIT>,
+    pub pending_consolidations: SszList<PendingConsolidation, PENDING_CONSOLIDATIONS_LIMIT>,
+}
+
+// ── Fulu types ──
+// Reuse fulu DAS types (preset-independent), add fulu BeaconState with proposer_lookahead
+pub use super::fulu::{DataColumnSidecar, DataColumnsByRootIdentifier, MatrixEntry};
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct FuluBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_header: DenebExecutionPayloadHeader,
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+    pub deposit_requests_start_index: u64,
+    pub deposit_balance_to_consume: u64,
+    pub exit_balance_to_consume: u64,
+    pub earliest_exit_epoch: u64,
+    pub consolidation_balance_to_consume: u64,
+    pub earliest_consolidation_epoch: u64,
+    pub pending_deposits: SszList<PendingDeposit, PENDING_DEPOSITS_LIMIT>,
+    pub pending_partial_withdrawals:
+        SszList<PendingPartialWithdrawal, PENDING_PARTIAL_WITHDRAWALS_LIMIT>,
+    pub pending_consolidations: SszList<PendingConsolidation, PENDING_CONSOLIDATIONS_LIMIT>,
+    pub proposer_lookahead: SszVector<u64, PROPOSER_LOOKAHEAD_LEN>,
+}
+
+// ── Gloas types ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasPayloadAttestation {
+    pub aggregation_bits: SszBitvector<PTC_SIZE>,
+    pub data: PayloadAttestationData,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasIndexedPayloadAttestation {
+    pub attesting_indices: SszList<u64, PTC_SIZE>,
+    pub data: PayloadAttestationData,
+    pub signature: [u8; 96],
+}
+
+pub use super::gloas::SignedExecutionPayloadBid;
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasExecutionPayloadEnvelope {
+    pub payload: DenebExecutionPayload,
+    pub execution_requests: ExecutionRequests,
+    pub builder_index: u64,
+    pub beacon_block_root: [u8; 32],
+    pub slot: u64,
+    pub blob_kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub state_root: [u8; 32],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasSignedExecutionPayloadEnvelope {
+    pub message: GloasExecutionPayloadEnvelope,
+    pub signature: [u8; 96],
+}
+
+pub use super::gloas::PayloadAttestationMessage;
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasDataColumnSidecar {
+    pub index: u64,
+    pub column: SszList<SszVector<u8, BYTES_PER_CELL>, MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub kzg_proofs: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub slot: u64,
+    pub beacon_block_root: [u8; 32],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
+    pub attester_slashings: SszList<ElectraAttesterSlashing, MAX_ATTESTER_SLASHINGS_ELECTRA>,
+    pub attestations: SszList<ElectraAttestation, MAX_ATTESTATIONS_ELECTRA>,
+    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
+    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub sync_aggregate: SyncAggregate,
+    pub bls_to_execution_changes: SszList<SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES>,
+    pub signed_execution_payload_bid: SignedExecutionPayloadBid,
+    pub payload_attestations: SszList<GloasPayloadAttestation, MAX_PAYLOAD_ATTESTATIONS>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: GloasBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasSignedBeaconBlock {
+    pub message: GloasBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
+    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_execution_payload_bid: ExecutionPayloadBid,
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+    pub deposit_requests_start_index: u64,
+    pub deposit_balance_to_consume: u64,
+    pub exit_balance_to_consume: u64,
+    pub earliest_exit_epoch: u64,
+    pub consolidation_balance_to_consume: u64,
+    pub earliest_consolidation_epoch: u64,
+    pub pending_deposits: SszList<PendingDeposit, PENDING_DEPOSITS_LIMIT>,
+    pub pending_partial_withdrawals:
+        SszList<PendingPartialWithdrawal, PENDING_PARTIAL_WITHDRAWALS_LIMIT>,
+    pub pending_consolidations: SszList<PendingConsolidation, PENDING_CONSOLIDATIONS_LIMIT>,
+    pub proposer_lookahead: SszVector<u64, PROPOSER_LOOKAHEAD_LEN>,
+    pub execution_payload_availability: SszBitvector<SLOTS_PER_HISTORICAL_ROOT>,
+    pub builder_pending_payments: SszVector<BuilderPendingPayment, { 2 * SLOTS_PER_EPOCH }>,
+    pub builder_pending_withdrawals:
+        SszList<BuilderPendingWithdrawal, BUILDER_PENDING_WITHDRAWALS_LIMIT>,
+    pub latest_block_hash: [u8; 32],
+    pub latest_withdrawals_root: [u8; 32],
+}
+
+// eip7805 types — reuse fulu + InclusionList (preset-independent)
+pub use super::eip7805::{InclusionList, SignedInclusionList};

@@ -291,3 +291,1592 @@ minimal_test!(
     "BeaconState",
     AltairBeaconState
 );
+
+// ── Bellatrix minimal ──
+preset_independent_tests!(bellatrix_minimal, "bellatrix");
+minimal_test!(
+    bellatrix_minimal_historical_batch,
+    "bellatrix",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    bellatrix_minimal_indexed_attestation,
+    "bellatrix",
+    "IndexedAttestation",
+    IndexedAttestation
+);
+minimal_test!(
+    bellatrix_minimal_pending_attestation,
+    "bellatrix",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    bellatrix_minimal_attestation,
+    "bellatrix",
+    "Attestation",
+    Attestation
+);
+minimal_test!(
+    bellatrix_minimal_attester_slashing,
+    "bellatrix",
+    "AttesterSlashing",
+    AttesterSlashing
+);
+minimal_test!(
+    bellatrix_minimal_aggregate_and_proof,
+    "bellatrix",
+    "AggregateAndProof",
+    AggregateAndProof
+);
+minimal_test!(
+    bellatrix_minimal_signed_aggregate_and_proof,
+    "bellatrix",
+    "SignedAggregateAndProof",
+    SignedAggregateAndProof
+);
+minimal_test!(
+    bellatrix_minimal_sync_aggregate,
+    "bellatrix",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    bellatrix_minimal_sync_committee,
+    "bellatrix",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    bellatrix_minimal_sync_committee_contribution,
+    "bellatrix",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    bellatrix_minimal_contribution_and_proof,
+    "bellatrix",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    bellatrix_minimal_signed_contribution_and_proof,
+    "bellatrix",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    bellatrix_minimal_sync_committee_message,
+    "bellatrix",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    bellatrix_minimal_sync_aggregator_selection_data,
+    "bellatrix",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(
+    bellatrix_minimal_light_client_header,
+    "bellatrix",
+    "LightClientHeader",
+    AltairLightClientHeader
+);
+minimal_test!(
+    bellatrix_minimal_light_client_bootstrap,
+    "bellatrix",
+    "LightClientBootstrap",
+    AltairLightClientBootstrap
+);
+minimal_test!(
+    bellatrix_minimal_light_client_update,
+    "bellatrix",
+    "LightClientUpdate",
+    AltairLightClientUpdate
+);
+minimal_test!(
+    bellatrix_minimal_light_client_finality_update,
+    "bellatrix",
+    "LightClientFinalityUpdate",
+    AltairLightClientFinalityUpdate
+);
+minimal_test!(
+    bellatrix_minimal_light_client_optimistic_update,
+    "bellatrix",
+    "LightClientOptimisticUpdate",
+    AltairLightClientOptimisticUpdate
+);
+minimal_test!(
+    bellatrix_minimal_execution_payload,
+    "bellatrix",
+    "ExecutionPayload",
+    BellatrixExecutionPayload
+);
+minimal_test!(
+    bellatrix_minimal_execution_payload_header,
+    "bellatrix",
+    "ExecutionPayloadHeader",
+    BellatrixExecutionPayloadHeader
+);
+minimal_test!(
+    bellatrix_minimal_pow_block,
+    "bellatrix",
+    "PowBlock",
+    PowBlock
+);
+minimal_test!(
+    bellatrix_minimal_beacon_block_body,
+    "bellatrix",
+    "BeaconBlockBody",
+    BellatrixBeaconBlockBody
+);
+minimal_test!(
+    bellatrix_minimal_beacon_block,
+    "bellatrix",
+    "BeaconBlock",
+    BellatrixBeaconBlock
+);
+minimal_test!(
+    bellatrix_minimal_signed_beacon_block,
+    "bellatrix",
+    "SignedBeaconBlock",
+    BellatrixSignedBeaconBlock
+);
+minimal_test!(
+    bellatrix_minimal_beacon_state,
+    "bellatrix",
+    "BeaconState",
+    BellatrixBeaconState
+);
+
+// ── Capella minimal ──
+preset_independent_tests!(capella_minimal, "capella");
+minimal_test!(
+    capella_minimal_historical_batch,
+    "capella",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    capella_minimal_indexed_attestation,
+    "capella",
+    "IndexedAttestation",
+    IndexedAttestation
+);
+minimal_test!(
+    capella_minimal_pending_attestation,
+    "capella",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    capella_minimal_attestation,
+    "capella",
+    "Attestation",
+    Attestation
+);
+minimal_test!(
+    capella_minimal_attester_slashing,
+    "capella",
+    "AttesterSlashing",
+    AttesterSlashing
+);
+minimal_test!(
+    capella_minimal_aggregate_and_proof,
+    "capella",
+    "AggregateAndProof",
+    AggregateAndProof
+);
+minimal_test!(
+    capella_minimal_signed_aggregate_and_proof,
+    "capella",
+    "SignedAggregateAndProof",
+    SignedAggregateAndProof
+);
+minimal_test!(
+    capella_minimal_sync_aggregate,
+    "capella",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    capella_minimal_sync_committee,
+    "capella",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    capella_minimal_sync_committee_contribution,
+    "capella",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    capella_minimal_contribution_and_proof,
+    "capella",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    capella_minimal_signed_contribution_and_proof,
+    "capella",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    capella_minimal_sync_committee_message,
+    "capella",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    capella_minimal_sync_aggregator_selection_data,
+    "capella",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(
+    capella_minimal_withdrawal,
+    "capella",
+    "Withdrawal",
+    Withdrawal
+);
+minimal_test!(
+    capella_minimal_bls_to_execution_change,
+    "capella",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    capella_minimal_signed_bls_to_execution_change,
+    "capella",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    capella_minimal_historical_summary,
+    "capella",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    capella_minimal_execution_payload,
+    "capella",
+    "ExecutionPayload",
+    CapellaExecutionPayload
+);
+minimal_test!(
+    capella_minimal_execution_payload_header,
+    "capella",
+    "ExecutionPayloadHeader",
+    CapellaExecutionPayloadHeader
+);
+minimal_test!(
+    capella_minimal_light_client_header,
+    "capella",
+    "LightClientHeader",
+    CapellaLightClientHeader
+);
+minimal_test!(
+    capella_minimal_light_client_bootstrap,
+    "capella",
+    "LightClientBootstrap",
+    CapellaLightClientBootstrap
+);
+minimal_test!(
+    capella_minimal_light_client_update,
+    "capella",
+    "LightClientUpdate",
+    CapellaLightClientUpdate
+);
+minimal_test!(
+    capella_minimal_light_client_finality_update,
+    "capella",
+    "LightClientFinalityUpdate",
+    CapellaLightClientFinalityUpdate
+);
+minimal_test!(
+    capella_minimal_light_client_optimistic_update,
+    "capella",
+    "LightClientOptimisticUpdate",
+    CapellaLightClientOptimisticUpdate
+);
+minimal_test!(
+    capella_minimal_beacon_block_body,
+    "capella",
+    "BeaconBlockBody",
+    CapellaBeaconBlockBody
+);
+minimal_test!(
+    capella_minimal_beacon_block,
+    "capella",
+    "BeaconBlock",
+    CapellaBeaconBlock
+);
+minimal_test!(
+    capella_minimal_signed_beacon_block,
+    "capella",
+    "SignedBeaconBlock",
+    CapellaSignedBeaconBlock
+);
+minimal_test!(
+    capella_minimal_beacon_state,
+    "capella",
+    "BeaconState",
+    CapellaBeaconState
+);
+
+// ── Deneb minimal ──
+preset_independent_tests!(deneb_minimal, "deneb");
+minimal_test!(
+    deneb_minimal_historical_batch,
+    "deneb",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    deneb_minimal_indexed_attestation,
+    "deneb",
+    "IndexedAttestation",
+    IndexedAttestation
+);
+minimal_test!(
+    deneb_minimal_pending_attestation,
+    "deneb",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    deneb_minimal_attestation,
+    "deneb",
+    "Attestation",
+    Attestation
+);
+minimal_test!(
+    deneb_minimal_attester_slashing,
+    "deneb",
+    "AttesterSlashing",
+    AttesterSlashing
+);
+minimal_test!(
+    deneb_minimal_aggregate_and_proof,
+    "deneb",
+    "AggregateAndProof",
+    AggregateAndProof
+);
+minimal_test!(
+    deneb_minimal_signed_aggregate_and_proof,
+    "deneb",
+    "SignedAggregateAndProof",
+    SignedAggregateAndProof
+);
+minimal_test!(
+    deneb_minimal_sync_aggregate,
+    "deneb",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    deneb_minimal_sync_committee,
+    "deneb",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    deneb_minimal_sync_committee_contribution,
+    "deneb",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    deneb_minimal_contribution_and_proof,
+    "deneb",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    deneb_minimal_signed_contribution_and_proof,
+    "deneb",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    deneb_minimal_sync_committee_message,
+    "deneb",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    deneb_minimal_sync_aggregator_selection_data,
+    "deneb",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(deneb_minimal_withdrawal, "deneb", "Withdrawal", Withdrawal);
+minimal_test!(
+    deneb_minimal_bls_to_execution_change,
+    "deneb",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    deneb_minimal_signed_bls_to_execution_change,
+    "deneb",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    deneb_minimal_historical_summary,
+    "deneb",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    deneb_minimal_blob_identifier,
+    "deneb",
+    "BlobIdentifier",
+    BlobIdentifier
+);
+minimal_test!(
+    deneb_minimal_blob_sidecar,
+    "deneb",
+    "BlobSidecar",
+    BlobSidecar
+);
+minimal_test!(
+    deneb_minimal_execution_payload,
+    "deneb",
+    "ExecutionPayload",
+    DenebExecutionPayload
+);
+minimal_test!(
+    deneb_minimal_execution_payload_header,
+    "deneb",
+    "ExecutionPayloadHeader",
+    DenebExecutionPayloadHeader
+);
+minimal_test!(
+    deneb_minimal_light_client_header,
+    "deneb",
+    "LightClientHeader",
+    DenebLightClientHeader
+);
+minimal_test!(
+    deneb_minimal_light_client_bootstrap,
+    "deneb",
+    "LightClientBootstrap",
+    DenebLightClientBootstrap
+);
+minimal_test!(
+    deneb_minimal_light_client_update,
+    "deneb",
+    "LightClientUpdate",
+    DenebLightClientUpdate
+);
+minimal_test!(
+    deneb_minimal_light_client_finality_update,
+    "deneb",
+    "LightClientFinalityUpdate",
+    DenebLightClientFinalityUpdate
+);
+minimal_test!(
+    deneb_minimal_light_client_optimistic_update,
+    "deneb",
+    "LightClientOptimisticUpdate",
+    DenebLightClientOptimisticUpdate
+);
+minimal_test!(
+    deneb_minimal_beacon_block_body,
+    "deneb",
+    "BeaconBlockBody",
+    DenebBeaconBlockBody
+);
+minimal_test!(
+    deneb_minimal_beacon_block,
+    "deneb",
+    "BeaconBlock",
+    DenebBeaconBlock
+);
+minimal_test!(
+    deneb_minimal_signed_beacon_block,
+    "deneb",
+    "SignedBeaconBlock",
+    DenebSignedBeaconBlock
+);
+minimal_test!(
+    deneb_minimal_beacon_state,
+    "deneb",
+    "BeaconState",
+    DenebBeaconState
+);
+
+// ── Electra minimal ──
+preset_independent_tests!(electra_minimal, "electra");
+minimal_test!(
+    electra_minimal_historical_batch,
+    "electra",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    electra_minimal_pending_attestation,
+    "electra",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    electra_minimal_sync_aggregate,
+    "electra",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    electra_minimal_sync_committee,
+    "electra",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    electra_minimal_sync_committee_contribution,
+    "electra",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    electra_minimal_contribution_and_proof,
+    "electra",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    electra_minimal_signed_contribution_and_proof,
+    "electra",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    electra_minimal_sync_committee_message,
+    "electra",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    electra_minimal_sync_aggregator_selection_data,
+    "electra",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(
+    electra_minimal_withdrawal,
+    "electra",
+    "Withdrawal",
+    Withdrawal
+);
+minimal_test!(
+    electra_minimal_bls_to_execution_change,
+    "electra",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    electra_minimal_signed_bls_to_execution_change,
+    "electra",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    electra_minimal_historical_summary,
+    "electra",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    electra_minimal_blob_identifier,
+    "electra",
+    "BlobIdentifier",
+    BlobIdentifier
+);
+minimal_test!(
+    electra_minimal_blob_sidecar,
+    "electra",
+    "BlobSidecar",
+    BlobSidecar
+);
+minimal_test!(electra_minimal_pow_block, "electra", "PowBlock", PowBlock);
+minimal_test!(
+    electra_minimal_consolidation_request,
+    "electra",
+    "ConsolidationRequest",
+    ConsolidationRequest
+);
+minimal_test!(
+    electra_minimal_deposit_request,
+    "electra",
+    "DepositRequest",
+    DepositRequest
+);
+minimal_test!(
+    electra_minimal_execution_requests,
+    "electra",
+    "ExecutionRequests",
+    ExecutionRequests
+);
+minimal_test!(
+    electra_minimal_pending_consolidation,
+    "electra",
+    "PendingConsolidation",
+    PendingConsolidation
+);
+minimal_test!(
+    electra_minimal_pending_deposit,
+    "electra",
+    "PendingDeposit",
+    PendingDeposit
+);
+minimal_test!(
+    electra_minimal_pending_partial_withdrawal,
+    "electra",
+    "PendingPartialWithdrawal",
+    PendingPartialWithdrawal
+);
+minimal_test!(
+    electra_minimal_single_attestation,
+    "electra",
+    "SingleAttestation",
+    SingleAttestation
+);
+minimal_test!(
+    electra_minimal_withdrawal_request,
+    "electra",
+    "WithdrawalRequest",
+    WithdrawalRequest
+);
+minimal_test!(
+    electra_minimal_attestation,
+    "electra",
+    "Attestation",
+    ElectraAttestation
+);
+minimal_test!(
+    electra_minimal_indexed_attestation,
+    "electra",
+    "IndexedAttestation",
+    ElectraIndexedAttestation
+);
+minimal_test!(
+    electra_minimal_attester_slashing,
+    "electra",
+    "AttesterSlashing",
+    ElectraAttesterSlashing
+);
+minimal_test!(
+    electra_minimal_aggregate_and_proof,
+    "electra",
+    "AggregateAndProof",
+    ElectraAggregateAndProof
+);
+minimal_test!(
+    electra_minimal_signed_aggregate_and_proof,
+    "electra",
+    "SignedAggregateAndProof",
+    ElectraSignedAggregateAndProof
+);
+minimal_test!(
+    electra_minimal_execution_payload,
+    "electra",
+    "ExecutionPayload",
+    DenebExecutionPayload
+);
+minimal_test!(
+    electra_minimal_execution_payload_header,
+    "electra",
+    "ExecutionPayloadHeader",
+    DenebExecutionPayloadHeader
+);
+minimal_test!(
+    electra_minimal_light_client_header,
+    "electra",
+    "LightClientHeader",
+    ElectraLightClientHeader
+);
+minimal_test!(
+    electra_minimal_light_client_bootstrap,
+    "electra",
+    "LightClientBootstrap",
+    ElectraLightClientBootstrap
+);
+minimal_test!(
+    electra_minimal_light_client_update,
+    "electra",
+    "LightClientUpdate",
+    ElectraLightClientUpdate
+);
+minimal_test!(
+    electra_minimal_light_client_finality_update,
+    "electra",
+    "LightClientFinalityUpdate",
+    ElectraLightClientFinalityUpdate
+);
+minimal_test!(
+    electra_minimal_light_client_optimistic_update,
+    "electra",
+    "LightClientOptimisticUpdate",
+    ElectraLightClientOptimisticUpdate
+);
+minimal_test!(
+    electra_minimal_beacon_block_body,
+    "electra",
+    "BeaconBlockBody",
+    ElectraBeaconBlockBody
+);
+minimal_test!(
+    electra_minimal_beacon_block,
+    "electra",
+    "BeaconBlock",
+    ElectraBeaconBlock
+);
+minimal_test!(
+    electra_minimal_signed_beacon_block,
+    "electra",
+    "SignedBeaconBlock",
+    ElectraSignedBeaconBlock
+);
+minimal_test!(
+    electra_minimal_beacon_state,
+    "electra",
+    "BeaconState",
+    ElectraBeaconState
+);
+
+// ── Fulu minimal ──
+// Same as electra but with DataColumn types and modified BeaconState
+preset_independent_tests!(fulu_minimal, "fulu");
+minimal_test!(
+    fulu_minimal_historical_batch,
+    "fulu",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    fulu_minimal_pending_attestation,
+    "fulu",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    fulu_minimal_sync_aggregate,
+    "fulu",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    fulu_minimal_sync_committee,
+    "fulu",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    fulu_minimal_sync_committee_contribution,
+    "fulu",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    fulu_minimal_contribution_and_proof,
+    "fulu",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    fulu_minimal_signed_contribution_and_proof,
+    "fulu",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    fulu_minimal_sync_committee_message,
+    "fulu",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    fulu_minimal_sync_aggregator_selection_data,
+    "fulu",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(fulu_minimal_withdrawal, "fulu", "Withdrawal", Withdrawal);
+minimal_test!(
+    fulu_minimal_bls_to_execution_change,
+    "fulu",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    fulu_minimal_signed_bls_to_execution_change,
+    "fulu",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    fulu_minimal_historical_summary,
+    "fulu",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    fulu_minimal_blob_identifier,
+    "fulu",
+    "BlobIdentifier",
+    BlobIdentifier
+);
+minimal_test!(
+    fulu_minimal_blob_sidecar,
+    "fulu",
+    "BlobSidecar",
+    BlobSidecar
+);
+minimal_test!(fulu_minimal_pow_block, "fulu", "PowBlock", PowBlock);
+minimal_test!(
+    fulu_minimal_consolidation_request,
+    "fulu",
+    "ConsolidationRequest",
+    ConsolidationRequest
+);
+minimal_test!(
+    fulu_minimal_deposit_request,
+    "fulu",
+    "DepositRequest",
+    DepositRequest
+);
+minimal_test!(
+    fulu_minimal_execution_requests,
+    "fulu",
+    "ExecutionRequests",
+    ExecutionRequests
+);
+minimal_test!(
+    fulu_minimal_pending_consolidation,
+    "fulu",
+    "PendingConsolidation",
+    PendingConsolidation
+);
+minimal_test!(
+    fulu_minimal_pending_deposit,
+    "fulu",
+    "PendingDeposit",
+    PendingDeposit
+);
+minimal_test!(
+    fulu_minimal_pending_partial_withdrawal,
+    "fulu",
+    "PendingPartialWithdrawal",
+    PendingPartialWithdrawal
+);
+minimal_test!(
+    fulu_minimal_single_attestation,
+    "fulu",
+    "SingleAttestation",
+    SingleAttestation
+);
+minimal_test!(
+    fulu_minimal_withdrawal_request,
+    "fulu",
+    "WithdrawalRequest",
+    WithdrawalRequest
+);
+minimal_test!(
+    fulu_minimal_attestation,
+    "fulu",
+    "Attestation",
+    ElectraAttestation
+);
+minimal_test!(
+    fulu_minimal_indexed_attestation,
+    "fulu",
+    "IndexedAttestation",
+    ElectraIndexedAttestation
+);
+minimal_test!(
+    fulu_minimal_attester_slashing,
+    "fulu",
+    "AttesterSlashing",
+    ElectraAttesterSlashing
+);
+minimal_test!(
+    fulu_minimal_aggregate_and_proof,
+    "fulu",
+    "AggregateAndProof",
+    ElectraAggregateAndProof
+);
+minimal_test!(
+    fulu_minimal_signed_aggregate_and_proof,
+    "fulu",
+    "SignedAggregateAndProof",
+    ElectraSignedAggregateAndProof
+);
+minimal_test!(
+    fulu_minimal_execution_payload,
+    "fulu",
+    "ExecutionPayload",
+    DenebExecutionPayload
+);
+minimal_test!(
+    fulu_minimal_execution_payload_header,
+    "fulu",
+    "ExecutionPayloadHeader",
+    DenebExecutionPayloadHeader
+);
+minimal_test!(
+    fulu_minimal_light_client_header,
+    "fulu",
+    "LightClientHeader",
+    ElectraLightClientHeader
+);
+minimal_test!(
+    fulu_minimal_light_client_bootstrap,
+    "fulu",
+    "LightClientBootstrap",
+    ElectraLightClientBootstrap
+);
+minimal_test!(
+    fulu_minimal_light_client_update,
+    "fulu",
+    "LightClientUpdate",
+    ElectraLightClientUpdate
+);
+minimal_test!(
+    fulu_minimal_light_client_finality_update,
+    "fulu",
+    "LightClientFinalityUpdate",
+    ElectraLightClientFinalityUpdate
+);
+minimal_test!(
+    fulu_minimal_light_client_optimistic_update,
+    "fulu",
+    "LightClientOptimisticUpdate",
+    ElectraLightClientOptimisticUpdate
+);
+minimal_test!(
+    fulu_minimal_beacon_block_body,
+    "fulu",
+    "BeaconBlockBody",
+    ElectraBeaconBlockBody
+);
+minimal_test!(
+    fulu_minimal_beacon_block,
+    "fulu",
+    "BeaconBlock",
+    ElectraBeaconBlock
+);
+minimal_test!(
+    fulu_minimal_signed_beacon_block,
+    "fulu",
+    "SignedBeaconBlock",
+    ElectraSignedBeaconBlock
+);
+minimal_test!(
+    fulu_minimal_data_column_sidecar,
+    "fulu",
+    "DataColumnSidecar",
+    DataColumnSidecar
+);
+minimal_test!(
+    fulu_minimal_data_columns_by_root_identifier,
+    "fulu",
+    "DataColumnsByRootIdentifier",
+    DataColumnsByRootIdentifier
+);
+minimal_test!(
+    fulu_minimal_matrix_entry,
+    "fulu",
+    "MatrixEntry",
+    MatrixEntry
+);
+minimal_test!(
+    fulu_minimal_beacon_state,
+    "fulu",
+    "BeaconState",
+    FuluBeaconState
+);
+
+// ── Gloas minimal ──
+preset_independent_tests!(gloas_minimal, "gloas");
+minimal_test!(
+    gloas_minimal_historical_batch,
+    "gloas",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    gloas_minimal_pending_attestation,
+    "gloas",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    gloas_minimal_sync_aggregate,
+    "gloas",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    gloas_minimal_sync_committee,
+    "gloas",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    gloas_minimal_sync_committee_contribution,
+    "gloas",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    gloas_minimal_contribution_and_proof,
+    "gloas",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    gloas_minimal_signed_contribution_and_proof,
+    "gloas",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    gloas_minimal_sync_committee_message,
+    "gloas",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    gloas_minimal_sync_aggregator_selection_data,
+    "gloas",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(gloas_minimal_withdrawal, "gloas", "Withdrawal", Withdrawal);
+minimal_test!(
+    gloas_minimal_bls_to_execution_change,
+    "gloas",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    gloas_minimal_signed_bls_to_execution_change,
+    "gloas",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    gloas_minimal_historical_summary,
+    "gloas",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    gloas_minimal_blob_identifier,
+    "gloas",
+    "BlobIdentifier",
+    BlobIdentifier
+);
+minimal_test!(
+    gloas_minimal_blob_sidecar,
+    "gloas",
+    "BlobSidecar",
+    BlobSidecar
+);
+minimal_test!(gloas_minimal_pow_block, "gloas", "PowBlock", PowBlock);
+minimal_test!(
+    gloas_minimal_consolidation_request,
+    "gloas",
+    "ConsolidationRequest",
+    ConsolidationRequest
+);
+minimal_test!(
+    gloas_minimal_deposit_request,
+    "gloas",
+    "DepositRequest",
+    DepositRequest
+);
+minimal_test!(
+    gloas_minimal_execution_requests,
+    "gloas",
+    "ExecutionRequests",
+    ExecutionRequests
+);
+minimal_test!(
+    gloas_minimal_pending_consolidation,
+    "gloas",
+    "PendingConsolidation",
+    PendingConsolidation
+);
+minimal_test!(
+    gloas_minimal_pending_deposit,
+    "gloas",
+    "PendingDeposit",
+    PendingDeposit
+);
+minimal_test!(
+    gloas_minimal_pending_partial_withdrawal,
+    "gloas",
+    "PendingPartialWithdrawal",
+    PendingPartialWithdrawal
+);
+minimal_test!(
+    gloas_minimal_single_attestation,
+    "gloas",
+    "SingleAttestation",
+    SingleAttestation
+);
+minimal_test!(
+    gloas_minimal_withdrawal_request,
+    "gloas",
+    "WithdrawalRequest",
+    WithdrawalRequest
+);
+minimal_test!(
+    gloas_minimal_attestation,
+    "gloas",
+    "Attestation",
+    ElectraAttestation
+);
+minimal_test!(
+    gloas_minimal_indexed_attestation,
+    "gloas",
+    "IndexedAttestation",
+    ElectraIndexedAttestation
+);
+minimal_test!(
+    gloas_minimal_attester_slashing,
+    "gloas",
+    "AttesterSlashing",
+    ElectraAttesterSlashing
+);
+minimal_test!(
+    gloas_minimal_aggregate_and_proof,
+    "gloas",
+    "AggregateAndProof",
+    ElectraAggregateAndProof
+);
+minimal_test!(
+    gloas_minimal_signed_aggregate_and_proof,
+    "gloas",
+    "SignedAggregateAndProof",
+    ElectraSignedAggregateAndProof
+);
+minimal_test!(
+    gloas_minimal_execution_payload,
+    "gloas",
+    "ExecutionPayload",
+    DenebExecutionPayload
+);
+minimal_test!(
+    gloas_minimal_execution_payload_header,
+    "gloas",
+    "ExecutionPayloadHeader",
+    DenebExecutionPayloadHeader
+);
+minimal_test!(
+    gloas_minimal_light_client_header,
+    "gloas",
+    "LightClientHeader",
+    ElectraLightClientHeader
+);
+minimal_test!(
+    gloas_minimal_light_client_bootstrap,
+    "gloas",
+    "LightClientBootstrap",
+    ElectraLightClientBootstrap
+);
+minimal_test!(
+    gloas_minimal_light_client_update,
+    "gloas",
+    "LightClientUpdate",
+    ElectraLightClientUpdate
+);
+minimal_test!(
+    gloas_minimal_light_client_finality_update,
+    "gloas",
+    "LightClientFinalityUpdate",
+    ElectraLightClientFinalityUpdate
+);
+minimal_test!(
+    gloas_minimal_light_client_optimistic_update,
+    "gloas",
+    "LightClientOptimisticUpdate",
+    ElectraLightClientOptimisticUpdate
+);
+minimal_test!(
+    gloas_minimal_data_columns_by_root_identifier,
+    "gloas",
+    "DataColumnsByRootIdentifier",
+    DataColumnsByRootIdentifier
+);
+minimal_test!(
+    gloas_minimal_builder_pending_payment,
+    "gloas",
+    "BuilderPendingPayment",
+    BuilderPendingPayment
+);
+minimal_test!(
+    gloas_minimal_builder_pending_withdrawal,
+    "gloas",
+    "BuilderPendingWithdrawal",
+    BuilderPendingWithdrawal
+);
+minimal_test!(
+    gloas_minimal_execution_payload_bid,
+    "gloas",
+    "ExecutionPayloadBid",
+    ExecutionPayloadBid
+);
+minimal_test!(
+    gloas_minimal_execution_payload_envelope,
+    "gloas",
+    "ExecutionPayloadEnvelope",
+    GloasExecutionPayloadEnvelope
+);
+minimal_test!(
+    gloas_minimal_fork_choice_node,
+    "gloas",
+    "ForkChoiceNode",
+    ForkChoiceNode
+);
+minimal_test!(
+    gloas_minimal_payload_attestation,
+    "gloas",
+    "PayloadAttestation",
+    GloasPayloadAttestation
+);
+minimal_test!(
+    gloas_minimal_indexed_payload_attestation,
+    "gloas",
+    "IndexedPayloadAttestation",
+    GloasIndexedPayloadAttestation
+);
+minimal_test!(
+    gloas_minimal_payload_attestation_data,
+    "gloas",
+    "PayloadAttestationData",
+    PayloadAttestationData
+);
+minimal_test!(
+    gloas_minimal_payload_attestation_message,
+    "gloas",
+    "PayloadAttestationMessage",
+    PayloadAttestationMessage
+);
+minimal_test!(
+    gloas_minimal_signed_execution_payload_bid,
+    "gloas",
+    "SignedExecutionPayloadBid",
+    SignedExecutionPayloadBid
+);
+minimal_test!(
+    gloas_minimal_signed_execution_payload_envelope,
+    "gloas",
+    "SignedExecutionPayloadEnvelope",
+    GloasSignedExecutionPayloadEnvelope
+);
+minimal_test!(
+    gloas_minimal_data_column_sidecar,
+    "gloas",
+    "DataColumnSidecar",
+    GloasDataColumnSidecar
+);
+minimal_test!(
+    gloas_minimal_beacon_block_body,
+    "gloas",
+    "BeaconBlockBody",
+    GloasBeaconBlockBody
+);
+minimal_test!(
+    gloas_minimal_beacon_block,
+    "gloas",
+    "BeaconBlock",
+    GloasBeaconBlock
+);
+minimal_test!(
+    gloas_minimal_signed_beacon_block,
+    "gloas",
+    "SignedBeaconBlock",
+    GloasSignedBeaconBlock
+);
+minimal_test!(
+    gloas_minimal_beacon_state,
+    "gloas",
+    "BeaconState",
+    GloasBeaconState
+);
+
+// ── EIP7805 minimal ──
+preset_independent_tests!(eip7805_minimal, "eip7805");
+minimal_test!(
+    eip7805_minimal_historical_batch,
+    "eip7805",
+    "HistoricalBatch",
+    HistoricalBatch
+);
+minimal_test!(
+    eip7805_minimal_pending_attestation,
+    "eip7805",
+    "PendingAttestation",
+    PendingAttestation
+);
+minimal_test!(
+    eip7805_minimal_sync_aggregate,
+    "eip7805",
+    "SyncAggregate",
+    SyncAggregate
+);
+minimal_test!(
+    eip7805_minimal_sync_committee,
+    "eip7805",
+    "SyncCommittee",
+    SyncCommittee
+);
+minimal_test!(
+    eip7805_minimal_sync_committee_contribution,
+    "eip7805",
+    "SyncCommitteeContribution",
+    SyncCommitteeContribution
+);
+minimal_test!(
+    eip7805_minimal_contribution_and_proof,
+    "eip7805",
+    "ContributionAndProof",
+    ContributionAndProof
+);
+minimal_test!(
+    eip7805_minimal_signed_contribution_and_proof,
+    "eip7805",
+    "SignedContributionAndProof",
+    SignedContributionAndProof
+);
+minimal_test!(
+    eip7805_minimal_sync_committee_message,
+    "eip7805",
+    "SyncCommitteeMessage",
+    altair::SyncCommitteeMessage
+);
+minimal_test!(
+    eip7805_minimal_sync_aggregator_selection_data,
+    "eip7805",
+    "SyncAggregatorSelectionData",
+    altair::SyncAggregatorSelectionData
+);
+minimal_test!(
+    eip7805_minimal_withdrawal,
+    "eip7805",
+    "Withdrawal",
+    Withdrawal
+);
+minimal_test!(
+    eip7805_minimal_bls_to_execution_change,
+    "eip7805",
+    "BLSToExecutionChange",
+    BLSToExecutionChange
+);
+minimal_test!(
+    eip7805_minimal_signed_bls_to_execution_change,
+    "eip7805",
+    "SignedBLSToExecutionChange",
+    SignedBLSToExecutionChange
+);
+minimal_test!(
+    eip7805_minimal_historical_summary,
+    "eip7805",
+    "HistoricalSummary",
+    HistoricalSummary
+);
+minimal_test!(
+    eip7805_minimal_blob_identifier,
+    "eip7805",
+    "BlobIdentifier",
+    BlobIdentifier
+);
+minimal_test!(
+    eip7805_minimal_blob_sidecar,
+    "eip7805",
+    "BlobSidecar",
+    BlobSidecar
+);
+minimal_test!(eip7805_minimal_pow_block, "eip7805", "PowBlock", PowBlock);
+minimal_test!(
+    eip7805_minimal_consolidation_request,
+    "eip7805",
+    "ConsolidationRequest",
+    ConsolidationRequest
+);
+minimal_test!(
+    eip7805_minimal_deposit_request,
+    "eip7805",
+    "DepositRequest",
+    DepositRequest
+);
+minimal_test!(
+    eip7805_minimal_execution_requests,
+    "eip7805",
+    "ExecutionRequests",
+    ExecutionRequests
+);
+minimal_test!(
+    eip7805_minimal_pending_consolidation,
+    "eip7805",
+    "PendingConsolidation",
+    PendingConsolidation
+);
+minimal_test!(
+    eip7805_minimal_pending_deposit,
+    "eip7805",
+    "PendingDeposit",
+    PendingDeposit
+);
+minimal_test!(
+    eip7805_minimal_pending_partial_withdrawal,
+    "eip7805",
+    "PendingPartialWithdrawal",
+    PendingPartialWithdrawal
+);
+minimal_test!(
+    eip7805_minimal_single_attestation,
+    "eip7805",
+    "SingleAttestation",
+    SingleAttestation
+);
+minimal_test!(
+    eip7805_minimal_withdrawal_request,
+    "eip7805",
+    "WithdrawalRequest",
+    WithdrawalRequest
+);
+minimal_test!(
+    eip7805_minimal_attestation,
+    "eip7805",
+    "Attestation",
+    ElectraAttestation
+);
+minimal_test!(
+    eip7805_minimal_indexed_attestation,
+    "eip7805",
+    "IndexedAttestation",
+    ElectraIndexedAttestation
+);
+minimal_test!(
+    eip7805_minimal_attester_slashing,
+    "eip7805",
+    "AttesterSlashing",
+    ElectraAttesterSlashing
+);
+minimal_test!(
+    eip7805_minimal_aggregate_and_proof,
+    "eip7805",
+    "AggregateAndProof",
+    ElectraAggregateAndProof
+);
+minimal_test!(
+    eip7805_minimal_signed_aggregate_and_proof,
+    "eip7805",
+    "SignedAggregateAndProof",
+    ElectraSignedAggregateAndProof
+);
+minimal_test!(
+    eip7805_minimal_execution_payload,
+    "eip7805",
+    "ExecutionPayload",
+    DenebExecutionPayload
+);
+minimal_test!(
+    eip7805_minimal_execution_payload_header,
+    "eip7805",
+    "ExecutionPayloadHeader",
+    DenebExecutionPayloadHeader
+);
+minimal_test!(
+    eip7805_minimal_light_client_header,
+    "eip7805",
+    "LightClientHeader",
+    ElectraLightClientHeader
+);
+minimal_test!(
+    eip7805_minimal_light_client_bootstrap,
+    "eip7805",
+    "LightClientBootstrap",
+    ElectraLightClientBootstrap
+);
+minimal_test!(
+    eip7805_minimal_light_client_update,
+    "eip7805",
+    "LightClientUpdate",
+    ElectraLightClientUpdate
+);
+minimal_test!(
+    eip7805_minimal_light_client_finality_update,
+    "eip7805",
+    "LightClientFinalityUpdate",
+    ElectraLightClientFinalityUpdate
+);
+minimal_test!(
+    eip7805_minimal_light_client_optimistic_update,
+    "eip7805",
+    "LightClientOptimisticUpdate",
+    ElectraLightClientOptimisticUpdate
+);
+minimal_test!(
+    eip7805_minimal_beacon_block_body,
+    "eip7805",
+    "BeaconBlockBody",
+    ElectraBeaconBlockBody
+);
+minimal_test!(
+    eip7805_minimal_beacon_block,
+    "eip7805",
+    "BeaconBlock",
+    ElectraBeaconBlock
+);
+minimal_test!(
+    eip7805_minimal_signed_beacon_block,
+    "eip7805",
+    "SignedBeaconBlock",
+    ElectraSignedBeaconBlock
+);
+minimal_test!(
+    eip7805_minimal_data_column_sidecar,
+    "eip7805",
+    "DataColumnSidecar",
+    DataColumnSidecar
+);
+minimal_test!(
+    eip7805_minimal_data_columns_by_root_identifier,
+    "eip7805",
+    "DataColumnsByRootIdentifier",
+    DataColumnsByRootIdentifier
+);
+minimal_test!(
+    eip7805_minimal_matrix_entry,
+    "eip7805",
+    "MatrixEntry",
+    MatrixEntry
+);
+minimal_test!(
+    eip7805_minimal_inclusion_list,
+    "eip7805",
+    "InclusionList",
+    InclusionList
+);
+minimal_test!(
+    eip7805_minimal_signed_inclusion_list,
+    "eip7805",
+    "SignedInclusionList",
+    SignedInclusionList
+);
+minimal_test!(
+    eip7805_minimal_beacon_state,
+    "eip7805",
+    "BeaconState",
+    FuluBeaconState
+);

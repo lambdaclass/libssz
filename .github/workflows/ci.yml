@@ -190,3 +190,4 @@ jobs:
           key: consensus-spec-vectors-v1.6.1
       - run: cargo test -p spec-tests --test ssz_generic
       - run: cargo test -p spec-tests --test ssz_static -- --test-threads=1
+      - run: cargo test -p spec-tests --test ssz_static_minimal -- --test-threads=1
