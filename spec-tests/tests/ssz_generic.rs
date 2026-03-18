@@ -197,43 +197,6 @@ fn decimal_to_u256_le(s: &str) -> [u8; 32] {
 
 // ── basic_vector ──
 
-trait SizeCase {
-    fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str);
-}
-
-/// Dispatch a runtime size to a const generic. Covers all sizes used across
-/// basic_vector, bitlist, and bitvector test vectors.
-fn dispatch_size<T: SizeCase>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str, n: usize) {
-    match n {
-        1 => T::run::<1>(ssz, expected_root, case_name),
-        2 => T::run::<2>(ssz, expected_root, case_name),
-        3 => T::run::<3>(ssz, expected_root, case_name),
-        4 => T::run::<4>(ssz, expected_root, case_name),
-        5 => T::run::<5>(ssz, expected_root, case_name),
-        6 => T::run::<6>(ssz, expected_root, case_name),
-        7 => T::run::<7>(ssz, expected_root, case_name),
-        8 => T::run::<8>(ssz, expected_root, case_name),
-        9 => T::run::<9>(ssz, expected_root, case_name),
-        15 => T::run::<15>(ssz, expected_root, case_name),
-        16 => T::run::<16>(ssz, expected_root, case_name),
-        17 => T::run::<17>(ssz, expected_root, case_name),
-        31 => T::run::<31>(ssz, expected_root, case_name),
-        32 => T::run::<32>(ssz, expected_root, case_name),
-        33 => T::run::<33>(ssz, expected_root, case_name),
-        64 => T::run::<64>(ssz, expected_root, case_name),
-        128 => T::run::<128>(ssz, expected_root, case_name),
-        256 => T::run::<256>(ssz, expected_root, case_name),
-        511 => T::run::<511>(ssz, expected_root, case_name),
-        512 => T::run::<512>(ssz, expected_root, case_name),
-        513 => T::run::<513>(ssz, expected_root, case_name),
-        1024 => T::run::<1024>(ssz, expected_root, case_name),
-        2048 => T::run::<2048>(ssz, expected_root, case_name),
-        4096 => T::run::<4096>(ssz, expected_root, case_name),
-        8192 => T::run::<8192>(ssz, expected_root, case_name),
-        other => panic!("{}: unsupported size: {}", case_name, other),
-    }
-}
-
 #[test]
 fn basic_vector_valid() {
     use ssz_types::SszVector;
@@ -245,113 +208,344 @@ fn basic_vector_valid() {
         let (elem_type, length) = parse_basic_vector_case(&case_name);
 
         match elem_type {
-            "bool" => dispatch_size::<CheckVectorBool>(&ssz, &expected_root, &case_name, length),
-            "uint8" => dispatch_size::<CheckVectorU8>(&ssz, &expected_root, &case_name, length),
-            "uint16" => dispatch_size::<CheckVectorU16>(&ssz, &expected_root, &case_name, length),
-            "uint32" => dispatch_size::<CheckVectorU32>(&ssz, &expected_root, &case_name, length),
-            "uint64" => dispatch_size::<CheckVectorU64>(&ssz, &expected_root, &case_name, length),
-            "uint128" => dispatch_size::<CheckVectorU128>(&ssz, &expected_root, &case_name, length),
-            "uint256" => dispatch_size::<CheckVectorU256>(&ssz, &expected_root, &case_name, length),
+            "bool" => dispatch_check_vector_bool(&ssz, &expected_root, &case_name, length),
+            "uint8" => dispatch_check_vector_u8(&ssz, &expected_root, &case_name, length),
+            "uint16" => dispatch_check_vector_u16(&ssz, &expected_root, &case_name, length),
+            "uint32" => dispatch_check_vector_u32(&ssz, &expected_root, &case_name, length),
+            "uint64" => dispatch_check_vector_u64(&ssz, &expected_root, &case_name, length),
+            "uint128" => dispatch_check_vector_u128(&ssz, &expected_root, &case_name, length),
+            "uint256" => dispatch_check_vector_u256(&ssz, &expected_root, &case_name, length),
             _ => panic!("{case_name}: unsupported element type: {elem_type}"),
         }
     }
 
-    struct CheckVectorBool;
-    impl SizeCase for CheckVectorBool {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<bool, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn dispatch_check_vector_bool(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_bool::<1>(ssz, expected_root, case_name),
+            2 => check_vector_bool::<2>(ssz, expected_root, case_name),
+            3 => check_vector_bool::<3>(ssz, expected_root, case_name),
+            4 => check_vector_bool::<4>(ssz, expected_root, case_name),
+            5 => check_vector_bool::<5>(ssz, expected_root, case_name),
+            6 => check_vector_bool::<6>(ssz, expected_root, case_name),
+            7 => check_vector_bool::<7>(ssz, expected_root, case_name),
+            8 => check_vector_bool::<8>(ssz, expected_root, case_name),
+            9 => check_vector_bool::<9>(ssz, expected_root, case_name),
+            15 => check_vector_bool::<15>(ssz, expected_root, case_name),
+            16 => check_vector_bool::<16>(ssz, expected_root, case_name),
+            17 => check_vector_bool::<17>(ssz, expected_root, case_name),
+            31 => check_vector_bool::<31>(ssz, expected_root, case_name),
+            32 => check_vector_bool::<32>(ssz, expected_root, case_name),
+            33 => check_vector_bool::<33>(ssz, expected_root, case_name),
+            64 => check_vector_bool::<64>(ssz, expected_root, case_name),
+            128 => check_vector_bool::<128>(ssz, expected_root, case_name),
+            256 => check_vector_bool::<256>(ssz, expected_root, case_name),
+            511 => check_vector_bool::<511>(ssz, expected_root, case_name),
+            512 => check_vector_bool::<512>(ssz, expected_root, case_name),
+            513 => check_vector_bool::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_bool::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_bool::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_bool::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_bool::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU8;
-    impl SizeCase for CheckVectorU8 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<u8, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_bool<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<bool, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u8(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u8::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u8::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u8::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u8::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u8::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u8::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u8::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u8::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u8::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u8::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u8::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u8::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u8::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u8::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u8::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u8::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u8::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u8::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u8::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u8::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u8::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u8::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u8::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u8::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u8::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU16;
-    impl SizeCase for CheckVectorU16 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<u16, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_u8<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<u8, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u16(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u16::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u16::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u16::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u16::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u16::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u16::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u16::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u16::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u16::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u16::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u16::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u16::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u16::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u16::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u16::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u16::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u16::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u16::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u16::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u16::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u16::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u16::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u16::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u16::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u16::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU32;
-    impl SizeCase for CheckVectorU32 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<u32, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_u16<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<u16, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u32(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u32::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u32::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u32::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u32::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u32::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u32::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u32::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u32::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u32::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u32::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u32::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u32::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u32::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u32::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u32::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u32::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u32::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u32::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u32::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u32::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u32::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u32::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u32::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u32::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u32::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU64;
-    impl SizeCase for CheckVectorU64 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<u64, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_u32<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<u32, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u64(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u64::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u64::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u64::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u64::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u64::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u64::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u64::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u64::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u64::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u64::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u64::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u64::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u64::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u64::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u64::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u64::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u64::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u64::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u64::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u64::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u64::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u64::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u64::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u64::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u64::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU128;
-    impl SizeCase for CheckVectorU128 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<u128, N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_u64<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<u64, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u128(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u128::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u128::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u128::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u128::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u128::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u128::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u128::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u128::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u128::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u128::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u128::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u128::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u128::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u128::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u128::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u128::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u128::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u128::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u128::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u128::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u128::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u128::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u128::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u128::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u128::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
     }
 
-    struct CheckVectorU256;
-    impl SizeCase for CheckVectorU256 {
-        fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-            let decoded = SszVector::<[u8; 32], N>::from_ssz_bytes(ssz)
-                .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-            assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-            assert_eq!(
-                decoded.hash_tree_root(),
-                *expected_root,
-                "{case_name}: root"
-            );
+    fn check_vector_u128<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<u128, N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
+    }
+
+    fn dispatch_check_vector_u256(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_vector_u256::<1>(ssz, expected_root, case_name),
+            2 => check_vector_u256::<2>(ssz, expected_root, case_name),
+            3 => check_vector_u256::<3>(ssz, expected_root, case_name),
+            4 => check_vector_u256::<4>(ssz, expected_root, case_name),
+            5 => check_vector_u256::<5>(ssz, expected_root, case_name),
+            6 => check_vector_u256::<6>(ssz, expected_root, case_name),
+            7 => check_vector_u256::<7>(ssz, expected_root, case_name),
+            8 => check_vector_u256::<8>(ssz, expected_root, case_name),
+            9 => check_vector_u256::<9>(ssz, expected_root, case_name),
+            15 => check_vector_u256::<15>(ssz, expected_root, case_name),
+            16 => check_vector_u256::<16>(ssz, expected_root, case_name),
+            17 => check_vector_u256::<17>(ssz, expected_root, case_name),
+            31 => check_vector_u256::<31>(ssz, expected_root, case_name),
+            32 => check_vector_u256::<32>(ssz, expected_root, case_name),
+            33 => check_vector_u256::<33>(ssz, expected_root, case_name),
+            64 => check_vector_u256::<64>(ssz, expected_root, case_name),
+            128 => check_vector_u256::<128>(ssz, expected_root, case_name),
+            256 => check_vector_u256::<256>(ssz, expected_root, case_name),
+            511 => check_vector_u256::<511>(ssz, expected_root, case_name),
+            512 => check_vector_u256::<512>(ssz, expected_root, case_name),
+            513 => check_vector_u256::<513>(ssz, expected_root, case_name),
+            1024 => check_vector_u256::<1024>(ssz, expected_root, case_name),
+            2048 => check_vector_u256::<2048>(ssz, expected_root, case_name),
+            4096 => check_vector_u256::<4096>(ssz, expected_root, case_name),
+            8192 => check_vector_u256::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
         }
+    }
+
+    fn check_vector_u256<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszVector::<[u8; 32], N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
     }
 }
 
@@ -368,87 +562,283 @@ fn basic_vector_invalid() {
             continue;
         }
 
-        struct FailBool;
-        impl SizeCase for FailBool {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<bool, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU8;
-        impl SizeCase for FailU8 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<u8, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU16;
-        impl SizeCase for FailU16 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<u16, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU32;
-        impl SizeCase for FailU32 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<u32, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU64;
-        impl SizeCase for FailU64 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<u64, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU128;
-        impl SizeCase for FailU128 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<u128, N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
-        struct FailU256;
-        impl SizeCase for FailU256 {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszVector::<[u8; 32], N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
-
         let dummy = [0u8; 32];
         match elem_type {
-            "bool" => dispatch_size::<FailBool>(&ssz, &dummy, &case_name, length),
-            "uint8" => dispatch_size::<FailU8>(&ssz, &dummy, &case_name, length),
-            "uint16" => dispatch_size::<FailU16>(&ssz, &dummy, &case_name, length),
-            "uint32" => dispatch_size::<FailU32>(&ssz, &dummy, &case_name, length),
-            "uint64" => dispatch_size::<FailU64>(&ssz, &dummy, &case_name, length),
-            "uint128" => dispatch_size::<FailU128>(&ssz, &dummy, &case_name, length),
-            "uint256" => dispatch_size::<FailU256>(&ssz, &dummy, &case_name, length),
+            "bool" => dispatch_fail_bool(&ssz, &dummy, &case_name, length),
+            "uint8" => dispatch_fail_u8(&ssz, &dummy, &case_name, length),
+            "uint16" => dispatch_fail_u16(&ssz, &dummy, &case_name, length),
+            "uint32" => dispatch_fail_u32(&ssz, &dummy, &case_name, length),
+            "uint64" => dispatch_fail_u64(&ssz, &dummy, &case_name, length),
+            "uint128" => dispatch_fail_u128(&ssz, &dummy, &case_name, length),
+            "uint256" => dispatch_fail_u256(&ssz, &dummy, &case_name, length),
             _ => panic!("{case_name}: unsupported element type: {elem_type}"),
         }
+    }
+
+    fn dispatch_fail_bool(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_bool::<1>(ssz, dummy, case_name),
+            2 => fail_bool::<2>(ssz, dummy, case_name),
+            3 => fail_bool::<3>(ssz, dummy, case_name),
+            4 => fail_bool::<4>(ssz, dummy, case_name),
+            5 => fail_bool::<5>(ssz, dummy, case_name),
+            6 => fail_bool::<6>(ssz, dummy, case_name),
+            7 => fail_bool::<7>(ssz, dummy, case_name),
+            8 => fail_bool::<8>(ssz, dummy, case_name),
+            9 => fail_bool::<9>(ssz, dummy, case_name),
+            15 => fail_bool::<15>(ssz, dummy, case_name),
+            16 => fail_bool::<16>(ssz, dummy, case_name),
+            17 => fail_bool::<17>(ssz, dummy, case_name),
+            31 => fail_bool::<31>(ssz, dummy, case_name),
+            32 => fail_bool::<32>(ssz, dummy, case_name),
+            33 => fail_bool::<33>(ssz, dummy, case_name),
+            64 => fail_bool::<64>(ssz, dummy, case_name),
+            128 => fail_bool::<128>(ssz, dummy, case_name),
+            256 => fail_bool::<256>(ssz, dummy, case_name),
+            511 => fail_bool::<511>(ssz, dummy, case_name),
+            512 => fail_bool::<512>(ssz, dummy, case_name),
+            513 => fail_bool::<513>(ssz, dummy, case_name),
+            1024 => fail_bool::<1024>(ssz, dummy, case_name),
+            2048 => fail_bool::<2048>(ssz, dummy, case_name),
+            4096 => fail_bool::<4096>(ssz, dummy, case_name),
+            8192 => fail_bool::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_bool<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<bool, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u8(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u8::<1>(ssz, dummy, case_name),
+            2 => fail_u8::<2>(ssz, dummy, case_name),
+            3 => fail_u8::<3>(ssz, dummy, case_name),
+            4 => fail_u8::<4>(ssz, dummy, case_name),
+            5 => fail_u8::<5>(ssz, dummy, case_name),
+            6 => fail_u8::<6>(ssz, dummy, case_name),
+            7 => fail_u8::<7>(ssz, dummy, case_name),
+            8 => fail_u8::<8>(ssz, dummy, case_name),
+            9 => fail_u8::<9>(ssz, dummy, case_name),
+            15 => fail_u8::<15>(ssz, dummy, case_name),
+            16 => fail_u8::<16>(ssz, dummy, case_name),
+            17 => fail_u8::<17>(ssz, dummy, case_name),
+            31 => fail_u8::<31>(ssz, dummy, case_name),
+            32 => fail_u8::<32>(ssz, dummy, case_name),
+            33 => fail_u8::<33>(ssz, dummy, case_name),
+            64 => fail_u8::<64>(ssz, dummy, case_name),
+            128 => fail_u8::<128>(ssz, dummy, case_name),
+            256 => fail_u8::<256>(ssz, dummy, case_name),
+            511 => fail_u8::<511>(ssz, dummy, case_name),
+            512 => fail_u8::<512>(ssz, dummy, case_name),
+            513 => fail_u8::<513>(ssz, dummy, case_name),
+            1024 => fail_u8::<1024>(ssz, dummy, case_name),
+            2048 => fail_u8::<2048>(ssz, dummy, case_name),
+            4096 => fail_u8::<4096>(ssz, dummy, case_name),
+            8192 => fail_u8::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u8<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<u8, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u16(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u16::<1>(ssz, dummy, case_name),
+            2 => fail_u16::<2>(ssz, dummy, case_name),
+            3 => fail_u16::<3>(ssz, dummy, case_name),
+            4 => fail_u16::<4>(ssz, dummy, case_name),
+            5 => fail_u16::<5>(ssz, dummy, case_name),
+            6 => fail_u16::<6>(ssz, dummy, case_name),
+            7 => fail_u16::<7>(ssz, dummy, case_name),
+            8 => fail_u16::<8>(ssz, dummy, case_name),
+            9 => fail_u16::<9>(ssz, dummy, case_name),
+            15 => fail_u16::<15>(ssz, dummy, case_name),
+            16 => fail_u16::<16>(ssz, dummy, case_name),
+            17 => fail_u16::<17>(ssz, dummy, case_name),
+            31 => fail_u16::<31>(ssz, dummy, case_name),
+            32 => fail_u16::<32>(ssz, dummy, case_name),
+            33 => fail_u16::<33>(ssz, dummy, case_name),
+            64 => fail_u16::<64>(ssz, dummy, case_name),
+            128 => fail_u16::<128>(ssz, dummy, case_name),
+            256 => fail_u16::<256>(ssz, dummy, case_name),
+            511 => fail_u16::<511>(ssz, dummy, case_name),
+            512 => fail_u16::<512>(ssz, dummy, case_name),
+            513 => fail_u16::<513>(ssz, dummy, case_name),
+            1024 => fail_u16::<1024>(ssz, dummy, case_name),
+            2048 => fail_u16::<2048>(ssz, dummy, case_name),
+            4096 => fail_u16::<4096>(ssz, dummy, case_name),
+            8192 => fail_u16::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u16<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<u16, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u32(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u32::<1>(ssz, dummy, case_name),
+            2 => fail_u32::<2>(ssz, dummy, case_name),
+            3 => fail_u32::<3>(ssz, dummy, case_name),
+            4 => fail_u32::<4>(ssz, dummy, case_name),
+            5 => fail_u32::<5>(ssz, dummy, case_name),
+            6 => fail_u32::<6>(ssz, dummy, case_name),
+            7 => fail_u32::<7>(ssz, dummy, case_name),
+            8 => fail_u32::<8>(ssz, dummy, case_name),
+            9 => fail_u32::<9>(ssz, dummy, case_name),
+            15 => fail_u32::<15>(ssz, dummy, case_name),
+            16 => fail_u32::<16>(ssz, dummy, case_name),
+            17 => fail_u32::<17>(ssz, dummy, case_name),
+            31 => fail_u32::<31>(ssz, dummy, case_name),
+            32 => fail_u32::<32>(ssz, dummy, case_name),
+            33 => fail_u32::<33>(ssz, dummy, case_name),
+            64 => fail_u32::<64>(ssz, dummy, case_name),
+            128 => fail_u32::<128>(ssz, dummy, case_name),
+            256 => fail_u32::<256>(ssz, dummy, case_name),
+            511 => fail_u32::<511>(ssz, dummy, case_name),
+            512 => fail_u32::<512>(ssz, dummy, case_name),
+            513 => fail_u32::<513>(ssz, dummy, case_name),
+            1024 => fail_u32::<1024>(ssz, dummy, case_name),
+            2048 => fail_u32::<2048>(ssz, dummy, case_name),
+            4096 => fail_u32::<4096>(ssz, dummy, case_name),
+            8192 => fail_u32::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u32<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<u32, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u64(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u64::<1>(ssz, dummy, case_name),
+            2 => fail_u64::<2>(ssz, dummy, case_name),
+            3 => fail_u64::<3>(ssz, dummy, case_name),
+            4 => fail_u64::<4>(ssz, dummy, case_name),
+            5 => fail_u64::<5>(ssz, dummy, case_name),
+            6 => fail_u64::<6>(ssz, dummy, case_name),
+            7 => fail_u64::<7>(ssz, dummy, case_name),
+            8 => fail_u64::<8>(ssz, dummy, case_name),
+            9 => fail_u64::<9>(ssz, dummy, case_name),
+            15 => fail_u64::<15>(ssz, dummy, case_name),
+            16 => fail_u64::<16>(ssz, dummy, case_name),
+            17 => fail_u64::<17>(ssz, dummy, case_name),
+            31 => fail_u64::<31>(ssz, dummy, case_name),
+            32 => fail_u64::<32>(ssz, dummy, case_name),
+            33 => fail_u64::<33>(ssz, dummy, case_name),
+            64 => fail_u64::<64>(ssz, dummy, case_name),
+            128 => fail_u64::<128>(ssz, dummy, case_name),
+            256 => fail_u64::<256>(ssz, dummy, case_name),
+            511 => fail_u64::<511>(ssz, dummy, case_name),
+            512 => fail_u64::<512>(ssz, dummy, case_name),
+            513 => fail_u64::<513>(ssz, dummy, case_name),
+            1024 => fail_u64::<1024>(ssz, dummy, case_name),
+            2048 => fail_u64::<2048>(ssz, dummy, case_name),
+            4096 => fail_u64::<4096>(ssz, dummy, case_name),
+            8192 => fail_u64::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u64<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<u64, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u128(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u128::<1>(ssz, dummy, case_name),
+            2 => fail_u128::<2>(ssz, dummy, case_name),
+            3 => fail_u128::<3>(ssz, dummy, case_name),
+            4 => fail_u128::<4>(ssz, dummy, case_name),
+            5 => fail_u128::<5>(ssz, dummy, case_name),
+            6 => fail_u128::<6>(ssz, dummy, case_name),
+            7 => fail_u128::<7>(ssz, dummy, case_name),
+            8 => fail_u128::<8>(ssz, dummy, case_name),
+            9 => fail_u128::<9>(ssz, dummy, case_name),
+            15 => fail_u128::<15>(ssz, dummy, case_name),
+            16 => fail_u128::<16>(ssz, dummy, case_name),
+            17 => fail_u128::<17>(ssz, dummy, case_name),
+            31 => fail_u128::<31>(ssz, dummy, case_name),
+            32 => fail_u128::<32>(ssz, dummy, case_name),
+            33 => fail_u128::<33>(ssz, dummy, case_name),
+            64 => fail_u128::<64>(ssz, dummy, case_name),
+            128 => fail_u128::<128>(ssz, dummy, case_name),
+            256 => fail_u128::<256>(ssz, dummy, case_name),
+            511 => fail_u128::<511>(ssz, dummy, case_name),
+            512 => fail_u128::<512>(ssz, dummy, case_name),
+            513 => fail_u128::<513>(ssz, dummy, case_name),
+            1024 => fail_u128::<1024>(ssz, dummy, case_name),
+            2048 => fail_u128::<2048>(ssz, dummy, case_name),
+            4096 => fail_u128::<4096>(ssz, dummy, case_name),
+            8192 => fail_u128::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u128<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<u128, N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
+    }
+
+    fn dispatch_fail_u256(ssz: &[u8], dummy: &[u8; 32], case_name: &str, length: usize) {
+        match length {
+            1 => fail_u256::<1>(ssz, dummy, case_name),
+            2 => fail_u256::<2>(ssz, dummy, case_name),
+            3 => fail_u256::<3>(ssz, dummy, case_name),
+            4 => fail_u256::<4>(ssz, dummy, case_name),
+            5 => fail_u256::<5>(ssz, dummy, case_name),
+            6 => fail_u256::<6>(ssz, dummy, case_name),
+            7 => fail_u256::<7>(ssz, dummy, case_name),
+            8 => fail_u256::<8>(ssz, dummy, case_name),
+            9 => fail_u256::<9>(ssz, dummy, case_name),
+            15 => fail_u256::<15>(ssz, dummy, case_name),
+            16 => fail_u256::<16>(ssz, dummy, case_name),
+            17 => fail_u256::<17>(ssz, dummy, case_name),
+            31 => fail_u256::<31>(ssz, dummy, case_name),
+            32 => fail_u256::<32>(ssz, dummy, case_name),
+            33 => fail_u256::<33>(ssz, dummy, case_name),
+            64 => fail_u256::<64>(ssz, dummy, case_name),
+            128 => fail_u256::<128>(ssz, dummy, case_name),
+            256 => fail_u256::<256>(ssz, dummy, case_name),
+            511 => fail_u256::<511>(ssz, dummy, case_name),
+            512 => fail_u256::<512>(ssz, dummy, case_name),
+            513 => fail_u256::<513>(ssz, dummy, case_name),
+            1024 => fail_u256::<1024>(ssz, dummy, case_name),
+            2048 => fail_u256::<2048>(ssz, dummy, case_name),
+            4096 => fail_u256::<4096>(ssz, dummy, case_name),
+            8192 => fail_u256::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn fail_u256<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszVector::<[u8; 32], N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
     }
 }
 
@@ -480,21 +870,49 @@ fn bitlist_valid() {
         let expected_root = loader::parse_root(&case_path.join("meta.yaml"));
         let limit = parse_bitfield_param(&case_name, "bitlist_");
 
-        struct Check;
-        impl SizeCase for Check {
-            fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-                let decoded = SszBitlist::<N>::from_ssz_bytes(ssz)
-                    .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-                assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-                assert_eq!(
-                    decoded.hash_tree_root(),
-                    *expected_root,
-                    "{case_name}: root"
-                );
-            }
-        }
+        dispatch_check_bitlist(&ssz, &expected_root, &case_name, limit);
+    }
 
-        dispatch_size::<Check>(&ssz, &expected_root, &case_name, limit);
+    fn dispatch_check_bitlist(ssz: &[u8], expected_root: &[u8; 32], case_name: &str, limit: usize) {
+        match limit {
+            1 => check_bitlist::<1>(ssz, expected_root, case_name),
+            2 => check_bitlist::<2>(ssz, expected_root, case_name),
+            3 => check_bitlist::<3>(ssz, expected_root, case_name),
+            4 => check_bitlist::<4>(ssz, expected_root, case_name),
+            5 => check_bitlist::<5>(ssz, expected_root, case_name),
+            6 => check_bitlist::<6>(ssz, expected_root, case_name),
+            7 => check_bitlist::<7>(ssz, expected_root, case_name),
+            8 => check_bitlist::<8>(ssz, expected_root, case_name),
+            9 => check_bitlist::<9>(ssz, expected_root, case_name),
+            15 => check_bitlist::<15>(ssz, expected_root, case_name),
+            16 => check_bitlist::<16>(ssz, expected_root, case_name),
+            17 => check_bitlist::<17>(ssz, expected_root, case_name),
+            31 => check_bitlist::<31>(ssz, expected_root, case_name),
+            32 => check_bitlist::<32>(ssz, expected_root, case_name),
+            33 => check_bitlist::<33>(ssz, expected_root, case_name),
+            64 => check_bitlist::<64>(ssz, expected_root, case_name),
+            128 => check_bitlist::<128>(ssz, expected_root, case_name),
+            256 => check_bitlist::<256>(ssz, expected_root, case_name),
+            511 => check_bitlist::<511>(ssz, expected_root, case_name),
+            512 => check_bitlist::<512>(ssz, expected_root, case_name),
+            513 => check_bitlist::<513>(ssz, expected_root, case_name),
+            1024 => check_bitlist::<1024>(ssz, expected_root, case_name),
+            2048 => check_bitlist::<2048>(ssz, expected_root, case_name),
+            4096 => check_bitlist::<4096>(ssz, expected_root, case_name),
+            8192 => check_bitlist::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn check_bitlist<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszBitlist::<N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
     }
 }
 
@@ -506,14 +924,42 @@ fn bitlist_invalid() {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
         let limit = parse_bitfield_param(&case_name, "bitlist_");
 
-        struct CheckFails;
-        impl SizeCase for CheckFails {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(SszBitlist::<N>::from_ssz_bytes(ssz).is_err(), "{case_name}");
-            }
-        }
+        dispatch_check_bitlist_fails(&ssz, &[0u8; 32], &case_name, limit);
+    }
 
-        dispatch_size::<CheckFails>(&ssz, &[0u8; 32], &case_name, limit);
+    fn dispatch_check_bitlist_fails(ssz: &[u8], dummy: &[u8; 32], case_name: &str, limit: usize) {
+        match limit {
+            1 => check_bitlist_fails::<1>(ssz, dummy, case_name),
+            2 => check_bitlist_fails::<2>(ssz, dummy, case_name),
+            3 => check_bitlist_fails::<3>(ssz, dummy, case_name),
+            4 => check_bitlist_fails::<4>(ssz, dummy, case_name),
+            5 => check_bitlist_fails::<5>(ssz, dummy, case_name),
+            6 => check_bitlist_fails::<6>(ssz, dummy, case_name),
+            7 => check_bitlist_fails::<7>(ssz, dummy, case_name),
+            8 => check_bitlist_fails::<8>(ssz, dummy, case_name),
+            9 => check_bitlist_fails::<9>(ssz, dummy, case_name),
+            15 => check_bitlist_fails::<15>(ssz, dummy, case_name),
+            16 => check_bitlist_fails::<16>(ssz, dummy, case_name),
+            17 => check_bitlist_fails::<17>(ssz, dummy, case_name),
+            31 => check_bitlist_fails::<31>(ssz, dummy, case_name),
+            32 => check_bitlist_fails::<32>(ssz, dummy, case_name),
+            33 => check_bitlist_fails::<33>(ssz, dummy, case_name),
+            64 => check_bitlist_fails::<64>(ssz, dummy, case_name),
+            128 => check_bitlist_fails::<128>(ssz, dummy, case_name),
+            256 => check_bitlist_fails::<256>(ssz, dummy, case_name),
+            511 => check_bitlist_fails::<511>(ssz, dummy, case_name),
+            512 => check_bitlist_fails::<512>(ssz, dummy, case_name),
+            513 => check_bitlist_fails::<513>(ssz, dummy, case_name),
+            1024 => check_bitlist_fails::<1024>(ssz, dummy, case_name),
+            2048 => check_bitlist_fails::<2048>(ssz, dummy, case_name),
+            4096 => check_bitlist_fails::<4096>(ssz, dummy, case_name),
+            8192 => check_bitlist_fails::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn check_bitlist_fails<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(SszBitlist::<N>::from_ssz_bytes(ssz).is_err(), "{case_name}");
     }
 }
 
@@ -528,21 +974,54 @@ fn bitvector_valid() {
         let expected_root = loader::parse_root(&case_path.join("meta.yaml"));
         let length = parse_bitfield_param(&case_name, "bitvec_");
 
-        struct Check;
-        impl SizeCase for Check {
-            fn run<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
-                let decoded = SszBitvector::<N>::from_ssz_bytes(ssz)
-                    .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
-                assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-                assert_eq!(
-                    decoded.hash_tree_root(),
-                    *expected_root,
-                    "{case_name}: root"
-                );
-            }
-        }
+        dispatch_check_bitvector(&ssz, &expected_root, &case_name, length);
+    }
 
-        dispatch_size::<Check>(&ssz, &expected_root, &case_name, length);
+    fn dispatch_check_bitvector(
+        ssz: &[u8],
+        expected_root: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_bitvector::<1>(ssz, expected_root, case_name),
+            2 => check_bitvector::<2>(ssz, expected_root, case_name),
+            3 => check_bitvector::<3>(ssz, expected_root, case_name),
+            4 => check_bitvector::<4>(ssz, expected_root, case_name),
+            5 => check_bitvector::<5>(ssz, expected_root, case_name),
+            6 => check_bitvector::<6>(ssz, expected_root, case_name),
+            7 => check_bitvector::<7>(ssz, expected_root, case_name),
+            8 => check_bitvector::<8>(ssz, expected_root, case_name),
+            9 => check_bitvector::<9>(ssz, expected_root, case_name),
+            15 => check_bitvector::<15>(ssz, expected_root, case_name),
+            16 => check_bitvector::<16>(ssz, expected_root, case_name),
+            17 => check_bitvector::<17>(ssz, expected_root, case_name),
+            31 => check_bitvector::<31>(ssz, expected_root, case_name),
+            32 => check_bitvector::<32>(ssz, expected_root, case_name),
+            33 => check_bitvector::<33>(ssz, expected_root, case_name),
+            64 => check_bitvector::<64>(ssz, expected_root, case_name),
+            128 => check_bitvector::<128>(ssz, expected_root, case_name),
+            256 => check_bitvector::<256>(ssz, expected_root, case_name),
+            511 => check_bitvector::<511>(ssz, expected_root, case_name),
+            512 => check_bitvector::<512>(ssz, expected_root, case_name),
+            513 => check_bitvector::<513>(ssz, expected_root, case_name),
+            1024 => check_bitvector::<1024>(ssz, expected_root, case_name),
+            2048 => check_bitvector::<2048>(ssz, expected_root, case_name),
+            4096 => check_bitvector::<4096>(ssz, expected_root, case_name),
+            8192 => check_bitvector::<8192>(ssz, expected_root, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn check_bitvector<const N: usize>(ssz: &[u8], expected_root: &[u8; 32], case_name: &str) {
+        let decoded = SszBitvector::<N>::from_ssz_bytes(ssz)
+            .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
+        assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
+        assert_eq!(
+            decoded.hash_tree_root(),
+            *expected_root,
+            "{case_name}: root"
+        );
     }
 }
 
@@ -559,17 +1038,50 @@ fn bitvector_invalid() {
             continue;
         }
 
-        struct CheckFails;
-        impl SizeCase for CheckFails {
-            fn run<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
-                assert!(
-                    SszBitvector::<N>::from_ssz_bytes(ssz).is_err(),
-                    "{case_name}"
-                );
-            }
-        }
+        dispatch_check_bitvector_fails(&ssz, &[0u8; 32], &case_name, length);
+    }
 
-        dispatch_size::<CheckFails>(&ssz, &[0u8; 32], &case_name, length);
+    fn dispatch_check_bitvector_fails(
+        ssz: &[u8],
+        dummy: &[u8; 32],
+        case_name: &str,
+        length: usize,
+    ) {
+        match length {
+            1 => check_bitvector_fails::<1>(ssz, dummy, case_name),
+            2 => check_bitvector_fails::<2>(ssz, dummy, case_name),
+            3 => check_bitvector_fails::<3>(ssz, dummy, case_name),
+            4 => check_bitvector_fails::<4>(ssz, dummy, case_name),
+            5 => check_bitvector_fails::<5>(ssz, dummy, case_name),
+            6 => check_bitvector_fails::<6>(ssz, dummy, case_name),
+            7 => check_bitvector_fails::<7>(ssz, dummy, case_name),
+            8 => check_bitvector_fails::<8>(ssz, dummy, case_name),
+            9 => check_bitvector_fails::<9>(ssz, dummy, case_name),
+            15 => check_bitvector_fails::<15>(ssz, dummy, case_name),
+            16 => check_bitvector_fails::<16>(ssz, dummy, case_name),
+            17 => check_bitvector_fails::<17>(ssz, dummy, case_name),
+            31 => check_bitvector_fails::<31>(ssz, dummy, case_name),
+            32 => check_bitvector_fails::<32>(ssz, dummy, case_name),
+            33 => check_bitvector_fails::<33>(ssz, dummy, case_name),
+            64 => check_bitvector_fails::<64>(ssz, dummy, case_name),
+            128 => check_bitvector_fails::<128>(ssz, dummy, case_name),
+            256 => check_bitvector_fails::<256>(ssz, dummy, case_name),
+            511 => check_bitvector_fails::<511>(ssz, dummy, case_name),
+            512 => check_bitvector_fails::<512>(ssz, dummy, case_name),
+            513 => check_bitvector_fails::<513>(ssz, dummy, case_name),
+            1024 => check_bitvector_fails::<1024>(ssz, dummy, case_name),
+            2048 => check_bitvector_fails::<2048>(ssz, dummy, case_name),
+            4096 => check_bitvector_fails::<4096>(ssz, dummy, case_name),
+            8192 => check_bitvector_fails::<8192>(ssz, dummy, case_name),
+            other => panic!("{case_name}: unsupported size: {other}"),
+        }
+    }
+
+    fn check_bitvector_fails<const N: usize>(ssz: &[u8], _: &[u8; 32], case_name: &str) {
+        assert!(
+            SszBitvector::<N>::from_ssz_bytes(ssz).is_err(),
+            "{case_name}"
+        );
     }
 }
 
