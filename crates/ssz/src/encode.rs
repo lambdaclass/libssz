@@ -43,6 +43,14 @@ pub trait SszEncode {
     }
 }
 
+#[cfg(feature = "alloc")]
+fn append_fixed_slice_as_bytes<T>(items: &[T], buf: &mut Vec<u8>) {
+    let byte_slice = unsafe {
+        core::slice::from_raw_parts(items.as_ptr().cast::<u8>(), core::mem::size_of_val(items))
+    };
+    buf.extend_from_slice(byte_slice);
+}
+
 // ── bool ──
 
 impl SszEncode for bool {
@@ -87,14 +95,11 @@ impl SszEncode for u8 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            let byte_slice = unsafe {
-                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 1)
-            };
-            buf.extend_from_slice(byte_slice);
+            append_fixed_slice_as_bytes(items, buf);
         }
         #[cfg(not(target_endian = "little"))]
         {
-            buf.reserve(1 * items.len());
+            buf.reserve(items.len());
             for item in items {
                 item.ssz_append(buf);
             }
@@ -123,10 +128,7 @@ impl SszEncode for u16 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            let byte_slice = unsafe {
-                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 2)
-            };
-            buf.extend_from_slice(byte_slice);
+            append_fixed_slice_as_bytes(items, buf);
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -159,10 +161,7 @@ impl SszEncode for u32 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            let byte_slice = unsafe {
-                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 4)
-            };
-            buf.extend_from_slice(byte_slice);
+            append_fixed_slice_as_bytes(items, buf);
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -195,10 +194,7 @@ impl SszEncode for u64 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            let byte_slice = unsafe {
-                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 8)
-            };
-            buf.extend_from_slice(byte_slice);
+            append_fixed_slice_as_bytes(items, buf);
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -231,10 +227,7 @@ impl SszEncode for u128 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            let byte_slice = unsafe {
-                core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 16)
-            };
-            buf.extend_from_slice(byte_slice);
+            append_fixed_slice_as_bytes(items, buf);
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -267,10 +260,7 @@ impl SszEncode for [u8; 4] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-        let byte_slice =
-            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 4) };
-        buf.extend_from_slice(byte_slice);
+        append_fixed_slice_as_bytes(items, buf);
     }
 }
 
@@ -293,10 +283,7 @@ impl SszEncode for [u8; 20] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-        let byte_slice =
-            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 20) };
-        buf.extend_from_slice(byte_slice);
+        append_fixed_slice_as_bytes(items, buf);
     }
 }
 
@@ -319,10 +306,7 @@ impl SszEncode for [u8; 32] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-        let byte_slice =
-            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 32) };
-        buf.extend_from_slice(byte_slice);
+        append_fixed_slice_as_bytes(items, buf);
     }
 }
 
@@ -345,10 +329,7 @@ impl SszEncode for [u8; 48] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-        let byte_slice =
-            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 48) };
-        buf.extend_from_slice(byte_slice);
+        append_fixed_slice_as_bytes(items, buf);
     }
 }
 
@@ -371,10 +352,7 @@ impl SszEncode for [u8; 96] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding, layout is exactly N contiguous bytes.
-        let byte_slice =
-            unsafe { core::slice::from_raw_parts(items.as_ptr() as *const u8, items.len() * 96) };
-        buf.extend_from_slice(byte_slice);
+        append_fixed_slice_as_bytes(items, buf);
     }
 }
 

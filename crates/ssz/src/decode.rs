@@ -246,7 +246,7 @@ fn decode_byte_array<const N: usize>(bytes: &[u8]) -> Result<[u8; N], DecodeErro
 
 #[cfg(feature = "alloc")]
 fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, DecodeError> {
-    if bytes.len() % N != 0 {
+    if !bytes.len().is_multiple_of(N) {
         return Err(DecodeError::InvalidByteLength {
             expected: N,
             got: bytes.len(),
