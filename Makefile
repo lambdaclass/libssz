@@ -21,7 +21,7 @@ doc: ## Check documentation builds without warnings
 	RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --exclude spec-tests
 
 no-std-check: ## Verify no_std compilation on thumbv7m-none-eabi
-	cargo check -p ssz -p ssz-types -p ssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
+	cargo check -p libssz -p libssz-types -p libssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
 
 coverage: ## Generate code coverage report (requires cargo-llvm-cov)
 	cargo llvm-cov --workspace --exclude spec-tests --lcov --output-path lcov.info --fail-under-lines 70

@@ -125,7 +125,7 @@ jobs:
             target
           key: no-std-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: no-std-
-      - run: cargo check -p ssz -p ssz-types -p ssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
+      - run: cargo check -p libssz -p libssz-types -p libssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
 
   iai-bench:
     name: iai-callgrind
