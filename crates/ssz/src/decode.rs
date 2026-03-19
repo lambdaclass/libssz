@@ -97,140 +97,45 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
     }
 }
 
-impl SszDecode for u8 {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        1
-    }
+macro_rules! impl_ssz_decode_for_uint {
+    ($type:ty, $size:expr) => {
+        impl SszDecode for $type {
+            #[inline(always)]
+            fn is_fixed_size() -> bool {
+                true
+            }
+            #[inline(always)]
+            fn fixed_size() -> usize {
+                $size
+            }
 
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<1, Self>(bytes, Self::from_le_bytes)
-    }
+            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+                decode_uint::<$size, Self>(bytes, Self::from_le_bytes)
+            }
 
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 1)
+            #[cfg(feature = "alloc")]
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+                #[cfg(target_endian = "little")]
+                {
+                    decode_fixed_vec_le(bytes, $size)
+                }
+                #[cfg(not(target_endian = "little"))]
+                {
+                    bytes
+                        .chunks_exact($size)
+                        .map(Self::from_ssz_bytes)
+                        .collect()
+                }
+            }
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(1).map(Self::from_ssz_bytes).collect()
-        }
-    }
+    };
 }
 
-impl SszDecode for u16 {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        2
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<2, Self>(bytes, Self::from_le_bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 2)
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(2).map(Self::from_ssz_bytes).collect()
-        }
-    }
-}
-
-impl SszDecode for u32 {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        4
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<4, Self>(bytes, Self::from_le_bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 4)
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(4).map(Self::from_ssz_bytes).collect()
-        }
-    }
-}
-
-impl SszDecode for u64 {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        8
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<8, Self>(bytes, Self::from_le_bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 8)
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(8).map(Self::from_ssz_bytes).collect()
-        }
-    }
-}
-
-impl SszDecode for u128 {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        16
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<16, Self>(bytes, Self::from_le_bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 16)
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(16).map(Self::from_ssz_bytes).collect()
-        }
-    }
-}
+impl_ssz_decode_for_uint!(u8, 1);
+impl_ssz_decode_for_uint!(u16, 2);
+impl_ssz_decode_for_uint!(u32, 4);
+impl_ssz_decode_for_uint!(u64, 8);
+impl_ssz_decode_for_uint!(u128, 16);
 
 // ── Fixed-size byte arrays ──
 
@@ -342,12 +247,11 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
         });
     }
 
-    // Read all offsets.
-    let mut offsets = Vec::with_capacity(num_items);
+    // Read all offsets, with bytes.len() as a sentinel for the last item's end.
+    let mut offsets = Vec::with_capacity(num_items + 1);
     for i in 0..num_items {
         let offset = read_offset(bytes, i * BYTES_PER_LENGTH_OFFSET)?;
-        if !offsets.is_empty() && offset < *offsets.last().expect("bug: offsets verified non-empty")
-        {
+        if offsets.last().is_some_and(|&last| offset < last) {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > bytes.len() {
@@ -358,20 +262,13 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
         }
         offsets.push(offset);
     }
+    offsets.push(bytes.len());
 
     // Decode each item from its slice.
-    let mut items = Vec::with_capacity(num_items);
-    for i in 0..num_items {
-        let start = offsets[i];
-        let end = if i + 1 < num_items {
-            offsets[i + 1]
-        } else {
-            bytes.len()
-        };
-        items.push(T::from_ssz_bytes(&bytes[start..end])?);
-    }
-
-    Ok(items)
+    offsets
+        .windows(2)
+        .map(|pair| T::from_ssz_bytes(&bytes[pair[0]..pair[1]]))
+        .collect()
 }
 
 /// Read a 4-byte little-endian offset at the given byte position.
