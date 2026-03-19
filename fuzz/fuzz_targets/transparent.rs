@@ -3,8 +3,6 @@
 //! Fuzz transparent wrapper types: roundtrip, no-panic decode, and
 //! verify that transparent encoding equals inner type encoding.
 
-extern crate libssz as ssz;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

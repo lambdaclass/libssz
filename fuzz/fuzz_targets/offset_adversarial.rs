@@ -6,9 +6,6 @@
 //! non-monotonic offsets, zero offsets, offsets exceeding buffer length,
 //! offsets pointing into the fixed section, etc.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};
 use libssz_derive::{SszDecode, SszEncode};

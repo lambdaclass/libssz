@@ -1,4 +1,4 @@
-use ssz::{ContainerDecoder, ContainerEncoder, DecodeError, SszDecode, SszEncode};
+use libssz::{ContainerDecoder, ContainerEncoder, DecodeError, SszDecode, SszEncode};
 
 // ── bool ──
 

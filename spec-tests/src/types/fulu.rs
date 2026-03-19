@@ -1,5 +1,5 @@
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::{SszList, SszVector};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::{SszList, SszVector};
 
 use super::deneb::MAX_BLOB_COMMITMENTS_PER_BLOCK;
 use super::phase0::SignedBeaconBlockHeader;

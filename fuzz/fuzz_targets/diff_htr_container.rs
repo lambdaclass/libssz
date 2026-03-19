@@ -6,9 +6,6 @@
 //! using SszList (which carries the limit) instead of Vec.
 //! Also tests no-panic HTR for a BeaconBlockHeader container with our derive.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};

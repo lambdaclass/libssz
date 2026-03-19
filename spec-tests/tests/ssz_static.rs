@@ -1,6 +1,6 @@
 use spec_tests::loader::{self, Archive};
-use ssz::{SszDecode, SszEncode};
-use ssz_merkle::HashTreeRoot;
+use libssz::{SszDecode, SszEncode};
+use libssz_merkle::HashTreeRoot;
 
 fn check_roundtrip_root<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debug>(
     ssz: &[u8],

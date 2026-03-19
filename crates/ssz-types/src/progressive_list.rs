@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ops::Deref;
-use ssz::{DecodeError, SszDecode, SszEncode};
-use ssz_merkle::{merkleize_progressive, mix_in_length, pack, HashTreeRoot, Node};
+use libssz::{DecodeError, SszDecode, SszEncode};
+use libssz_merkle::{merkleize_progressive, mix_in_length, pack, HashTreeRoot, Node};
 
 /// A progressive list: ordered variable-length homogeneous collection **without limit**.
 ///

@@ -2,9 +2,6 @@
 
 //! Fuzz target for containers with many fields — stresses the derive macro's field-count handling.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

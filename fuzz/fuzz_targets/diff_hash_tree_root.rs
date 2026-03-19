@@ -4,9 +4,6 @@
 //! tree_hash (Lighthouse), and ssz_rs, then assert identical 32-byte roots.
 //! Note: tree_hash and ssz_rs don't implement HTR for u128, so we skip that.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};

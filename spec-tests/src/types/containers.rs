@@ -1,5 +1,5 @@
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
 pub struct SingleFieldTestStruct {

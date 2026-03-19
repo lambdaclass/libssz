@@ -1,7 +1,7 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use ssz::DecodeError;
+use libssz::DecodeError;
 
 /// Newtype for the union selector byte (0..=127).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

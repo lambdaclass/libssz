@@ -1,11 +1,11 @@
 //! Placeholder: demonstrates bounded SSZ collection types.
 //!
-//! This example will compile once ssz-types is fully implemented.
-//! Uncomment the ssz-types dependency in examples/Cargo.toml to use it.
+//! This example will compile once libssz-types is fully implemented.
+//! Uncomment the libssz-types dependency in examples/Cargo.toml to use it.
 //!
 //! ```rust,ignore
-//! use ssz::{SszEncode, SszDecode};
-//! use ssz_types::SszVector;
+//! use libssz::{SszEncode, SszDecode};
+//! use libssz_types::SszVector;
 //!
 //! // Vector[uint64, 4] -- exactly 4 elements
 //! let v: SszVector<u64, 4> = SszVector::try_from(vec![10, 20, 30, 40]).unwrap();
@@ -29,7 +29,7 @@
 //! ```
 
 fn main() {
-    println!("This is a placeholder example for ssz-types bounded collections.");
+    println!("This is a placeholder example for libssz-types bounded collections.");
     println!("See the doc comments in this file for planned API usage.");
-    println!("Enable by uncommenting ssz-types in examples/Cargo.toml.");
+    println!("Enable by uncommenting libssz-types in examples/Cargo.toml.");
 }

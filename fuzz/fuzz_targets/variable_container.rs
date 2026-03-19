@@ -2,9 +2,6 @@
 
 //! Fuzz target for variable-size SSZ containers: roundtrip encode/decode and no-panic decode.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

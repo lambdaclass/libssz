@@ -105,21 +105,21 @@ fn derive_encode_transparent(
     let (field_access, inner_ty) = transparent_field_info(data);
 
     quote! {
-        impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszEncode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool {
-                <#inner_ty as ssz::SszEncode>::is_fixed_size()
+                <#inner_ty as libssz::SszEncode>::is_fixed_size()
             }
 
             fn fixed_size() -> usize {
-                <#inner_ty as ssz::SszEncode>::fixed_size()
+                <#inner_ty as libssz::SszEncode>::fixed_size()
             }
 
             fn encoded_len(&self) -> usize {
-                ssz::SszEncode::encoded_len(&#field_access)
+                libssz::SszEncode::encoded_len(&#field_access)
             }
 
             fn ssz_append(&self, buf: &mut Vec<u8>) {
-                ssz::SszEncode::ssz_append(&#field_access, buf);
+                libssz::SszEncode::ssz_append(&#field_access, buf);
             }
         }
     }
@@ -142,14 +142,14 @@ fn derive_encode_struct(
 
     // is_fixed_size: all fields must be fixed
     let is_fixed_checks = field_types.iter().map(|ty| {
-        quote! { <#ty as ssz::SszEncode>::is_fixed_size() }
+        quote! { <#ty as libssz::SszEncode>::is_fixed_size() }
     });
 
     // fixed_size: sum of fixed sizes (only valid if is_fixed_size)
     let fixed_size_terms: Vec<_> = field_types
         .iter()
         .map(|ty| {
-            quote! { <#ty as ssz::SszEncode>::fixed_size() }
+            quote! { <#ty as libssz::SszEncode>::fixed_size() }
         })
         .collect();
 
@@ -160,10 +160,10 @@ fn derive_encode_struct(
         .map(|(fname, ty)| {
             quote! {
                 {
-                    if <#ty as ssz::SszEncode>::is_fixed_size() {
-                        <#ty as ssz::SszEncode>::fixed_size()
+                    if <#ty as libssz::SszEncode>::is_fixed_size() {
+                        <#ty as libssz::SszEncode>::fixed_size()
                     } else {
-                        4 + ssz::SszEncode::encoded_len(&self.#fname)
+                        4 + libssz::SszEncode::encoded_len(&self.#fname)
                     }
                 }
             }
@@ -176,7 +176,7 @@ fn derive_encode_struct(
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                if <#ty as ssz::SszEncode>::is_fixed_size() {
+                if <#ty as libssz::SszEncode>::is_fixed_size() {
                     encoder.append_fixed(&self.#fname);
                 } else {
                     encoder.append_variable(&self.#fname);
@@ -191,7 +191,7 @@ fn derive_encode_struct(
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                <#ty as ssz::SszEncode>::ssz_append(&self.#fname, buf);
+                <#ty as libssz::SszEncode>::ssz_append(&self.#fname, buf);
             }
         })
         .collect();
@@ -202,8 +202,8 @@ fn derive_encode_struct(
         .map(|ty| {
             quote! {
                 {
-                    if <#ty as ssz::SszEncode>::is_fixed_size() {
-                        <#ty as ssz::SszEncode>::fixed_size()
+                    if <#ty as libssz::SszEncode>::is_fixed_size() {
+                        <#ty as libssz::SszEncode>::fixed_size()
                     } else {
                         4usize
                     }
@@ -218,19 +218,19 @@ fn derive_encode_struct(
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                <#ty as ssz::SszEncode>::ssz_append(&item.#fname, buf);
+                <#ty as libssz::SszEncode>::ssz_append(&item.#fname, buf);
             }
         })
         .collect();
 
     quote! {
-        impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszEncode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool {
                 true #(&& #is_fixed_checks)*
             }
 
             fn fixed_size() -> usize {
-                if <Self as ssz::SszEncode>::is_fixed_size() {
+                if <Self as libssz::SszEncode>::is_fixed_size() {
                     0 #(+ #fixed_size_terms)*
                 } else {
                     0
@@ -242,12 +242,12 @@ fn derive_encode_struct(
             }
 
             fn ssz_append(&self, buf: &mut Vec<u8>) {
-                if <Self as ssz::SszEncode>::is_fixed_size() {
+                if <Self as libssz::SszEncode>::is_fixed_size() {
                     #(#direct_append_stmts)*
                 } else {
                     let fixed_part_len: usize = 0 #(+ #encode_fixed_part_len_terms)*;
-                    let total_len = ssz::SszEncode::encoded_len(self);
-                    let mut encoder = ssz::ContainerEncoder::with_capacity(buf, fixed_part_len, total_len);
+                    let total_len = libssz::SszEncode::encoded_len(self);
+                    let mut encoder = libssz::ContainerEncoder::with_capacity(buf, fixed_part_len, total_len);
                     #(#append_stmts)*
                     encoder.finalize();
                 }
@@ -257,13 +257,13 @@ fn derive_encode_struct(
             where
                 Self: Sized,
             {
-                if <Self as ssz::SszEncode>::is_fixed_size() {
-                    buf.reserve(<Self as ssz::SszEncode>::fixed_size() * items.len());
+                if <Self as libssz::SszEncode>::is_fixed_size() {
+                    buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
                     for item in items {
                         #(#bulk_append_stmts)*
                     }
                 } else {
-                    buf.reserve(<Self as ssz::SszEncode>::fixed_size() * items.len());
+                    buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
                     for item in items {
                         item.ssz_append(buf);
                     }
@@ -292,7 +292,7 @@ fn derive_encode_union_enum(
                     quote! {
                         #name::#variant_name(inner) => {
                             buf.push(#selector);
-                            ssz::SszEncode::ssz_append(inner, buf);
+                            libssz::SszEncode::ssz_append(inner, buf);
                         }
                     }
                 }
@@ -316,7 +316,7 @@ fn derive_encode_union_enum(
             match &variant.fields {
                 Fields::Unnamed(_f) => {
                     quote! {
-                        #name::#variant_name(inner) => 1 + ssz::SszEncode::encoded_len(inner)
+                        #name::#variant_name(inner) => 1 + libssz::SszEncode::encoded_len(inner)
                     }
                 }
                 Fields::Unit => {
@@ -330,7 +330,7 @@ fn derive_encode_union_enum(
         .collect();
 
     quote! {
-        impl #impl_generics ssz::SszEncode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszEncode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool { false }
             fn fixed_size() -> usize { 0 }
 
@@ -415,17 +415,17 @@ fn derive_decode_transparent(
     };
 
     quote! {
-        impl #impl_generics ssz::SszDecode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszDecode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool {
-                <#inner_ty as ssz::SszDecode>::is_fixed_size()
+                <#inner_ty as libssz::SszDecode>::is_fixed_size()
             }
 
             fn fixed_size() -> usize {
-                <#inner_ty as ssz::SszDecode>::fixed_size()
+                <#inner_ty as libssz::SszDecode>::fixed_size()
             }
 
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
-                let inner = <#inner_ty as ssz::SszDecode>::from_ssz_bytes(bytes)?;
+            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, libssz::DecodeError> {
+                let inner = <#inner_ty as libssz::SszDecode>::from_ssz_bytes(bytes)?;
                 Ok(#constructor)
             }
         }
@@ -449,14 +449,14 @@ fn derive_decode_struct(
 
     // is_fixed_size
     let is_fixed_checks = field_types.iter().map(|ty| {
-        quote! { <#ty as ssz::SszDecode>::is_fixed_size() }
+        quote! { <#ty as libssz::SszDecode>::is_fixed_size() }
     });
 
     // fixed_size
     let fixed_size_terms: Vec<_> = field_types
         .iter()
         .map(|ty| {
-            quote! { <#ty as ssz::SszDecode>::fixed_size() }
+            quote! { <#ty as libssz::SszDecode>::fixed_size() }
         })
         .collect();
 
@@ -466,8 +466,8 @@ fn derive_decode_struct(
         .map(|ty| {
             quote! {
                 {
-                    if <#ty as ssz::SszDecode>::is_fixed_size() {
-                        <#ty as ssz::SszDecode>::fixed_size()
+                    if <#ty as libssz::SszDecode>::is_fixed_size() {
+                        <#ty as libssz::SszDecode>::fixed_size()
                     } else {
                         4usize
                     }
@@ -482,7 +482,7 @@ fn derive_decode_struct(
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
+                let #fname = if <#ty as libssz::SszDecode>::is_fixed_size() {
                     Some(decoder.decode_fixed::<#ty>()?)
                 } else {
                     decoder.read_variable_offset()?;
@@ -497,7 +497,7 @@ fn derive_decode_struct(
         .zip(field_types.iter())
         .map(|(fname, ty)| {
             quote! {
-                let #fname = if <#ty as ssz::SszDecode>::is_fixed_size() {
+                let #fname = if <#ty as libssz::SszDecode>::is_fixed_size() {
                     #fname.unwrap()
                 } else {
                     decoder.decode_variable::<#ty>()?
@@ -516,8 +516,8 @@ fn derive_decode_struct(
         .map(|(fname, ty)| {
             quote! {
                 let (#fname, __remaining) = {
-                    let (slice, rest) = __remaining.split_at(<#ty as ssz::SszDecode>::fixed_size());
-                    (<#ty as ssz::SszDecode>::from_ssz_bytes(slice)?, rest)
+                    let (slice, rest) = __remaining.split_at(<#ty as libssz::SszDecode>::fixed_size());
+                    (<#ty as libssz::SszDecode>::from_ssz_bytes(slice)?, rest)
                 };
             }
         })
@@ -534,8 +534,8 @@ fn derive_decode_struct(
         .map(|(fname, ty)| {
             quote! {
                 let (#fname, __remaining) = {
-                    let (slice, rest) = __remaining.split_at(<#ty as ssz::SszDecode>::fixed_size());
-                    (<#ty as ssz::SszDecode>::from_ssz_bytes(slice)?, rest)
+                    let (slice, rest) = __remaining.split_at(<#ty as libssz::SszDecode>::fixed_size());
+                    (<#ty as libssz::SszDecode>::from_ssz_bytes(slice)?, rest)
                 };
             }
         })
@@ -546,24 +546,24 @@ fn derive_decode_struct(
     });
 
     quote! {
-        impl #impl_generics ssz::SszDecode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszDecode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool {
                 true #(&& #is_fixed_checks)*
             }
 
             fn fixed_size() -> usize {
-                if <Self as ssz::SszDecode>::is_fixed_size() {
+                if <Self as libssz::SszDecode>::is_fixed_size() {
                     0 #(+ #fixed_size_terms)*
                 } else {
                     0
                 }
             }
 
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
-                if <Self as ssz::SszDecode>::is_fixed_size() {
-                    let expected = <Self as ssz::SszDecode>::fixed_size();
+            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, libssz::DecodeError> {
+                if <Self as libssz::SszDecode>::is_fixed_size() {
+                    let expected = <Self as libssz::SszDecode>::fixed_size();
                     if bytes.len() != expected {
-                        return Err(ssz::DecodeError::InvalidFixedLength { expected, got: bytes.len() });
+                        return Err(libssz::DecodeError::InvalidFixedLength { expected, got: bytes.len() });
                     }
                     let __remaining = bytes;
                     #(#direct_decode_stmts)*
@@ -572,7 +572,7 @@ fn derive_decode_struct(
                     })
                 } else {
                     let fixed_part_len: usize = 0 #(+ #fixed_part_len_terms)*;
-                    let mut decoder = ssz::ContainerDecoder::new(bytes, fixed_part_len)?;
+                    let mut decoder = libssz::ContainerDecoder::new(bytes, fixed_part_len)?;
 
                     // Fixed-part pass
                     #(#fixed_pass_stmts)*
@@ -586,11 +586,11 @@ fn derive_decode_struct(
                 }
             }
 
-            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, ssz::DecodeError> {
-                if <Self as ssz::SszDecode>::is_fixed_size() {
-                    let item_size = <Self as ssz::SszDecode>::fixed_size();
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, libssz::DecodeError> {
+                if <Self as libssz::SszDecode>::is_fixed_size() {
+                    let item_size = <Self as libssz::SszDecode>::fixed_size();
                     if item_size > 0 && bytes.len() % item_size != 0 {
-                        return Err(ssz::DecodeError::InvalidByteLength {
+                        return Err(libssz::DecodeError::InvalidByteLength {
                             expected: item_size,
                             got: bytes.len(),
                         });
@@ -609,7 +609,7 @@ fn derive_decode_struct(
                     Ok(result)
                 } else {
                     // Variable-size: fall back to default
-                    let item_size = <Self as ssz::SszDecode>::fixed_size();
+                    let item_size = <Self as libssz::SszDecode>::fixed_size();
                     bytes
                         .chunks_exact(item_size)
                         .map(Self::from_ssz_bytes)
@@ -639,7 +639,7 @@ fn derive_decode_union_enum(
                     let ty = &f.unnamed.first().unwrap().ty;
                     quote! {
                         #selector => {
-                            let inner = <#ty as ssz::SszDecode>::from_ssz_bytes(&bytes[1..])?;
+                            let inner = <#ty as libssz::SszDecode>::from_ssz_bytes(&bytes[1..])?;
                             Ok(#name::#variant_name(inner))
                         }
                     }
@@ -648,7 +648,7 @@ fn derive_decode_union_enum(
                     quote! {
                         #selector => {
                             if bytes.len() != 1 {
-                                return Err(ssz::DecodeError::AdditionalBytes {
+                                return Err(libssz::DecodeError::AdditionalBytes {
                                     expected: 1,
                                     got: bytes.len(),
                                 });
@@ -663,18 +663,18 @@ fn derive_decode_union_enum(
         .collect();
 
     quote! {
-        impl #impl_generics ssz::SszDecode for #name #ty_generics #where_clause {
+        impl #impl_generics libssz::SszDecode for #name #ty_generics #where_clause {
             fn is_fixed_size() -> bool { false }
             fn fixed_size() -> usize { 0 }
 
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
+            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, libssz::DecodeError> {
                 if bytes.is_empty() {
-                    return Err(ssz::DecodeError::EmptyInput);
+                    return Err(libssz::DecodeError::EmptyInput);
                 }
                 let selector = bytes[0];
                 match selector {
                     #(#variant_arms)*
-                    s => Err(ssz::DecodeError::InvalidUnionSelector(s)),
+                    s => Err(libssz::DecodeError::InvalidUnionSelector(s)),
                 }
             }
         }
@@ -732,9 +732,9 @@ fn derive_htr_transparent(
     let (field_access, _) = transparent_field_info(data);
 
     quote! {
-        impl #impl_generics ssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> ssz_merkle::Node {
-                ssz_merkle::HashTreeRoot::hash_tree_root(&#field_access)
+        impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
+            fn hash_tree_root(&self) -> libssz_merkle::Node {
+                libssz_merkle::HashTreeRoot::hash_tree_root(&#field_access)
             }
         }
     }
@@ -755,19 +755,19 @@ fn derive_htr_struct(
     let field_roots = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
         quote! {
-            ssz_merkle::HashTreeRoot::hash_tree_root(&self.#field_name)
+            libssz_merkle::HashTreeRoot::hash_tree_root(&self.#field_name)
         }
     });
 
     let num_fields = fields.len();
 
     quote! {
-        impl #impl_generics ssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> ssz_merkle::Node {
-                let field_roots: [ssz_merkle::Node; #num_fields] = [
+        impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
+            fn hash_tree_root(&self) -> libssz_merkle::Node {
+                let field_roots: [libssz_merkle::Node; #num_fields] = [
                     #(#field_roots,)*
                 ];
-                ssz_merkle::merkleize(&field_roots, None)
+                libssz_merkle::merkleize(&field_roots, None)
             }
         }
     }
@@ -791,16 +791,16 @@ fn derive_htr_union_enum(
                 Fields::Unnamed(_f) => {
                     quote! {
                         #name::#variant_name(inner) => {
-                            let root = ssz_merkle::HashTreeRoot::hash_tree_root(inner);
-                            ssz_merkle::mix_in_selector(&root, #selector)
+                            let root = libssz_merkle::HashTreeRoot::hash_tree_root(inner);
+                            libssz_merkle::mix_in_selector(&root, #selector)
                         }
                     }
                 }
                 Fields::Unit => {
                     quote! {
                         #name::#variant_name => {
-                            let root = ssz_merkle::ZERO_HASHES[0];
-                            ssz_merkle::mix_in_selector(&root, #selector)
+                            let root = libssz_merkle::ZERO_HASHES[0];
+                            libssz_merkle::mix_in_selector(&root, #selector)
                         }
                     }
                 }
@@ -810,8 +810,8 @@ fn derive_htr_union_enum(
         .collect();
 
     quote! {
-        impl #impl_generics ssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> ssz_merkle::Node {
+        impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
+            fn hash_tree_root(&self) -> libssz_merkle::Node {
                 match self {
                     #(#variant_arms)*
                 }

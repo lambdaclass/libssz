@@ -1,5 +1,5 @@
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::SszList;
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::SszList;
 
 use super::bellatrix::MAX_BYTES_PER_TRANSACTION;
 use super::bellatrix::MAX_TRANSACTIONS_PER_PAYLOAD;

@@ -3,8 +3,6 @@
 //! Differential encoding fuzzer: encode the same data with libssz, lighthouse_ssz,
 //! and ssz_rs, then assert byte-identical output.
 
-extern crate libssz as ssz;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 

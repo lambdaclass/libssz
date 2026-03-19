@@ -1,9 +1,9 @@
 use alloc::vec::Vec;
 use smallvec::SmallVec;
-use ssz::{DecodeError, SszDecode, SszEncode};
+use libssz::{DecodeError, SszDecode, SszEncode};
 
 use crate::error::IndexError;
-use ssz_merkle::{merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, Node};
+use libssz_merkle::{merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, Node};
 
 /// A progressive bitlist: ordered variable-length collection of booleans **without limit**.
 ///

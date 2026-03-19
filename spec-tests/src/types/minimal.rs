@@ -3,8 +3,8 @@
 //! Only types whose SSZ layout differs between mainnet and minimal are defined here.
 //! All other types are reused from the mainnet modules.
 
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 use super::phase0::{
     AttestationData, BeaconBlockHeader, Checkpoint, Deposit, Eth1Data, Fork, ProposerSlashing,

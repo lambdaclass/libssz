@@ -6,10 +6,10 @@ publish = false
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ssz = { path = "../crates/ssz" }
-ssz-types = { path = "../crates/ssz-types" }
-ssz-merkle = { path = "../crates/ssz-merkle" }
-ssz-derive = { path = "../crates/ssz-derive" }
+libssz = { version = "0.1.0", path = "../crates/ssz" }
+libssz-types = { version = "0.1.0", path = "../crates/ssz-types" }
+libssz-merkle = { version = "0.1.0", path = "../crates/ssz-merkle" }
+libssz-derive = { version = "0.1.0", path = "../crates/ssz-derive" }
 
 # Test vector loading (vectors downloaded by spec-tests/download-vectors.sh)
 snap = "1"

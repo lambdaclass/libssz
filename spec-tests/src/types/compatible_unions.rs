@@ -1,6 +1,6 @@
-use ssz::{DecodeError, SszDecode, SszEncode};
-use ssz_merkle::{mix_in_selector, HashTreeRoot, Node};
-use ssz_types::split_union_bytes;
+use libssz::{DecodeError, SszDecode, SszEncode};
+use libssz_merkle::{mix_in_selector, HashTreeRoot, Node};
+use libssz_types::split_union_bytes;
 
 use super::progressive_containers::{
     ProgressiveSingleFieldContainerTestStruct, ProgressiveSingleListContainerTestStruct,

@@ -3,9 +3,6 @@
 //! Fuzz hash_tree_root for union (enum with enum_behaviour = "union").
 //! Tests no-panic, determinism, and decode-then-hash correctness.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::SszDecode;

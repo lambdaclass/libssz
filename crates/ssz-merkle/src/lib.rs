@@ -10,7 +10,7 @@ use alloc::{vec, vec::Vec};
 mod ethereum_types;
 
 use sha2::{Digest, Sha256};
-use ssz::SszEncode;
+use libssz::SszEncode;
 
 /// A 32-byte Merkle tree node.
 pub type Node = [u8; 32];

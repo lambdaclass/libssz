@@ -2,8 +2,6 @@
 
 //! Fuzz union type decode for no-panic and roundtrip correctness.
 
-extern crate libssz as ssz;
-
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};
 use libssz_derive::{SszDecode, SszEncode};

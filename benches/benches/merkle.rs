@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use ssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node};
+use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node};
 
 fn make_chunks(n: usize) -> Vec<Node> {
     (0..n)

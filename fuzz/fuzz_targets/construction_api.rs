@@ -5,9 +5,6 @@
 //! Tests SszBitlist, SszBitvector, SszList, and SszVector construction
 //! methods that are not exercised by encode/decode fuzzing alone.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

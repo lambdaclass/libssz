@@ -2,9 +2,6 @@
 
 //! Fuzz target for wide unions (8+ variants): stresses selector byte logic near boundary 127.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

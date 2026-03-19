@@ -3,8 +3,6 @@
 //! Differential decoding fuzzer: encode the same data with libssz, lighthouse_ssz,
 //! or ssz_rs, then decode with the other libraries and assert results match.
 
-extern crate libssz as ssz;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::SszDecode;

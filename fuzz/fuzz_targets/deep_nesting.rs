@@ -2,9 +2,6 @@
 
 //! Fuzz target for deeply nested SSZ composites and SszList of variable-size items.
 
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use libssz::{SszDecode, SszEncode};

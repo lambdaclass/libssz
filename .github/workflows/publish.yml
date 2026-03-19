@@ -1,0 +1,78 @@
+on:
+  release:
+    types: [published]
+
+jobs:
+  crates-publish:
+    runs-on: ubuntu-latest
+    environment: crates-release-prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+
+      - name: Set Up Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # 1.10.1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Publish libssz
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          OUTPUT=$(cargo publish --package libssz 2>&1) || {
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "libssz already published, continuing"
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+
+      - name: Wait for crates.io indexing
+        run: sleep 30
+
+      - name: Publish libssz-merkle
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          OUTPUT=$(cargo publish --package libssz-merkle 2>&1) || {
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "libssz-merkle already published, continuing"
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+
+      - name: Wait for crates.io indexing
+        run: sleep 30
+
+      - name: Publish libssz-types
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          OUTPUT=$(cargo publish --package libssz-types 2>&1) || {
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "libssz-types already published, continuing"
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
+
+      - name: Wait for crates.io indexing
+        run: sleep 30
+
+      - name: Publish libssz-derive
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          OUTPUT=$(cargo publish --package libssz-derive 2>&1) || {
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "libssz-derive already published, continuing"
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }

@@ -1,5 +1,5 @@
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 // Mainnet preset constants
 pub const MAX_VALIDATORS_PER_COMMITTEE: usize = 2048;

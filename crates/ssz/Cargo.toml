@@ -1,9 +1,13 @@
 [package]
-name = "ssz"
+name = "libssz"
 version = "0.1.0"
 edition = "2021"
 description = "Simple Serialize (SSZ) encoding/decoding for Ethereum consensus"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/lambdaclass/libssz"
+readme = "../../README.md"
+keywords = ["ssz", "ethereum", "serialization", "merkle", "no-std"]
+categories = ["encoding", "cryptography::cryptocurrencies"]
 
 [features]
 default = ["std"]

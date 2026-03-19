@@ -5,7 +5,7 @@ use ssz_bench::fixtures::{
     make_list_u64, make_nested_container, make_pending_attestation, make_validator,
     make_validator_list, make_variable_container, make_vec_u64, make_vector_bytes32,
 };
-use ssz_merkle::HashTreeRoot;
+use libssz_merkle::HashTreeRoot;
 
 fn htr_primitives(c: &mut Criterion) {
     let mut group = c.benchmark_group("hash_tree_root/primitives");

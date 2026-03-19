@@ -1,6 +1,6 @@
 use spec_tests::loader;
-use ssz::{SszDecode, SszEncode};
-use ssz_merkle::HashTreeRoot;
+use libssz::{SszDecode, SszEncode};
+use libssz_merkle::HashTreeRoot;
 
 // ── boolean ──
 
@@ -199,7 +199,7 @@ fn decimal_to_u256_le(s: &str) -> [u8; 32] {
 
 #[test]
 fn basic_vector_valid() {
-    use ssz_types::SszVector;
+    use libssz_types::SszVector;
 
     for (case_path, case_name) in loader::ssz_generic_valid_cases("basic_vector") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -551,7 +551,7 @@ fn basic_vector_valid() {
 
 #[test]
 fn basic_vector_invalid() {
-    use ssz_types::SszVector;
+    use libssz_types::SszVector;
 
     for (case_path, case_name) in loader::ssz_generic_invalid_cases("basic_vector") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -863,7 +863,7 @@ fn parse_basic_vector_case(case_name: &str) -> (&str, usize) {
 
 #[test]
 fn bitlist_valid() {
-    use ssz_types::SszBitlist;
+    use libssz_types::SszBitlist;
 
     for (case_path, case_name) in loader::ssz_generic_valid_cases("bitlist") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -918,7 +918,7 @@ fn bitlist_valid() {
 
 #[test]
 fn bitlist_invalid() {
-    use ssz_types::SszBitlist;
+    use libssz_types::SszBitlist;
 
     for (case_path, case_name) in loader::ssz_generic_invalid_cases("bitlist") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -967,7 +967,7 @@ fn bitlist_invalid() {
 
 #[test]
 fn bitvector_valid() {
-    use ssz_types::SszBitvector;
+    use libssz_types::SszBitvector;
 
     for (case_path, case_name) in loader::ssz_generic_valid_cases("bitvector") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -1027,7 +1027,7 @@ fn bitvector_valid() {
 
 #[test]
 fn bitvector_invalid() {
-    use ssz_types::SszBitvector;
+    use libssz_types::SszBitvector;
 
     for (case_path, case_name) in loader::ssz_generic_invalid_cases("bitvector") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -1195,7 +1195,7 @@ fn check_container<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debug>(
 
 #[test]
 fn basic_progressive_list_valid() {
-    use ssz_types::ProgressiveList;
+    use libssz_types::ProgressiveList;
 
     for (case_path, case_name) in loader::ssz_generic_valid_cases("basic_progressive_list") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -1232,7 +1232,7 @@ fn basic_progressive_list_valid() {
 
 #[test]
 fn basic_progressive_list_invalid() {
-    use ssz_types::ProgressiveList;
+    use libssz_types::ProgressiveList;
 
     for (case_path, case_name) in loader::ssz_generic_invalid_cases("basic_progressive_list") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -1285,7 +1285,7 @@ fn check_roundtrip_root<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debu
 
 #[test]
 fn progressive_bitlist_valid() {
-    use ssz_types::ProgressiveBitlist;
+    use libssz_types::ProgressiveBitlist;
 
     for (case_path, case_name) in loader::ssz_generic_valid_cases("progressive_bitlist") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));
@@ -1300,7 +1300,7 @@ fn progressive_bitlist_valid() {
 
 #[test]
 fn progressive_bitlist_invalid() {
-    use ssz_types::ProgressiveBitlist;
+    use libssz_types::ProgressiveBitlist;
 
     for (case_path, case_name) in loader::ssz_generic_invalid_cases("progressive_bitlist") {
         let ssz = loader::read_ssz_snappy(&case_path.join("serialized.ssz_snappy"));

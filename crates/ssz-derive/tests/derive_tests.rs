@@ -1,6 +1,6 @@
-use ssz::{DecodeError, SszDecode, SszEncode};
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_merkle::HashTreeRoot;
+use libssz::{DecodeError, SszDecode, SszEncode};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_merkle::HashTreeRoot;
 
 // ── All-fixed struct ──
 
@@ -144,7 +144,7 @@ fn hash_tree_root_struct() {
     // Manual: merkleize([hash_tree_root(a), hash_tree_root(b)])
     let root_a = 1u64.hash_tree_root();
     let root_b = 2u64.hash_tree_root();
-    let expected = ssz_merkle::merkleize(&[root_a, root_b], None);
+    let expected = libssz_merkle::merkleize(&[root_a, root_b], None);
     assert_eq!(root, expected);
 }
 
@@ -207,7 +207,7 @@ fn union_hash_tree_root() {
     let root = val.hash_tree_root();
 
     let inner_root = 42u32.hash_tree_root();
-    let expected = ssz_merkle::mix_in_selector(&inner_root, 0);
+    let expected = libssz_merkle::mix_in_selector(&inner_root, 0);
     assert_eq!(root, expected);
 }
 

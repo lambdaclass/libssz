@@ -1,5 +1,5 @@
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
-use ssz::{SszDecode, SszEncode};
+use libssz::{SszDecode, SszEncode};
 use ssz_bench::fixtures::{make_validator, Validator};
 
 #[library_benchmark]

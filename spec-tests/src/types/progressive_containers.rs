@@ -1,6 +1,6 @@
-use ssz_derive::{SszDecode, SszEncode};
-use ssz_merkle::{merkleize_progressive, mix_in_active_fields, HashTreeRoot, Node};
-use ssz_types::{ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList};
+use libssz_derive::{SszDecode, SszEncode};
+use libssz_merkle::{merkleize_progressive, mix_in_active_fields, HashTreeRoot, Node};
+use libssz_types::{ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList};
 
 use super::containers::SmallTestStruct;
 
@@ -161,7 +161,7 @@ impl HashTreeRoot for ProgressiveTestStruct {
             self.c.hash_tree_root(),
             self.d.hash_tree_root(),
         ];
-        ssz_merkle::merkleize(&field_roots, None)
+        libssz_merkle::merkleize(&field_roots, None)
     }
 }
 
@@ -215,6 +215,6 @@ impl HashTreeRoot for ProgressiveBitsStruct {
             self.k.hash_tree_root(),
             self.l.hash_tree_root(),
         ];
-        ssz_merkle::merkleize(&field_roots, None)
+        libssz_merkle::merkleize(&field_roots, None)
     }
 }

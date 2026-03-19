@@ -1,18 +1,22 @@
 [package]
-name = "ssz-merkle"
+name = "libssz-merkle"
 version = "0.1.0"
 edition = "2021"
 description = "SSZ Merkleization: HashTreeRoot, merkleize, zero hashes"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/lambdaclass/libssz"
+readme = "../../README.md"
+keywords = ["ssz", "ethereum", "serialization", "merkle", "no-std"]
+categories = ["encoding", "cryptography::cryptocurrencies"]
 
 [features]
 default = ["std"]
-std = ["alloc", "ssz/std"]
-alloc = ["ssz/alloc"]
-ethereum_types = ["dep:ethereum-types", "ssz/ethereum_types"]
+std = ["alloc", "libssz/std"]
+alloc = ["libssz/alloc"]
+ethereum_types = ["dep:ethereum-types", "libssz/ethereum_types"]
 
 [dependencies]
-ssz = { path = "../ssz", default-features = false }
+libssz = { version = "0.1.0", path = "../ssz", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
 

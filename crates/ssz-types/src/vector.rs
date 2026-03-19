@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 
 use core::ops::{Deref, Index};
 
-use ssz::{DecodeError, SszDecode, SszEncode};
+use libssz::{DecodeError, SszDecode, SszEncode};
 
 use crate::error::TypeError;
 

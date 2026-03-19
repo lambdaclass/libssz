@@ -1,5 +1,5 @@
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
-use ssz_merkle::{hash_nodes, merkleize, pack, Node};
+use libssz_merkle::{hash_nodes, merkleize, pack, Node};
 
 fn make_chunks(n: usize) -> Vec<Node> {
     (0..n)

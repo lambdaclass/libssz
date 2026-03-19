@@ -1,8 +1,8 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use ssz::SszEncode;
-use ssz_merkle::{merkleize, mix_in_length, pack, pack_bits, HashTreeRoot, Node};
+use libssz::SszEncode;
+use libssz_merkle::{merkleize, mix_in_length, pack, pack_bits, HashTreeRoot, Node};
 
 use crate::bitlist::SszBitlist;
 use crate::bitvector::SszBitvector;

@@ -1,9 +1,5 @@
 #![no_main]
 
-// Aliases so our derive macros' generated code (which references `ssz::` and `ssz_merkle::`) resolves correctly.
-extern crate libssz as ssz;
-extern crate libssz_merkle as ssz_merkle;
-
 use libfuzzer_sys::fuzz_target;
 use libssz::SszDecode;
 use libssz_derive::{SszDecode, SszEncode};

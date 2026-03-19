@@ -4,7 +4,7 @@
 //!   #[derive(SszEncode, SszDecode)]
 //!   struct BeaconBlockHeader { ... }
 
-use ssz::{ContainerDecoder, ContainerEncoder};
+use libssz::{ContainerDecoder, ContainerEncoder};
 
 fn main() {
     // ── All-fixed container ──

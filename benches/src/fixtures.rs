@@ -1,7 +1,7 @@
-use ssz::SszEncode;
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_merkle::{merkleize, mix_in_length, HashTreeRoot, Node};
-use ssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
+use libssz::SszEncode;
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_merkle::{merkleize, mix_in_length, HashTreeRoot, Node};
+use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 /// Ethereum consensus Validator (121 bytes, all fixed-size fields).
 #[derive(Clone, Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]

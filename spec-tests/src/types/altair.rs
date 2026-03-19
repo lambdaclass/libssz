@@ -1,5 +1,5 @@
-use ssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use ssz_types::{SszBitvector, SszList, SszVector};
+use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
+use libssz_types::{SszBitvector, SszList, SszVector};
 
 use super::phase0::{
     Attestation, AttesterSlashing, BeaconBlockHeader, Checkpoint, Deposit, Eth1Data, Fork,

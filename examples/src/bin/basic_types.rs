@@ -1,6 +1,6 @@
 //! Demonstrates SSZ encoding and decoding of basic types.
 
-use ssz::{SszDecode, SszEncode};
+use libssz::{SszDecode, SszEncode};
 
 fn main() {
     // ── bool ──

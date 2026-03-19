@@ -6,9 +6,9 @@ publish = false
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ssz = { path = "../crates/ssz" }
-ssz-types = { path = "../crates/ssz-types" }
-ssz-merkle = { path = "../crates/ssz-merkle" }
+libssz = { version = "0.1.0", path = "../crates/ssz" }
+libssz-types = { version = "0.1.0", path = "../crates/ssz-types" }
+libssz-merkle = { version = "0.1.0", path = "../crates/ssz-merkle" }
 
 [[bin]]
 name = "basic_types"

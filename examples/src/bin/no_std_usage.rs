@@ -4,7 +4,7 @@
 //!
 //! ```toml,ignore
 //! [dependencies]
-//! ssz = { version = "0.1", default-features = false, features = ["alloc"] }
+//! libssz = { version = "0.1", default-features = false, features = ["alloc"] }
 //! ```
 //!
 //! And in your crate root:
@@ -14,13 +14,13 @@
 //! extern crate alloc;
 //!
 //! use alloc::vec::Vec;
-//! use ssz::{SszEncode, SszDecode};
+//! use libssz::{SszEncode, SszDecode};
 //!
 //! fn encode_slot(slot: u64) -> Vec<u8> {
 //!     slot.to_ssz()
 //! }
 //!
-//! fn decode_slot(bytes: &[u8]) -> Result<u64, ssz::DecodeError> {
+//! fn decode_slot(bytes: &[u8]) -> Result<u64, libssz::DecodeError> {
 //!     u64::from_ssz_bytes(bytes)
 //! }
 //! ```
@@ -31,10 +31,10 @@
 //! - The `alloc` feature gives you `Vec`, `SszEncode::to_ssz()`, and all
 //!   standard implementations.
 //! - Without `alloc`, only the trait definitions are available (no impls).
-//! - Each crate propagates features: `ssz-types = { features = ["alloc"] }`
-//!   automatically enables `ssz/alloc`.
+//! - Each crate propagates features: `libssz-types = { features = ["alloc"] }`
+//!   automatically enables `libssz/alloc`.
 
-use ssz::{SszDecode, SszEncode};
+use libssz::{SszDecode, SszEncode};
 
 fn main() {
     // This example runs in a std environment but demonstrates the same API
@@ -47,7 +47,7 @@ fn main() {
     println!("no_std pattern: u64 round-trip OK (slot={decoded})");
     println!();
     println!("To use in a real no_std project:");
-    println!("  1. Add `ssz` with default-features = false, features = [\"alloc\"]");
+    println!("  1. Add `libssz` with default-features = false, features = [\"alloc\"]");
     println!("  2. Add #![no_std] and extern crate alloc to your crate root");
     println!("  3. Use the same SszEncode/SszDecode API as in std");
 }
