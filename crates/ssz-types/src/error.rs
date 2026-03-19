@@ -31,6 +31,27 @@ impl std::fmt::Display for TypeError {
 #[cfg(feature = "std")]
 impl std::error::Error for TypeError {}
 
+/// Error returned when accessing a bit at an out-of-bounds index.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IndexError {
+    pub index: usize,
+    pub len: usize,
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for IndexError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "index {} out of bounds (length {})",
+            self.index, self.len
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IndexError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -64,5 +85,19 @@ mod tests {
         let err = TypeError::OverCapacity { max: 5, got: 6 };
         let err_ref: &dyn std::error::Error = &err;
         assert!(err_ref.to_string().contains("over capacity"));
+    }
+
+    #[test]
+    fn display_index_error() {
+        let err = IndexError { index: 5, len: 3 };
+        let msg = format!("{err}");
+        assert_eq!(msg, "index 5 out of bounds (length 3)");
+    }
+
+    #[test]
+    fn index_error_trait_impl() {
+        let err = IndexError { index: 10, len: 8 };
+        let err_ref: &dyn std::error::Error = &err;
+        assert!(err_ref.to_string().contains("out of bounds"));
     }
 }

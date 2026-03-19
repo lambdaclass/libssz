@@ -17,7 +17,7 @@ mod vector;
 
 pub use bitlist::SszBitlist;
 pub use bitvector::SszBitvector;
-pub use error::TypeError;
+pub use error::{IndexError, TypeError};
 pub use list::SszList;
 #[cfg(feature = "alloc")]
 pub use progressive_bitlist::ProgressiveBitlist;

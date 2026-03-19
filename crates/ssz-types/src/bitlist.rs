@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use ssz::{DecodeError, SszDecode, SszEncode};
 
-use crate::error::TypeError;
+use crate::error::{IndexError, TypeError};
 
 /// A variable-length bitlist of at most `N` bits, using LSB-first bit ordering.
 ///
@@ -66,24 +66,34 @@ impl<const N: usize> SszBitlist<N> {
 
     /// Set the bit at position `index` to `value` (LSB-first ordering).
     ///
-    /// Returns `false` if `index >= len` (no change made).
-    pub fn set(&mut self, index: usize, value: bool) -> bool {
+    /// Returns the previous value of the bit on success, or `IndexError` if
+    /// `index >= len`.
+    pub fn set(&mut self, index: usize, value: bool) -> Result<bool, IndexError> {
         if index >= self.len {
-            return false;
+            return Err(IndexError {
+                index,
+                len: self.len,
+            });
         }
         let byte_index = index / 8;
         let bit_index = index % 8;
+        let previous = (self.bytes[byte_index] >> bit_index) & 1 == 1;
         if value {
             self.bytes[byte_index] |= 1 << bit_index;
         } else {
             self.bytes[byte_index] &= !(1 << bit_index);
         }
-        true
+        Ok(previous)
     }
 
     /// Returns the raw data bytes (without delimiter bit).
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    /// Returns the number of bits set to `true`.
+    pub fn count_ones(&self) -> usize {
+        self.bytes.iter().map(|b| b.count_ones() as usize).sum()
     }
 
     /// Push a bit. Returns `Err` if at capacity.
@@ -125,7 +135,7 @@ impl<const N: usize> TryFrom<Vec<bool>> for SszBitlist<N> {
         }
         let mut bl = Self::with_length(bits.len())?;
         for (i, &bit) in bits.iter().enumerate() {
-            bl.set(i, bit);
+            let _ = bl.set(i, bit);
         }
         Ok(bl)
     }
@@ -272,11 +282,14 @@ mod tests {
     #[test]
     fn set_and_get() {
         let mut bl = SszBitlist::<8>::with_length(4).unwrap();
-        bl.set(0, true);
-        bl.set(3, true);
+        assert_eq!(bl.set(0, true), Ok(false));
+        assert_eq!(bl.set(3, true), Ok(false));
         assert_eq!(bl.get(0), Some(true));
         assert_eq!(bl.get(1), Some(false));
         assert_eq!(bl.get(3), Some(true));
+        // Setting again returns the previous value
+        assert_eq!(bl.set(0, true), Ok(true));
+        assert_eq!(bl.set(3, false), Ok(true));
     }
 
     #[test]
@@ -304,7 +317,7 @@ mod tests {
     fn encode_8_bits_needs_2_bytes() {
         // 8 data bits + delimiter = 9 bits = 2 bytes
         let mut bl = SszBitlist::<16>::with_length(8).unwrap();
-        bl.set(0, true);
+        bl.set(0, true).unwrap();
         let encoded = bl.to_ssz();
         assert_eq!(encoded.len(), 2);
         // Delimiter bit at position 8 => bit 0 of byte 1
@@ -335,7 +348,7 @@ mod tests {
     fn encode_decode_roundtrip_8bits() {
         let mut bl = SszBitlist::<16>::with_length(8).unwrap();
         for i in 0..8 {
-            bl.set(i, i % 2 == 0);
+            bl.set(i, i % 2 == 0).unwrap();
         }
         let encoded = bl.to_ssz();
         let decoded = SszBitlist::<16>::from_ssz_bytes(&encoded).unwrap();
@@ -345,9 +358,9 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_large() {
         let mut bl = SszBitlist::<512>::with_length(256).unwrap();
-        bl.set(0, true);
-        bl.set(127, true);
-        bl.set(255, true);
+        bl.set(0, true).unwrap();
+        bl.set(127, true).unwrap();
+        bl.set(255, true).unwrap();
         let encoded = bl.to_ssz();
         let decoded = SszBitlist::<512>::from_ssz_bytes(&encoded).unwrap();
         assert_eq!(bl, decoded);
@@ -369,7 +382,7 @@ mod tests {
     fn decode_rejects_len_over_n() {
         // Encode a bitlist with 5 bits, try to decode as max 3
         let mut bl = SszBitlist::<8>::with_length(5).unwrap();
-        bl.set(0, true);
+        bl.set(0, true).unwrap();
         let encoded = bl.to_ssz();
         let err = SszBitlist::<3>::from_ssz_bytes(&encoded).unwrap_err();
         assert_eq!(
@@ -424,17 +437,17 @@ mod tests {
     #[test]
     fn as_bytes_returns_raw_data() {
         let mut bl = SszBitlist::<8>::with_length(4).unwrap();
-        bl.set(0, true);
-        bl.set(2, true);
+        bl.set(0, true).unwrap();
+        bl.set(2, true).unwrap();
         // LSB-first: bits 0,2 set = 0b00000101 = 5
         assert_eq!(bl.as_bytes(), &[5]);
     }
 
     #[test]
-    fn set_out_of_bounds_returns_false() {
+    fn set_out_of_bounds_returns_error() {
         let mut bl = SszBitlist::<8>::with_length(3).unwrap();
-        assert!(!bl.set(3, true)); // index == len
-        assert!(!bl.set(100, true)); // way past end
+        assert_eq!(bl.set(3, true), Err(IndexError { index: 3, len: 3 }));
+        assert_eq!(bl.set(100, true), Err(IndexError { index: 100, len: 3 }));
     }
 
     #[test]
@@ -451,5 +464,44 @@ mod tests {
     fn decode_is_always_variable() {
         assert!(!<SszBitlist<8> as SszDecode>::is_fixed_size());
         assert_eq!(<SszBitlist<8> as SszDecode>::fixed_size(), 0);
+    }
+
+    #[test]
+    fn count_ones_empty() {
+        let bl = SszBitlist::<10>::new();
+        assert_eq!(bl.count_ones(), 0);
+    }
+
+    #[test]
+    fn count_ones_mixed() {
+        let mut bl = SszBitlist::<8>::with_length(5).unwrap();
+        bl.set(0, true).unwrap();
+        bl.set(2, true).unwrap();
+        bl.set(4, true).unwrap();
+        assert_eq!(bl.count_ones(), 3);
+    }
+
+    #[test]
+    fn count_ones_all_zeros() {
+        let bl = SszBitlist::<16>::with_length(10).unwrap();
+        assert_eq!(bl.count_ones(), 0);
+    }
+
+    #[test]
+    fn count_ones_all_ones() {
+        let mut bl = SszBitlist::<8>::with_length(8).unwrap();
+        for i in 0..8 {
+            bl.set(i, true).unwrap();
+        }
+        assert_eq!(bl.count_ones(), 8);
+    }
+
+    #[test]
+    fn count_ones_non_byte_aligned() {
+        let mut bl = SszBitlist::<8>::with_length(5).unwrap();
+        for i in 0..5 {
+            bl.set(i, true).unwrap();
+        }
+        assert_eq!(bl.count_ones(), 5);
     }
 }

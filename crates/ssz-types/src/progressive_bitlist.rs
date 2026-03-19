@@ -1,6 +1,8 @@
 use alloc::vec::Vec;
 use smallvec::SmallVec;
 use ssz::{DecodeError, SszDecode, SszEncode};
+
+use crate::error::IndexError;
 use ssz_merkle::{merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, Node};
 
 /// A progressive bitlist: ordered variable-length collection of booleans **without limit**.
@@ -45,15 +47,22 @@ impl ProgressiveBitlist {
         Some(byte & (1 << (index % 8)) != 0)
     }
 
-    pub fn set(&mut self, index: usize, value: bool) {
-        assert!(index < self.len, "index out of bounds");
+    pub fn set(&mut self, index: usize, value: bool) -> Result<bool, IndexError> {
+        if index >= self.len {
+            return Err(IndexError {
+                index,
+                len: self.len,
+            });
+        }
         let byte_index = index / 8;
         let bit_index = index % 8;
+        let previous = (self.bytes[byte_index] >> bit_index) & 1 == 1;
         if value {
             self.bytes[byte_index] |= 1 << bit_index;
         } else {
             self.bytes[byte_index] &= !(1 << bit_index);
         }
+        Ok(previous)
     }
 
     pub fn push(&mut self, value: bool) {
@@ -71,6 +80,11 @@ impl ProgressiveBitlist {
     /// Returns the underlying data bytes (without delimiter bit).
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    /// Returns the number of bits set to `true`.
+    pub fn count_ones(&self) -> usize {
+        self.bytes.iter().map(|b| b.count_ones() as usize).sum()
     }
 }
 
@@ -163,5 +177,66 @@ impl HashTreeRoot for ProgressiveBitlist {
         let chunks = pack_bits(self.as_bytes(), length);
         let root = merkleize_progressive(&chunks);
         mix_in_length(&root, length)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::error::IndexError;
+
+    #[test]
+    fn set_returns_previous_value() {
+        let mut pb = ProgressiveBitlist::with_length(8);
+        assert_eq!(pb.set(0, true), Ok(false));
+        assert_eq!(pb.set(0, true), Ok(true));
+        assert_eq!(pb.set(0, false), Ok(true));
+        assert_eq!(pb.set(0, false), Ok(false));
+    }
+
+    #[test]
+    fn set_out_of_bounds_returns_error() {
+        let mut pb = ProgressiveBitlist::with_length(3);
+        assert_eq!(pb.set(3, true), Err(IndexError { index: 3, len: 3 }));
+        assert_eq!(pb.set(100, true), Err(IndexError { index: 100, len: 3 }));
+    }
+
+    #[test]
+    fn count_ones_empty() {
+        let pb = ProgressiveBitlist::new();
+        assert_eq!(pb.count_ones(), 0);
+    }
+
+    #[test]
+    fn count_ones_mixed() {
+        let mut pb = ProgressiveBitlist::with_length(5);
+        pb.set(0, true).unwrap();
+        pb.set(2, true).unwrap();
+        pb.set(4, true).unwrap();
+        assert_eq!(pb.count_ones(), 3);
+    }
+
+    #[test]
+    fn count_ones_all_zeros() {
+        let pb = ProgressiveBitlist::with_length(10);
+        assert_eq!(pb.count_ones(), 0);
+    }
+
+    #[test]
+    fn count_ones_all_ones() {
+        let mut pb = ProgressiveBitlist::with_length(8);
+        for i in 0..8 {
+            pb.set(i, true).unwrap();
+        }
+        assert_eq!(pb.count_ones(), 8);
+    }
+
+    #[test]
+    fn count_ones_non_byte_aligned() {
+        let mut pb = ProgressiveBitlist::with_length(5);
+        for i in 0..5 {
+            pb.set(i, true).unwrap();
+        }
+        assert_eq!(pb.count_ones(), 5);
     }
 }

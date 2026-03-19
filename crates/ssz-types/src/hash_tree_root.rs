@@ -153,8 +153,8 @@ mod tests {
     #[test]
     fn bitvector_hash_tree_root() {
         let mut bv = SszBitvector::<8>::new();
-        bv.set(0, true);
-        bv.set(7, true);
+        bv.set(0, true).unwrap();
+        bv.set(7, true).unwrap();
         let root = bv.hash_tree_root();
 
         // 8 bits = 1 byte, pack_bits produces 1 chunk

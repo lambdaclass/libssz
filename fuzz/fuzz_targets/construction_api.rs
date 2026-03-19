@@ -54,17 +54,17 @@ fuzz_target!(|input: FuzzInput| {
         assert_eq!(bl, decoded, "SszBitlist push roundtrip");
     }
 
-    // -- SszBitlist::set with index >= len returns false --
+    // -- SszBitlist::set with index >= len returns Err --
     {
         if let Ok(mut bl) = SszBitlist::<4096>::with_length(len) {
-            // set within bounds must return true (if len > 0)
+            // set within bounds must return Ok (if len > 0)
             if len > 0 {
-                assert!(bl.set(0, true));
+                assert!(bl.set(0, true).is_ok());
             }
-            // set at or beyond len must return false
-            assert!(!bl.set(len, true));
-            assert!(!bl.set(len.saturating_add(1), true));
-            assert!(!bl.set(set_index.saturating_add(len).saturating_add(1), true));
+            // set at or beyond len must return Err
+            assert!(bl.set(len, true).is_err());
+            assert!(bl.set(len.saturating_add(1), true).is_err());
+            assert!(bl.set(set_index.saturating_add(len).saturating_add(1), true).is_err());
         }
     }
 
@@ -122,11 +122,11 @@ fuzz_target!(|input: FuzzInput| {
         let mut bv = SszBitvector::<64>::new();
         // set within bounds
         let idx = set_index % 64;
-        bv.set(idx, input.set_value);
+        bv.set(idx, input.set_value).unwrap();
         assert_eq!(bv.get(idx), Some(input.set_value), "SszBitvector set/get");
-        // set out of bounds must return false
-        assert!(!bv.set(64, true));
-        assert!(!bv.set(usize::MAX, true));
+        // set out of bounds must return Err
+        assert!(bv.set(64, true).is_err());
+        assert!(bv.set(usize::MAX, true).is_err());
 
         let encoded = bv.to_ssz();
         let decoded = SszBitvector::<64>::from_ssz_bytes(&encoded).unwrap();
@@ -137,7 +137,7 @@ fuzz_target!(|input: FuzzInput| {
     {
         let mut bv = SszBitvector::<8>::new();
         let idx = set_index % 8;
-        bv.set(idx, input.set_value);
+        bv.set(idx, input.set_value).unwrap();
         assert_eq!(bv.get(idx), Some(input.set_value));
         let encoded = bv.to_ssz();
         let decoded = SszBitvector::<8>::from_ssz_bytes(&encoded).unwrap();

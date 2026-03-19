@@ -196,7 +196,7 @@ pub fn make_attestation_data(seed: u64) -> AttestationData {
 pub fn make_pending_attestation(seed: u64) -> PendingAttestation {
     let mut bl = SszBitlist::<2048>::with_length(2048).expect("valid length");
     for i in (0..2048).step_by(3) {
-        bl.set(i, true);
+        bl.set(i, true).unwrap();
     }
     PendingAttestation {
         aggregation_bits: bl,
@@ -234,8 +234,8 @@ pub fn make_beacon_state(n_validators: usize) -> BeaconState {
         .collect();
 
     let mut justification_bits = SszBitvector::<4>::new();
-    justification_bits.set(0, true);
-    justification_bits.set(1, true);
+    justification_bits.set(0, true).unwrap();
+    justification_bits.set(1, true).unwrap();
 
     BeaconState {
         genesis_time: 1606824023,
@@ -290,7 +290,7 @@ pub fn make_bitlist_2048() -> SszBitlist<2048> {
     let mut bl = SszBitlist::<2048>::with_length(2048).expect("valid length");
     // Set every third bit
     for i in (0..2048).step_by(3) {
-        bl.set(i, true);
+        bl.set(i, true).unwrap();
     }
     bl
 }
@@ -300,7 +300,7 @@ pub fn make_bitvector_512() -> SszBitvector<512> {
     let mut bv = SszBitvector::<512>::new();
     // Set every other bit
     for i in (0..512).step_by(2) {
-        bv.set(i, true);
+        bv.set(i, true).unwrap();
     }
     bv
 }
@@ -390,7 +390,7 @@ pub fn make_nested_container(n_validators: usize) -> NestedContainer {
 pub fn make_bitlist<const N: usize>(len: usize) -> SszBitlist<N> {
     let mut bl = SszBitlist::<N>::with_length(len).expect("valid length");
     for i in (0..len).step_by(3) {
-        bl.set(i, true);
+        bl.set(i, true).unwrap();
     }
     bl
 }
@@ -398,7 +398,7 @@ pub fn make_bitlist<const N: usize>(len: usize) -> SszBitlist<N> {
 pub fn make_bitvector<const N: usize>() -> SszBitvector<N> {
     let mut bv = SszBitvector::<N>::new();
     for i in (0..N).step_by(2) {
-        bv.set(i, true);
+        bv.set(i, true).unwrap();
     }
     bv
 }

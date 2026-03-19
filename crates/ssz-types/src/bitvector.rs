@@ -5,6 +5,8 @@ use smallvec::SmallVec;
 
 use ssz::{DecodeError, SszDecode, SszEncode};
 
+use crate::error::IndexError;
+
 /// A fixed-length bitvector of exactly `N` bits, using LSB-first bit ordering.
 ///
 /// Serialized as `ceil(N/8)` bytes. Excess bits (beyond `N`) must be zero.
@@ -48,24 +50,31 @@ impl<const N: usize> SszBitvector<N> {
 
     /// Set the bit at position `index` to `value` (LSB-first ordering).
     ///
-    /// Returns `false` if `index >= N` (no change made).
-    pub fn set(&mut self, index: usize, value: bool) -> bool {
+    /// Returns the previous value of the bit on success, or `IndexError` if
+    /// `index >= N`.
+    pub fn set(&mut self, index: usize, value: bool) -> Result<bool, IndexError> {
         if index >= N {
-            return false;
+            return Err(IndexError { index, len: N });
         }
         let byte_index = index / 8;
         let bit_index = index % 8;
+        let previous = (self.bytes[byte_index] >> bit_index) & 1 == 1;
         if value {
             self.bytes[byte_index] |= 1 << bit_index;
         } else {
             self.bytes[byte_index] &= !(1 << bit_index);
         }
-        true
+        Ok(previous)
     }
 
     /// Returns the underlying bytes.
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    /// Returns the number of bits set to `true`.
+    pub fn count_ones(&self) -> usize {
+        self.bytes.iter().map(|b| b.count_ones() as usize).sum()
     }
 
     /// Validate that excess bits beyond `N` are zero.
@@ -160,8 +169,8 @@ mod tests {
     #[test]
     fn set_and_get_lsb_first() {
         let mut bv = SszBitvector::<8>::new();
-        bv.set(0, true);
-        bv.set(2, true);
+        assert_eq!(bv.set(0, true), Ok(false));
+        assert_eq!(bv.set(2, true), Ok(false));
         assert_eq!(bv.get(0), Some(true));
         assert_eq!(bv.get(1), Some(false));
         assert_eq!(bv.get(2), Some(true));
@@ -173,24 +182,27 @@ mod tests {
     #[test]
     fn set_out_of_bounds() {
         let mut bv = SszBitvector::<8>::new();
-        assert!(!bv.set(8, true));
-        assert!(!bv.set(100, true));
+        assert_eq!(bv.set(8, true), Err(IndexError { index: 8, len: 8 }));
+        assert_eq!(
+            bv.set(100, true),
+            Err(IndexError { index: 100, len: 8 })
+        );
     }
 
     #[test]
     fn set_clear_bit() {
         let mut bv = SszBitvector::<8>::new();
-        bv.set(3, true);
+        assert_eq!(bv.set(3, true), Ok(false));
         assert_eq!(bv.get(3), Some(true));
-        bv.set(3, false);
+        assert_eq!(bv.set(3, false), Ok(true));
         assert_eq!(bv.get(3), Some(false));
     }
 
     #[test]
     fn encode_packs_lsb_first() {
         let mut bv = SszBitvector::<8>::new();
-        bv.set(0, true);
-        bv.set(7, true);
+        bv.set(0, true).unwrap();
+        bv.set(7, true).unwrap();
         let encoded = bv.to_ssz();
         assert_eq!(encoded, vec![0b1000_0001]);
     }
@@ -198,8 +210,8 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_n8() {
         let mut bv = SszBitvector::<8>::new();
-        bv.set(1, true);
-        bv.set(5, true);
+        bv.set(1, true).unwrap();
+        bv.set(5, true).unwrap();
         let encoded = bv.to_ssz();
         let decoded = SszBitvector::<8>::from_ssz_bytes(&encoded).unwrap();
         assert_eq!(bv, decoded);
@@ -208,7 +220,7 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_n1() {
         let mut bv = SszBitvector::<1>::new();
-        bv.set(0, true);
+        bv.set(0, true).unwrap();
         let encoded = bv.to_ssz();
         assert_eq!(encoded.len(), 1);
         assert_eq!(encoded[0], 0b0000_0001);
@@ -219,7 +231,7 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_n7() {
         let mut bv = SszBitvector::<7>::new();
-        bv.set(6, true);
+        bv.set(6, true).unwrap();
         let encoded = bv.to_ssz();
         assert_eq!(encoded.len(), 1);
         let decoded = SszBitvector::<7>::from_ssz_bytes(&encoded).unwrap();
@@ -229,7 +241,7 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_n9() {
         let mut bv = SszBitvector::<9>::new();
-        bv.set(8, true);
+        bv.set(8, true).unwrap();
         let encoded = bv.to_ssz();
         assert_eq!(encoded.len(), 2);
         let decoded = SszBitvector::<9>::from_ssz_bytes(&encoded).unwrap();
@@ -239,9 +251,9 @@ mod tests {
     #[test]
     fn encode_decode_roundtrip_n256() {
         let mut bv = SszBitvector::<256>::new();
-        bv.set(0, true);
-        bv.set(127, true);
-        bv.set(255, true);
+        bv.set(0, true).unwrap();
+        bv.set(127, true).unwrap();
+        bv.set(255, true).unwrap();
         let encoded = bv.to_ssz();
         assert_eq!(encoded.len(), 32);
         let decoded = SszBitvector::<256>::from_ssz_bytes(&encoded).unwrap();
@@ -311,8 +323,8 @@ mod tests {
     #[test]
     fn as_bytes_returns_raw_storage() {
         let mut bv = SszBitvector::<16>::new();
-        bv.set(0, true);
-        bv.set(8, true);
+        bv.set(0, true).unwrap();
+        bv.set(8, true).unwrap();
         // Byte 0: bit 0 set = 0x01, Byte 1: bit 0 set = 0x01
         assert_eq!(bv.as_bytes(), &[0x01, 0x01]);
     }
@@ -335,5 +347,44 @@ mod tests {
         assert_eq!(bv.get(0), Some(true));
         assert_eq!(bv.get(1), Some(true));
         assert_eq!(bv.get(2), Some(true));
+    }
+
+    #[test]
+    fn count_ones_all_zeros() {
+        let bv = SszBitvector::<16>::new();
+        assert_eq!(bv.count_ones(), 0);
+    }
+
+    #[test]
+    fn count_ones_mixed() {
+        let mut bv = SszBitvector::<8>::new();
+        bv.set(0, true).unwrap();
+        bv.set(3, true).unwrap();
+        bv.set(7, true).unwrap();
+        assert_eq!(bv.count_ones(), 3);
+    }
+
+    #[test]
+    fn count_ones_all_ones() {
+        let mut bv = SszBitvector::<8>::new();
+        for i in 0..8 {
+            bv.set(i, true).unwrap();
+        }
+        assert_eq!(bv.count_ones(), 8);
+    }
+
+    #[test]
+    fn count_ones_non_byte_aligned() {
+        let mut bv = SszBitvector::<5>::new();
+        for i in 0..5 {
+            bv.set(i, true).unwrap();
+        }
+        assert_eq!(bv.count_ones(), 5);
+    }
+
+    #[test]
+    fn count_ones_zero_length() {
+        let bv = SszBitvector::<0>::new();
+        assert_eq!(bv.count_ones(), 0);
     }
 }
