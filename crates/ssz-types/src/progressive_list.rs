@@ -27,10 +27,6 @@ impl<T> ProgressiveList<T> {
         self.0.is_empty()
     }
 
-    pub fn iter(&self) -> core::slice::Iter<'_, T> {
-        self.0.iter()
-    }
-
     pub fn into_inner(self) -> Vec<T> {
         self.0
     }
