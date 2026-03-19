@@ -127,12 +127,6 @@ impl<const N: usize> TryFrom<Vec<bool>> for SszBitlist<N> {
     type Error = TypeError;
 
     fn try_from(bits: Vec<bool>) -> Result<Self, Self::Error> {
-        if bits.len() > N {
-            return Err(TypeError::OverCapacity {
-                max: N,
-                got: bits.len(),
-            });
-        }
         let mut bl = Self::with_length(bits.len())?;
         for (i, &bit) in bits.iter().enumerate() {
             let _ = bl.set(i, bit);
@@ -170,9 +164,7 @@ impl<const N: usize> SszEncode for SszBitlist<N> {
         buf.extend_from_slice(&self.bytes);
 
         // Pad to encoded_len if needed
-        while buf.len() - start < encoded_len {
-            buf.push(0);
-        }
+        buf.resize(start + encoded_len, 0);
 
         // Set the delimiter bit at position `self.len` (0-indexed from start of bitfield)
         let delim_byte_index = self.len / 8;
@@ -224,8 +216,7 @@ impl<const N: usize> SszDecode for SszBitlist<N> {
         }
 
         // Copy bytes and clear the delimiter bit
-        let mut sv = SmallVec::with_capacity(bytes.len());
-        sv.extend_from_slice(bytes);
+        let mut sv = SmallVec::from_slice(bytes);
         sv[bytes.len() - 1] &= !(1 << highest_bit);
 
         // Trim trailing zero bytes if they are beyond what the bit_len needs

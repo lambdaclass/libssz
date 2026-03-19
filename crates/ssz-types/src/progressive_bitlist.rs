@@ -43,8 +43,9 @@ impl ProgressiveBitlist {
         if index >= self.len {
             return None;
         }
-        let byte = self.bytes[index / 8];
-        Some(byte & (1 << (index % 8)) != 0)
+        let byte_index = index / 8;
+        let bit_index = index % 8;
+        Some((self.bytes[byte_index] >> bit_index) & 1 == 1)
     }
 
     pub fn set(&mut self, index: usize, value: bool) -> Result<bool, IndexError> {
@@ -119,9 +120,7 @@ impl SszEncode for ProgressiveBitlist {
         let start = buf.len();
         buf.extend_from_slice(&self.bytes);
 
-        while buf.len() - start < encoded_len {
-            buf.push(0);
-        }
+        buf.resize(start + encoded_len, 0);
 
         let delim_byte_index = self.len / 8;
         let delim_bit_index = self.len % 8;

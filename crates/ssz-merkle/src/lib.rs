@@ -23,10 +23,7 @@ pub fn hash_nodes(a: &Node, b: &Node) -> Node {
     let mut hasher = Sha256::new();
     hasher.update(a);
     hasher.update(b);
-    let result = hasher.finalize();
-    let mut out = [0u8; 32];
-    out.copy_from_slice(&result);
-    out
+    hasher.finalize().into()
 }
 
 /// Pack serialized bytes into 32-byte chunks, zero-padding the last chunk if needed.
@@ -81,11 +78,7 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
     }
 
     let leaf_count = count.next_power_of_two();
-    let depth = if leaf_count == 1 {
-        0
-    } else {
-        leaf_count.trailing_zeros() as usize
-    };
+    let depth = leaf_count.trailing_zeros() as usize;
 
     // Only allocate for real data, padded to the next power of two.
     // The rest of the tree is handled via precomputed zero hashes.
@@ -94,11 +87,7 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
     } else {
         chunks.len().next_power_of_two()
     };
-    let real_depth = if real_leaf_count == 1 {
-        0
-    } else {
-        real_leaf_count.trailing_zeros() as usize
-    };
+    let real_depth = real_leaf_count.trailing_zeros() as usize;
 
     // Build bottom layer from real chunks only
     let mut layer: Vec<Node> = Vec::with_capacity(real_leaf_count);
@@ -165,12 +154,7 @@ pub fn mix_in_active_fields(root: &Node, active_fields: &[bool]) -> Node {
         }
     }
     let chunks = pack_bits(&bits_bytes, active_fields.len());
-    // active_fields fits in one chunk (max 256 bits)
-    let af_node = if chunks.is_empty() {
-        [0u8; 32]
-    } else {
-        chunks[0]
-    };
+    let af_node = chunks.first().copied().unwrap_or([0u8; 32]);
     hash_nodes(root, &af_node)
 }
 
@@ -211,7 +195,7 @@ impl HashTreeRoot for bool {
     #[inline(always)]
     fn hash_tree_root(&self) -> Node {
         let mut node = [0u8; 32];
-        node[0] = if *self { 1 } else { 0 };
+        node[0] = *self as u8;
         node
     }
 
@@ -222,75 +206,25 @@ impl HashTreeRoot for bool {
 
 // ── Unsigned integers ──
 
-impl HashTreeRoot for u8 {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        let bytes = self.to_le_bytes();
-        node[..bytes.len()].copy_from_slice(&bytes);
-        node
-    }
+macro_rules! impl_htr_for_uint {
+    ($($type:ty),+) => {$(
+        impl HashTreeRoot for $type {
+            #[inline(always)]
+            fn hash_tree_root(&self) -> Node {
+                let mut node = [0u8; 32];
+                let bytes = self.to_le_bytes();
+                node[..bytes.len()].copy_from_slice(&bytes);
+                node
+            }
 
-    fn is_basic_type() -> bool {
-        true
-    }
+            fn is_basic_type() -> bool {
+                true
+            }
+        }
+    )+};
 }
 
-impl HashTreeRoot for u16 {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        let bytes = self.to_le_bytes();
-        node[..bytes.len()].copy_from_slice(&bytes);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-impl HashTreeRoot for u32 {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        let bytes = self.to_le_bytes();
-        node[..bytes.len()].copy_from_slice(&bytes);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-impl HashTreeRoot for u64 {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        let bytes = self.to_le_bytes();
-        node[..bytes.len()].copy_from_slice(&bytes);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-impl HashTreeRoot for u128 {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        let bytes = self.to_le_bytes();
-        node[..bytes.len()].copy_from_slice(&bytes);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
+impl_htr_for_uint!(u8, u16, u32, u64, u128);
 
 // ── [u8; N] ──
 
@@ -316,30 +250,21 @@ impl<const N: usize> HashTreeRoot for [u8; N] {
 #[cfg(feature = "alloc")]
 impl<T: HashTreeRoot + SszEncode> HashTreeRoot for Vec<T> {
     fn hash_tree_root(&self) -> Node {
-        let length = self.len();
-        if T::is_basic_type() {
-            // Basic type: pack serialized bytes
+        let chunks: Vec<Node> = if T::is_basic_type() {
             let mut serialized = Vec::new();
             for item in self {
                 item.ssz_append(&mut serialized);
             }
-            let chunks = pack(&serialized);
-            let root = if chunks.is_empty() {
-                merkleize(&[ZERO_HASHES[0]], None)
-            } else {
-                merkleize(&chunks, None)
-            };
-            mix_in_length(&root, length)
+            pack(&serialized)
         } else {
-            // Composite type: collect roots
-            let roots: Vec<Node> = self.iter().map(|item| item.hash_tree_root()).collect();
-            let root = if roots.is_empty() {
-                merkleize(&[ZERO_HASHES[0]], None)
-            } else {
-                merkleize(&roots, None)
-            };
-            mix_in_length(&root, length)
-        }
+            self.iter().map(|item| item.hash_tree_root()).collect()
+        };
+        let root = if chunks.is_empty() {
+            merkleize(&[ZERO_HASHES[0]], None)
+        } else {
+            merkleize(&chunks, None)
+        };
+        mix_in_length(&root, self.len())
     }
 }
 

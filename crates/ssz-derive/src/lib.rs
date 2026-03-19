@@ -314,7 +314,7 @@ fn derive_encode_union_enum(
         .map(|variant| {
             let variant_name = &variant.ident;
             match &variant.fields {
-                Fields::Unnamed(_f) => {
+                Fields::Unnamed(_) => {
                     quote! {
                         #name::#variant_name(inner) => 1 + libssz::SszEncode::encoded_len(inner)
                     }
@@ -505,12 +505,8 @@ fn derive_decode_struct(
             }
         });
 
-    let field_constructs = field_names.iter().map(|fname| {
-        quote! { #fname }
-    });
-
-    // Fast path for all-fixed containers: decode using split_at, no ContainerDecoder
-    let direct_decode_stmts: Vec<_> = field_names
+    // Inline field-by-field decode for all-fixed containers (used in both from_ssz_bytes and ssz_decode_fixed_vec)
+    let fixed_decode_stmts: Vec<_> = field_names
         .iter()
         .zip(field_types.iter())
         .map(|(fname, ty)| {
@@ -522,28 +518,6 @@ fn derive_decode_struct(
             }
         })
         .collect();
-
-    let field_constructs_fixed = field_names.iter().map(|fname| {
-        quote! { #fname }
-    });
-
-    // Bulk decode for all-fixed structs: inline field decodes, skip per-item length check
-    let bulk_decode_stmts: Vec<_> = field_names
-        .iter()
-        .zip(field_types.iter())
-        .map(|(fname, ty)| {
-            quote! {
-                let (#fname, __remaining) = {
-                    let (slice, rest) = __remaining.split_at(<#ty as libssz::SszDecode>::fixed_size());
-                    (<#ty as libssz::SszDecode>::from_ssz_bytes(slice)?, rest)
-                };
-            }
-        })
-        .collect();
-
-    let field_constructs_bulk = field_names.iter().map(|fname| {
-        quote! { #fname }
-    });
 
     quote! {
         impl #impl_generics libssz::SszDecode for #name #ty_generics #where_clause {
@@ -566,9 +540,9 @@ fn derive_decode_struct(
                         return Err(libssz::DecodeError::InvalidFixedLength { expected, got: bytes.len() });
                     }
                     let __remaining = bytes;
-                    #(#direct_decode_stmts)*
+                    #(#fixed_decode_stmts)*
                     Ok(#name {
-                        #(#field_constructs_fixed,)*
+                        #(#field_names,)*
                     })
                 } else {
                     let fixed_part_len: usize = 0 #(+ #fixed_part_len_terms)*;
@@ -581,7 +555,7 @@ fn derive_decode_struct(
                     #(#variable_pass_stmts)*
 
                     Ok(#name {
-                        #(#field_constructs,)*
+                        #(#field_names,)*
                     })
                 }
             }
@@ -601,9 +575,9 @@ fn derive_decode_struct(
                     // since chunks_exact guarantees correct chunk size.
                     for chunk in bytes.chunks_exact(item_size) {
                         let __remaining = chunk;
-                        #(#bulk_decode_stmts)*
+                        #(#fixed_decode_stmts)*
                         result.push(#name {
-                            #(#field_constructs_bulk,)*
+                            #(#field_names,)*
                         });
                     }
                     Ok(result)
@@ -788,7 +762,7 @@ fn derive_htr_union_enum(
             let variant_name = &variant.ident;
             let selector = i as u8;
             match &variant.fields {
-                Fields::Unnamed(_f) => {
+                Fields::Unnamed(_) => {
                     quote! {
                         #name::#variant_name(inner) => {
                             let root = libssz_merkle::HashTreeRoot::hash_tree_root(inner);
