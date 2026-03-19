@@ -2,7 +2,7 @@
 
 A fast, zkVM-friendly [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus.
 
-`no_std + alloc` from day one. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
+`no_std + alloc` from day one. Up to 2.9x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
 
 ## Performance
 
@@ -59,42 +59,42 @@ Benchmarked against [Lighthouse](https://github.com/sigp/lighthouse) (`ethereum_
 
 | Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
 |------|--------|------------|--------|---------------|-----------|
-| `u64` | 3.40 ns | 11.1 ns | 11.0 ns | **3.3x** | **3.2x** |
-| `[u8; 32]` | 3.49 ns | 11.3 ns | 501 ns | **3.2x** | **144x** |
-| `BeaconBlockHeader` | 10.1 ns | 77.5 ns | 1.52 µs | **7.7x** | **150x** |
-| `Vec<u64>` (1K) | 66.8 ns | 327 ns | 22.5 µs | **4.9x** | **337x** |
-| `Vec<u64>` (100K) | 9.54 µs | 30.0 µs | 2.27 ms | **3.1x** | **238x** |
+| `u64` | 3.39 ns | 11.0 ns | 11.1 ns | **3.2x** | **3.3x** |
+| `[u8; 32]` | 3.47 ns | 11.1 ns | 539 ns | **3.2x** | **155x** |
+| `BeaconBlockHeader` | 10.1 ns | 84.2 ns | 1.71 µs | **8.4x** | **170x** |
+| `Vec<u64>` (1K) | 58.6 ns | 400 ns | 23.9 µs | **6.8x** | **407x** |
+| `Vec<u64>` (100K) | 9.20 µs | 35.8 µs | 2.36 ms | **3.9x** | **257x** |
 
 #### Decode
 
 | Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
 |------|--------|------------|--------|---------------|-----------|
-| `u64` | 312 ps | 312 ps | 358 ps | ~1x | ~1x |
-| `[u8; 32]` | 3.1 ns | 3.3 ns | 51 ns | ~1x | **16x** |
-| `BeaconBlockHeader` | 9.15 ns | 7.33 ns | 189 ns | 0.8x | **21x** |
-| `Vec<u64>` (1K) | 609 ns | 799 ns | 522 ns | **1.3x** | 0.9x |
-| `Vec<u64>` (100K) | 42.7 µs | 60.3 µs | 33.7 µs | **1.4x** | 0.8x |
+| `u64` | 315 ps | 317 ps | 317 ps | ~1x | ~1x |
+| `[u8; 32]` | 3.2 ns | 3.4 ns | 72 ns | ~1x | **23x** |
+| `BeaconBlockHeader` | 8.96 ns | 7.08 ns | 196 ns | 0.8x | **22x** |
+| `Vec<u64>` (1K) | 55.7 ns | 843 ns | 591 ns | **15x** | **11x** |
+| `Vec<u64>` (100K) | 9.24 µs | 59.7 µs | 31.8 µs | **6.5x** | **3.4x** |
 
 #### BeaconState (21 fields, variable-length)
 
 | Benchmark | Validators | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
 |-----------|-----------|--------|------------|--------|---------------|-----------|
-| Encode | 16K | 139 µs | 170 µs | 70.0 ms | **1.2x** | **503x** |
-| Encode | 100K | 433 µs | 854 µs | 185 ms | **2.0x** | **427x** |
-| Encode | 300K | 3.54 ms | 6.53 ms | 475 ms | **1.8x** | **134x** |
-| Encode | 1M | 11.4 ms | 24.3 ms | 1.46 s | **2.1x** | **128x** |
-| Decode | 16K | 76 µs | 190 µs | 6.80 ms | **2.5x** | **89x** |
-| Decode | 100K | 335 µs | 849 µs | 19.7 ms | **2.5x** | **59x** |
-| Decode | 300K | 3.09 ms | 4.04 ms | 52.9 ms | **1.3x** | **17x** |
-| Decode | 1M | 11.1 ms | 14.3 ms | 167 ms | **1.3x** | **15x** |
+| Encode | 16K | 148 µs | 160 µs | 74.9 ms | ~1x | **506x** |
+| Encode | 100K | 450 µs | 773 µs | 201 ms | **1.7x** | **446x** |
+| Encode | 300K | 3.22 ms | 6.21 ms | 513 ms | **1.9x** | **159x** |
+| Encode | 1M | 10.1 ms | 20.3 ms | 1.58 s | **2.0x** | **156x** |
+| Decode | 16K | 72.5 µs | 185 µs | 6.83 ms | **2.6x** | **94x** |
+| Decode | 100K | 313 µs | 908 µs | 20.5 ms | **2.9x** | **66x** |
+| Decode | 300K | 2.74 ms | 4.18 ms | 55.2 ms | **1.5x** | **20x** |
+| Decode | 1M | 9.27 ms | 13.9 ms | 172 ms | **1.5x** | **19x** |
 
 #### Hash Tree Root
 
 | Type | libssz | Lighthouse | ssz_rs | vs Lighthouse | vs ssz_rs |
 |------|--------|------------|--------|---------------|-----------|
-| `bool` | 2.3 ns | 2.2 ns | 2.3 ns | ~1x | ~1x |
-| `u64` | 2.4 ns | 2.1 ns | 31 ns | ~1x | **13x** |
-| `[u8; 32]` | 2.80 ns | 2.80 ns | 57.8 ns | ~1x | **21x** |
+| `bool` | 2.24 ns | 2.20 ns | 2.30 ns | ~1x | ~1x |
+| `u64` | 2.36 ns | 2.10 ns | 33.0 ns | ~1x | **14x** |
+| `[u8; 32]` | 2.79 ns | 2.79 ns | 57.8 ns | ~1x | **21x** |
 
 libssz beats Lighthouse on both BeaconState encode and decode at every validator count, and dominates on primitives and vectors. Full results: `cargo bench --bench differential`.
 
