@@ -241,7 +241,9 @@ fn decode_byte_array<const N: usize>(bytes: &[u8]) -> Result<[u8; N], DecodeErro
             got: bytes.len(),
         });
     }
-    Ok(bytes.try_into().unwrap())
+    Ok(bytes
+        .try_into()
+        .expect("bug: length already validated above"))
 }
 
 #[cfg(feature = "alloc")]
@@ -344,7 +346,8 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
     let mut offsets = Vec::with_capacity(num_items);
     for i in 0..num_items {
         let offset = read_offset(bytes, i * BYTES_PER_LENGTH_OFFSET)?;
-        if !offsets.is_empty() && offset < *offsets.last().unwrap() {
+        if !offsets.is_empty() && offset < *offsets.last().expect("bug: offsets verified non-empty")
+        {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > bytes.len() {
@@ -442,7 +445,12 @@ impl<'a> ContainerDecoder<'a> {
                     got: offset,
                 });
             }
-        } else if offset < *self.offsets.last().unwrap() {
+        } else if offset
+            < *self
+                .offsets
+                .last()
+                .expect("bug: offsets verified non-empty")
+        {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > self.bytes.len() {

@@ -183,10 +183,7 @@ mod tests {
     fn set_out_of_bounds() {
         let mut bv = SszBitvector::<8>::new();
         assert_eq!(bv.set(8, true), Err(IndexError { index: 8, len: 8 }));
-        assert_eq!(
-            bv.set(100, true),
-            Err(IndexError { index: 100, len: 8 })
-        );
+        assert_eq!(bv.set(100, true), Err(IndexError { index: 100, len: 8 }));
     }
 
     #[test]

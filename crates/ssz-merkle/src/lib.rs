@@ -67,7 +67,7 @@ pub fn merkleize(chunks: &[Node], limit: Option<usize>) -> Node {
         Some(l) => {
             assert!(
                 chunks.len() <= l,
-                "chunk count {} exceeds limit {}",
+                "bug: chunk count {} exceeds limit {} — bounded type invariant violated",
                 chunks.len(),
                 l
             );
