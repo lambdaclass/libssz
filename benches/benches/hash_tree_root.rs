@@ -1,11 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use libssz_merkle::HashTreeRoot;
 use ssz_bench::fixtures::{
     make_attestation_data, make_beacon_state, make_bench_union, make_bitlist, make_bitlist_2048,
     make_bitvector, make_bitvector_512, make_checkpoint, make_eth1_data, make_fork, make_header,
     make_list_u64, make_nested_container, make_pending_attestation, make_validator,
     make_validator_list, make_variable_container, make_vec_u64, make_vector_bytes32,
 };
-use libssz_merkle::HashTreeRoot;
 
 fn htr_primitives(c: &mut Criterion) {
     let mut group = c.benchmark_group("hash_tree_root/primitives");

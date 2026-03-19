@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use libssz::SszDecode;
+use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 use ssz_bench::fixtures::{
     make_attestation_data, make_beacon_state, make_bench_union, make_bitlist, make_bitlist_2048,
     make_bitvector, make_bitvector_512, make_checkpoint, make_eth1_data, make_fork, make_header,
@@ -8,7 +9,6 @@ use ssz_bench::fixtures::{
     AttestationData, BeaconBlockHeader, BeaconState, BenchUnion, Checkpoint, Eth1Data, Fork,
     NestedContainer, PendingAttestation, Validator, VariableContainer,
 };
-use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 fn decode_primitives(c: &mut Criterion) {
     let mut group = c.benchmark_group("decode/primitives");

@@ -1,6 +1,6 @@
-use spec_tests::loader;
 use libssz::{SszDecode, SszEncode};
 use libssz_merkle::HashTreeRoot;
+use spec_tests::loader;
 
 // ── boolean ──
 

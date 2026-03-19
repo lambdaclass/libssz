@@ -9,8 +9,8 @@ use alloc::{vec, vec::Vec};
 #[cfg(feature = "ethereum_types")]
 mod ethereum_types;
 
-use sha2::{Digest, Sha256};
 use libssz::SszEncode;
+use sha2::{Digest, Sha256};
 
 /// A 32-byte Merkle tree node.
 pub type Node = [u8; 32];

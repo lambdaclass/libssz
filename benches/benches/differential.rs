@@ -1,11 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use libssz::{SszDecode, SszEncode};
+use libssz_merkle::HashTreeRoot;
 use ssz_bench::fixtures::{
     make_attestation_data, make_beacon_state, make_checkpoint, make_eth1_data, make_fork,
     make_header, make_vec_u64, pre_encode, AttestationData, BeaconBlockHeader, BeaconState,
     Checkpoint, Eth1Data, Fork,
 };
-use libssz_merkle::HashTreeRoot;
 
 // ===========================================================================
 // Lighthouse-native consensus types

@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
-use smallvec::SmallVec;
 use libssz::{DecodeError, SszDecode, SszEncode};
+use smallvec::SmallVec;
 
 use crate::error::IndexError;
 use libssz_merkle::{merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, Node};
