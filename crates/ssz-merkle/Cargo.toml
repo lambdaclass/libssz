@@ -9,10 +9,12 @@ license = "MIT OR Apache-2.0"
 default = ["std"]
 std = ["alloc", "ssz/std"]
 alloc = ["ssz/alloc"]
+ethereum_types = ["dep:ethereum-types", "ssz/ethereum_types"]
 
 [dependencies]
 ssz = { path = "../ssz", default-features = false }
 sha2 = { version = "0.10", default-features = false }
+ethereum-types = { version = "0.15", default-features = false, optional = true }
 
 [build-dependencies]
 sha2 = "0.10"

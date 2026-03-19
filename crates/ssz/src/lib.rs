@@ -7,6 +7,9 @@ mod decode;
 mod encode;
 mod error;
 
+#[cfg(feature = "ethereum_types")]
+mod ethereum_types;
+
 pub use decode::{ContainerDecoder, SszDecode};
 pub use encode::{ContainerEncoder, SszEncode};
 pub use error::DecodeError;

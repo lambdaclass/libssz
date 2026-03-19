@@ -9,6 +9,8 @@ license = "MIT OR Apache-2.0"
 default = ["std"]
 std = ["alloc"]
 alloc = []
+ethereum_types = ["dep:ethereum-types"]
 
 [dependencies]
 smallvec = { version = "1.13", default-features = false }
+ethereum-types = { version = "0.15", default-features = false, optional = true }
