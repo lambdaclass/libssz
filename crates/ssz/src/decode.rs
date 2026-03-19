@@ -97,45 +97,140 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
     }
 }
 
-macro_rules! impl_ssz_decode_for_uint {
-    ($type:ty, $size:expr) => {
-        impl SszDecode for $type {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
+impl SszDecode for u8 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        1
+    }
 
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-                decode_uint::<$size, Self>(bytes, Self::from_le_bytes)
-            }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        decode_uint::<1, Self>(bytes, Self::from_le_bytes)
+    }
 
-            #[cfg(feature = "alloc")]
-            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-                #[cfg(target_endian = "little")]
-                {
-                    decode_fixed_vec_le(bytes, $size)
-                }
-                #[cfg(not(target_endian = "little"))]
-                {
-                    bytes
-                        .chunks_exact($size)
-                        .map(Self::from_ssz_bytes)
-                        .collect()
-                }
-            }
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        #[cfg(target_endian = "little")]
+        {
+            decode_fixed_vec_le(bytes, 1)
         }
-    };
+        #[cfg(not(target_endian = "little"))]
+        {
+            bytes.chunks_exact(1).map(Self::from_ssz_bytes).collect()
+        }
+    }
 }
 
-impl_ssz_decode_for_uint!(u8, 1);
-impl_ssz_decode_for_uint!(u16, 2);
-impl_ssz_decode_for_uint!(u32, 4);
-impl_ssz_decode_for_uint!(u64, 8);
-impl_ssz_decode_for_uint!(u128, 16);
+impl SszDecode for u16 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        2
+    }
+
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        decode_uint::<2, Self>(bytes, Self::from_le_bytes)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        #[cfg(target_endian = "little")]
+        {
+            decode_fixed_vec_le(bytes, 2)
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            bytes.chunks_exact(2).map(Self::from_ssz_bytes).collect()
+        }
+    }
+}
+
+impl SszDecode for u32 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        4
+    }
+
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        decode_uint::<4, Self>(bytes, Self::from_le_bytes)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        #[cfg(target_endian = "little")]
+        {
+            decode_fixed_vec_le(bytes, 4)
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            bytes.chunks_exact(4).map(Self::from_ssz_bytes).collect()
+        }
+    }
+}
+
+impl SszDecode for u64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        decode_uint::<8, Self>(bytes, Self::from_le_bytes)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        #[cfg(target_endian = "little")]
+        {
+            decode_fixed_vec_le(bytes, 8)
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            bytes.chunks_exact(8).map(Self::from_ssz_bytes).collect()
+        }
+    }
+}
+
+impl SszDecode for u128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        decode_uint::<16, Self>(bytes, Self::from_le_bytes)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        #[cfg(target_endian = "little")]
+        {
+            decode_fixed_vec_le(bytes, 16)
+        }
+        #[cfg(not(target_endian = "little"))]
+        {
+            bytes.chunks_exact(16).map(Self::from_ssz_bytes).collect()
+        }
+    }
+}
 
 // ── Fixed-size byte arrays ──
 

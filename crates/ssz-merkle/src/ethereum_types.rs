@@ -6,49 +6,115 @@ use crate::{HashTreeRoot, Node};
 
 // ── H-types: delegate to inner [u8; N] ──
 
-macro_rules! impl_htr_for_hash {
-    ($type:ty, $size:expr) => {
-        impl HashTreeRoot for $type {
-            fn hash_tree_root(&self) -> Node {
-                self.as_fixed_bytes().hash_tree_root()
-            }
-
-            fn is_basic_type() -> bool {
-                <[u8; $size]>::is_basic_type()
-            }
-        }
-    };
+impl HashTreeRoot for et::H32 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 4]>::is_basic_type()
+    }
 }
 
-impl_htr_for_hash!(et::H32, 4);
-impl_htr_for_hash!(et::H64, 8);
-impl_htr_for_hash!(et::H128, 16);
-impl_htr_for_hash!(et::H160, 20);
-impl_htr_for_hash!(et::H256, 32);
-impl_htr_for_hash!(et::H264, 33);
-impl_htr_for_hash!(et::H512, 64);
-impl_htr_for_hash!(et::H520, 65);
+impl HashTreeRoot for et::H64 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 8]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H128 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 16]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H160 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 20]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H256 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 32]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H264 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 33]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H512 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 64]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::H520 {
+    fn hash_tree_root(&self) -> Node {
+        self.as_fixed_bytes().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 65]>::is_basic_type()
+    }
+}
 
 // ── U-types: serialize to LE bytes, then hash ──
 
-macro_rules! impl_htr_for_uint {
-    ($type:ty, $size:expr) => {
-        impl HashTreeRoot for $type {
-            fn hash_tree_root(&self) -> Node {
-                self.to_little_endian().hash_tree_root()
-            }
-
-            fn is_basic_type() -> bool {
-                <[u8; $size]>::is_basic_type()
-            }
-        }
-    };
+impl HashTreeRoot for et::U64 {
+    fn hash_tree_root(&self) -> Node {
+        self.to_little_endian().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 8]>::is_basic_type()
+    }
 }
 
-impl_htr_for_uint!(et::U64, 8);
-impl_htr_for_uint!(et::U128, 16);
-impl_htr_for_uint!(et::U256, 32);
-impl_htr_for_uint!(et::U512, 64);
+impl HashTreeRoot for et::U128 {
+    fn hash_tree_root(&self) -> Node {
+        self.to_little_endian().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 16]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::U256 {
+    fn hash_tree_root(&self) -> Node {
+        self.to_little_endian().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 32]>::is_basic_type()
+    }
+}
+
+impl HashTreeRoot for et::U512 {
+    fn hash_tree_root(&self) -> Node {
+        self.to_little_endian().hash_tree_root()
+    }
+    fn is_basic_type() -> bool {
+        <[u8; 64]>::is_basic_type()
+    }
+}
 
 #[cfg(test)]
 mod tests {
