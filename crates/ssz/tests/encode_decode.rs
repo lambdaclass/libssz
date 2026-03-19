@@ -474,6 +474,65 @@ fn decode_error_display_formats_correctly() {
     assert!(err_ref.to_string().contains("InvalidFixedLength"));
 }
 
+// ── Generic byte array encode/decode (non-standard sizes) ──
+
+#[test]
+fn encode_byte_array_7() {
+    let arr = [0xab_u8; 7];
+    assert_eq!(arr.to_ssz(), arr.to_vec());
+    assert_eq!(<[u8; 7] as SszEncode>::fixed_size(), 7);
+    assert!(<[u8; 7] as SszEncode>::is_fixed_size());
+}
+
+#[test]
+fn encode_byte_array_52() {
+    let arr = [0xcd_u8; 52];
+    assert_eq!(arr.to_ssz(), arr.to_vec());
+    assert_eq!(<[u8; 52] as SszEncode>::fixed_size(), 52);
+}
+
+#[test]
+fn encode_byte_array_100() {
+    let arr = [0xff_u8; 100];
+    assert_eq!(arr.to_ssz(), arr.to_vec());
+    assert_eq!(<[u8; 100] as SszEncode>::fixed_size(), 100);
+}
+
+#[test]
+fn decode_byte_array_7() {
+    let bytes = [0xab_u8; 7];
+    let decoded = <[u8; 7]>::from_ssz_bytes(&bytes).unwrap();
+    assert_eq!(decoded, bytes);
+}
+
+#[test]
+fn decode_byte_array_52() {
+    let bytes = [0xcd_u8; 52];
+    let decoded = <[u8; 52]>::from_ssz_bytes(&bytes).unwrap();
+    assert_eq!(decoded, bytes);
+}
+
+#[test]
+fn decode_byte_array_wrong_length() {
+    let bytes = [0u8; 31];
+    let err = <[u8; 52]>::from_ssz_bytes(&bytes).unwrap_err();
+    assert_eq!(
+        err,
+        DecodeError::InvalidFixedLength {
+            expected: 52,
+            got: 31
+        }
+    );
+}
+
+#[test]
+fn roundtrip_byte_array_33() {
+    let arr = [0x42_u8; 33];
+    let encoded = arr.to_ssz();
+    let decoded = <[u8; 33]>::from_ssz_bytes(&encoded).unwrap();
+    assert_eq!(arr, decoded);
+}
+
 // ── ContainerEncoder default ──
 
 #[test]

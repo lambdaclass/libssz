@@ -261,103 +261,23 @@ fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, D
     Ok(result)
 }
 
-impl SszDecode for [u8; 4] {
+impl<const N: usize> SszDecode for [u8; N] {
     #[inline(always)]
     fn is_fixed_size() -> bool {
         true
     }
     #[inline(always)]
     fn fixed_size() -> usize {
-        4
+        N
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_byte_array::<4>(bytes)
+        decode_byte_array::<N>(bytes)
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        decode_byte_array_vec::<4>(bytes)
-    }
-}
-
-impl SszDecode for [u8; 20] {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        20
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_byte_array::<20>(bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        decode_byte_array_vec::<20>(bytes)
-    }
-}
-
-impl SszDecode for [u8; 32] {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        32
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_byte_array::<32>(bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        decode_byte_array_vec::<32>(bytes)
-    }
-}
-
-impl SszDecode for [u8; 48] {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        48
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_byte_array::<48>(bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        decode_byte_array_vec::<48>(bytes)
-    }
-}
-
-impl SszDecode for [u8; 96] {
-    #[inline(always)]
-    fn is_fixed_size() -> bool {
-        true
-    }
-    #[inline(always)]
-    fn fixed_size() -> usize {
-        96
-    }
-
-    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_byte_array::<96>(bytes)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        decode_byte_array_vec::<96>(bytes)
+        decode_byte_array_vec::<N>(bytes)
     }
 }
 

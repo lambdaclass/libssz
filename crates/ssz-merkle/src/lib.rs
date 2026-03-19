@@ -6,6 +6,9 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{vec, vec::Vec};
 
+#[cfg(feature = "ethereum_types")]
+mod ethereum_types;
+
 use sha2::{Digest, Sha256};
 use ssz::SszEncode;
 
@@ -289,64 +292,22 @@ impl HashTreeRoot for u128 {
     }
 }
 
-// ── [u8; 32] ──
-
-impl HashTreeRoot for [u8; 32] {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        *self
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-// ── [u8; 20] ──
-
-impl HashTreeRoot for [u8; 20] {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        node[..20].copy_from_slice(self);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-// ── [u8; 4] ──
-
-impl HashTreeRoot for [u8; 4] {
-    #[inline(always)]
-    fn hash_tree_root(&self) -> Node {
-        let mut node = [0u8; 32];
-        node[..4].copy_from_slice(self);
-        node
-    }
-
-    fn is_basic_type() -> bool {
-        true
-    }
-}
-
-// ── [u8; 48] ──
+// ── [u8; N] ──
 
 #[cfg(feature = "alloc")]
-impl HashTreeRoot for [u8; 48] {
+impl<const N: usize> HashTreeRoot for [u8; N] {
     fn hash_tree_root(&self) -> Node {
-        merkleize(&pack(self), None)
+        if N <= 32 {
+            let mut node = [0u8; 32];
+            node[..N].copy_from_slice(self);
+            node
+        } else {
+            merkleize(&pack(self), None)
+        }
     }
-}
 
-// ── [u8; 96] ──
-
-#[cfg(feature = "alloc")]
-impl HashTreeRoot for [u8; 96] {
-    fn hash_tree_root(&self) -> Node {
-        merkleize(&pack(self), None)
+    fn is_basic_type() -> bool {
+        N <= 32
     }
 }
 
@@ -646,10 +607,65 @@ mod tests {
     }
 
     #[test]
-    fn hash_tree_root_bytes32() {
-        let val = [0xAB; 32];
-        let result = val.hash_tree_root();
-        assert_eq!(result, val);
+    fn hash_tree_root_byte_array_32_is_identity() {
+        let arr = [0xab_u8; 32];
+        assert_eq!(arr.hash_tree_root(), arr);
+        assert!(<[u8; 32]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_20_is_padded() {
+        let arr = [0xcd_u8; 20];
+        let root = arr.hash_tree_root();
+        assert_eq!(&root[..20], &arr[..]);
+        assert_eq!(&root[20..], &[0u8; 12]);
+        assert!(<[u8; 20]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_4_is_padded() {
+        let arr = [0x01, 0x02, 0x03, 0x04];
+        let root = arr.hash_tree_root();
+        assert_eq!(&root[..4], &arr[..]);
+        assert_eq!(&root[4..], &[0u8; 28]);
+        assert!(<[u8; 4]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_7_is_padded() {
+        let arr = [0xff_u8; 7];
+        let root = arr.hash_tree_root();
+        assert_eq!(&root[..7], &arr[..]);
+        assert_eq!(&root[7..], &[0u8; 25]);
+        assert!(<[u8; 7]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_48_is_merkleized() {
+        let arr = [0xab_u8; 48];
+        let root = arr.hash_tree_root();
+        // 48 bytes = 2 chunks (32 + 16 zero-padded), merkleize
+        let expected = merkleize(&pack(&arr), None);
+        assert_eq!(root, expected);
+        assert!(!<[u8; 48]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_52_is_merkleized() {
+        let arr = [0xcd_u8; 52];
+        let root = arr.hash_tree_root();
+        let expected = merkleize(&pack(&arr), None);
+        assert_eq!(root, expected);
+        assert!(!<[u8; 52]>::is_basic_type());
+    }
+
+    #[test]
+    fn hash_tree_root_byte_array_96_is_merkleized() {
+        let arr = [0xff_u8; 96];
+        let root = arr.hash_tree_root();
+        let expected = merkleize(&pack(&arr), None);
+        assert_eq!(root, expected);
+        assert!(!<[u8; 96]>::is_basic_type());
     }
 
     #[test]
