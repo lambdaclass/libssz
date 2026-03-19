@@ -1,8 +1,8 @@
 # libssz
 
-A fast, modular [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus, written in Rust.
+A fast, zkVM-friendly [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus.
 
-Built for `no_std` from day one — runs in zkVMs, WASM, and embedded targets. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
+`no_std + alloc` from day one. Up to 2.5x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
 
 ## Performance
 
