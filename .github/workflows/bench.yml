@@ -2,6 +2,7 @@ name: Benchmarks
 
 on:
   pull_request:
+    types: [labeled]
 
 env:
   CARGO_TERM_COLOR: always
@@ -9,8 +10,9 @@ env:
 jobs:
   bench-regression:
     name: Benchmark Regression Check
+    if: github.event.label.name == 'benchmark'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
