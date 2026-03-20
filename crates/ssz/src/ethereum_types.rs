@@ -10,141 +10,605 @@ use crate::{SszDecode, SszEncode};
 
 // ── H-types (fixed-size byte arrays) ──
 
-macro_rules! impl_ssz_for_hash {
-    ($type:ty, $size:expr) => {
-        impl SszEncode for $type {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
-            #[inline(always)]
-            fn encoded_len(&self) -> usize {
-                $size
-            }
-            #[inline(always)]
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
-                buf.extend_from_slice(self.as_bytes());
-            }
-        }
-
-        impl SszDecode for $type {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-                if bytes.len() != $size {
-                    return Err(DecodeError::InvalidFixedLength {
-                        expected: $size,
-                        got: bytes.len(),
-                    });
-                }
-                Ok(<$type>::from_slice(bytes))
-            }
-        }
-    };
+impl SszEncode for et::H32 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        4
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        4
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
 }
 
-impl_ssz_for_hash!(et::H32, 4);
-impl_ssz_for_hash!(et::H64, 8);
-impl_ssz_for_hash!(et::H128, 16);
-impl_ssz_for_hash!(et::H160, 20);
-impl_ssz_for_hash!(et::H256, 32);
-impl_ssz_for_hash!(et::H264, 33);
-impl_ssz_for_hash!(et::H512, 64);
-impl_ssz_for_hash!(et::H520, 65);
+impl SszDecode for et::H32 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        4
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 4 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 4,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H32::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        8
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 8 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 8,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H64::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        16
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 16 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 16,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H128::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H160 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        20
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        20
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H160 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        20
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 20 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 20,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H160::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H256 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        32
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        32
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H256 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        32
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 32 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 32,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H256::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H264 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        33
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        33
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H264 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        33
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 33 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 33,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H264::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H512 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        64
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        64
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H512 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        64
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 64 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 64,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H512::from_slice(bytes))
+    }
+}
+
+impl SszEncode for et::H520 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        65
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        65
+    }
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.as_bytes());
+    }
+}
+
+impl SszDecode for et::H520 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        65
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 65 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 65,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::H520::from_slice(bytes))
+    }
+}
 
 // ── U-types (little-endian unsigned integers) ──
 
-macro_rules! impl_ssz_for_uint {
-    ($type:ty, $size:expr) => {
-        impl SszEncode for $type {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
-            #[inline(always)]
-            fn encoded_len(&self) -> usize {
-                $size
-            }
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
-                buf.extend_from_slice(&self.to_little_endian());
-            }
-        }
-
-        impl SszDecode for $type {
-            #[inline(always)]
-            fn is_fixed_size() -> bool {
-                true
-            }
-            #[inline(always)]
-            fn fixed_size() -> usize {
-                $size
-            }
-            fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-                if bytes.len() != $size {
-                    return Err(DecodeError::InvalidFixedLength {
-                        expected: $size,
-                        got: bytes.len(),
-                    });
-                }
-                Ok(<$type>::from_little_endian(bytes))
-            }
-        }
-    };
+impl SszEncode for et::U64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        8
+    }
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_little_endian());
+    }
 }
 
-impl_ssz_for_uint!(et::U64, 8);
-impl_ssz_for_uint!(et::U128, 16);
-impl_ssz_for_uint!(et::U256, 32);
-impl_ssz_for_uint!(et::U512, 64);
+impl SszDecode for et::U64 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        8
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 8 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 8,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::U64::from_little_endian(bytes))
+    }
+}
+
+impl SszEncode for et::U128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        16
+    }
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_little_endian());
+    }
+}
+
+impl SszDecode for et::U128 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        16
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 16 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 16,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::U128::from_little_endian(bytes))
+    }
+}
+
+impl SszEncode for et::U256 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        32
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        32
+    }
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_little_endian());
+    }
+}
+
+impl SszDecode for et::U256 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        32
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 32 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 32,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::U256::from_little_endian(bytes))
+    }
+}
+
+impl SszEncode for et::U512 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        64
+    }
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        64
+    }
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(&self.to_little_endian());
+    }
+}
+
+impl SszDecode for et::U512 {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        true
+    }
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        64
+    }
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() != 64 {
+            return Err(DecodeError::InvalidFixedLength {
+                expected: 64,
+                got: bytes.len(),
+            });
+        }
+        Ok(et::U512::from_little_endian(bytes))
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     // H-type tests
-    macro_rules! test_hash_roundtrip {
-        ($name:ident, $type:ty, $size:expr) => {
-            #[test]
-            fn $name() {
-                let mut bytes = [0u8; $size];
-                for (i, b) in bytes.iter_mut().enumerate() {
-                    *b = i as u8;
-                }
-                let val = <$type>::from_slice(&bytes);
-                let encoded = val.to_ssz();
-                assert_eq!(encoded.len(), $size);
-                assert_eq!(&encoded[..], &bytes[..]);
-                let decoded = <$type>::from_ssz_bytes(&encoded).unwrap();
-                assert_eq!(val, decoded);
 
-                assert!(<$type as SszEncode>::is_fixed_size());
-                assert_eq!(<$type as SszEncode>::fixed_size(), $size);
-            }
-        };
+    #[test]
+    fn h32_roundtrip() {
+        let mut bytes = [0u8; 4];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H32::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 4);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H32::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H32 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H32 as SszEncode>::fixed_size(), 4);
     }
 
-    test_hash_roundtrip!(h32_roundtrip, et::H32, 4);
-    test_hash_roundtrip!(h64_roundtrip, et::H64, 8);
-    test_hash_roundtrip!(h128_roundtrip, et::H128, 16);
-    test_hash_roundtrip!(h160_roundtrip, et::H160, 20);
-    test_hash_roundtrip!(h256_roundtrip, et::H256, 32);
-    test_hash_roundtrip!(h264_roundtrip, et::H264, 33);
-    test_hash_roundtrip!(h512_roundtrip, et::H512, 64);
-    test_hash_roundtrip!(h520_roundtrip, et::H520, 65);
+    #[test]
+    fn h64_roundtrip() {
+        let mut bytes = [0u8; 8];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H64::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 8);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H64::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H64 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H64 as SszEncode>::fixed_size(), 8);
+    }
+
+    #[test]
+    fn h128_roundtrip() {
+        let mut bytes = [0u8; 16];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H128::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 16);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H128::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H128 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H128 as SszEncode>::fixed_size(), 16);
+    }
+
+    #[test]
+    fn h160_roundtrip() {
+        let mut bytes = [0u8; 20];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H160::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 20);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H160::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H160 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H160 as SszEncode>::fixed_size(), 20);
+    }
+
+    #[test]
+    fn h256_roundtrip() {
+        let mut bytes = [0u8; 32];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H256::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 32);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H256::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H256 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H256 as SszEncode>::fixed_size(), 32);
+    }
+
+    #[test]
+    fn h264_roundtrip() {
+        let mut bytes = [0u8; 33];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H264::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 33);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H264::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H264 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H264 as SszEncode>::fixed_size(), 33);
+    }
+
+    #[test]
+    fn h512_roundtrip() {
+        let mut bytes = [0u8; 64];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H512::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 64);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H512::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H512 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H512 as SszEncode>::fixed_size(), 64);
+    }
+
+    #[test]
+    fn h520_roundtrip() {
+        let mut bytes = [0u8; 65];
+        for (i, b) in bytes.iter_mut().enumerate() {
+            *b = i as u8;
+        }
+        let val = et::H520::from_slice(&bytes);
+        let encoded = val.to_ssz();
+        assert_eq!(encoded.len(), 65);
+        assert_eq!(&encoded[..], &bytes[..]);
+        let decoded = et::H520::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(val, decoded);
+        assert!(<et::H520 as SszEncode>::is_fixed_size());
+        assert_eq!(<et::H520 as SszEncode>::fixed_size(), 65);
+    }
 
     #[test]
     fn h256_wrong_length() {
