@@ -109,45 +109,42 @@ libssz beats Lighthouse on both BeaconState encode and decode at every validator
 
 </details>
 
-## `no_std` Support
+## Getting Started
 
-libssz is built from the ground up for `no_std + alloc`. Every crate — encoding, decoding, Merkleization, derive macros, bounded collections — works without the standard library. This makes it suitable for:
+### Adding dependencies
 
-- **zkVMs** — prove Ethereum state transitions inside SP1, RISC Zero, or any STARK/SNARK VM
-- **WASM** — run in browsers or light clients compiled to `wasm32-unknown-unknown`
-- **Embedded** — ARM Cortex-M and other targets with a global allocator
+Add libssz to your project from [crates.io](https://crates.io/crates/libssz):
 
-CI verifies `no_std` compilation against `thumbv7m-none-eabi` on every commit.
+```bash
+cargo add libssz libssz-derive libssz-merkle libssz-types
+```
+
+Or add them to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ssz        = { version = "0.1", default-features = false, features = ["alloc"] }
-ssz-types  = { version = "0.1", default-features = false, features = ["alloc"] }
-ssz-merkle = { version = "0.1", default-features = false, features = ["alloc"] }
-ssz-derive = "0.1"  # proc-macro, no std/alloc distinction
+libssz       = "0.1"
+libssz-types = "0.1"
+libssz-merkle = "0.1"
+libssz-derive = "0.1"
 ```
 
-```rust
-#![no_std]
-extern crate alloc;
+For `no_std` environments (zkVMs, WASM, embedded), disable default features and enable `alloc`:
 
-use ssz::{SszEncode, SszDecode};
-
-fn encode_slot(slot: u64) -> alloc::vec::Vec<u8> {
-    slot.to_ssz()
-}
-
-fn decode_slot(bytes: &[u8]) -> Result<u64, ssz::DecodeError> {
-    u64::from_ssz_bytes(bytes)
-}
+```toml
+[dependencies]
+libssz       = { version = "0.1", default-features = false, features = ["alloc"] }
+libssz-types = { version = "0.1", default-features = false, features = ["alloc"] }
+libssz-merkle = { version = "0.1", default-features = false, features = ["alloc"] }
+libssz-derive = "0.1"
 ```
 
-Features propagate through dependencies — `ssz-types = { features = ["alloc"] }` automatically enables `ssz/alloc` and `ssz-merkle/alloc`.
+Features propagate through dependencies: `libssz-types = { features = ["alloc"] }` automatically enables `libssz/alloc` and `libssz-merkle/alloc`.
 
-## Quick Start
+### Encode and decode
 
 ```rust
-use ssz::{SszEncode, SszDecode};
+use libssz::{SszEncode, SszDecode};
 
 let value: u64 = 42;
 let encoded = value.to_ssz();
@@ -155,12 +152,12 @@ let decoded = u64::from_ssz_bytes(&encoded).unwrap();
 assert_eq!(decoded, 42);
 ```
 
-### Derive Macros
+### Derive macros
 
 ```rust
-use ssz_derive::{SszEncode, SszDecode, HashTreeRoot};
-use ssz::{SszEncode, SszDecode};
-use ssz_merkle::HashTreeRoot;
+use libssz_derive::{SszEncode, SszDecode, HashTreeRoot};
+use libssz::{SszEncode, SszDecode};
+use libssz_merkle::HashTreeRoot;
 
 #[derive(SszEncode, SszDecode, HashTreeRoot)]
 struct BeaconBlockHeader {
@@ -184,10 +181,10 @@ let decoded = BeaconBlockHeader::from_ssz_bytes(&bytes).unwrap();
 let root = header.hash_tree_root();
 ```
 
-### Bounded Collections
+### Bounded collections
 
 ```rust
-use ssz_types::{SszVector, SszList, SszBitvector, SszBitlist};
+use libssz_types::{SszVector, SszList, SszBitvector, SszBitlist};
 
 // Vector: exactly 4 elements
 let v = SszVector::<u64, 4>::try_from(vec![1, 2, 3, 4]).unwrap();
@@ -204,10 +201,10 @@ let mut bl = SszBitlist::<64>::default();
 bl.push(true).unwrap();
 ```
 
-### Union Types
+### Union types
 
 ```rust
-use ssz_derive::{SszEncode, SszDecode, HashTreeRoot};
+use libssz_derive::{SszEncode, SszDecode, HashTreeRoot};
 
 #[derive(SszEncode, SszDecode, HashTreeRoot)]
 #[ssz(enum_behaviour = "union")]
@@ -218,16 +215,35 @@ enum ExecutionPayload {
 }
 ```
 
+### `no_std` usage
+
+Every crate works without the standard library. CI verifies `no_std` compilation against `thumbv7m-none-eabi` on every commit.
+
+```rust
+#![no_std]
+extern crate alloc;
+
+use libssz::{SszEncode, SszDecode};
+
+fn encode_slot(slot: u64) -> alloc::vec::Vec<u8> {
+    slot.to_ssz()
+}
+
+fn decode_slot(bytes: &[u8]) -> Result<u64, libssz::DecodeError> {
+    u64::from_ssz_bytes(bytes)
+}
+```
+
 ## Crates
 
 | Crate | Description |
 |-------|-------------|
-| [`ssz`](crates/ssz) | Core `SszEncode` / `SszDecode` traits, primitive and container impls |
-| [`ssz-types`](crates/ssz-types) | Bounded collections: `SszVector`, `SszList`, `SszBitvector`, `SszBitlist`, `ProgressiveList`, `ProgressiveBitlist` |
-| [`ssz-merkle`](crates/ssz-merkle) | `HashTreeRoot` trait, `merkleize`, `merkleize_progressive`, precomputed zero hashes |
-| [`ssz-derive`](crates/ssz-derive) | `#[derive(SszEncode, SszDecode, HashTreeRoot)]` |
+| [`libssz`](crates/ssz) | Core `SszEncode` / `SszDecode` traits, primitive and container impls |
+| [`libssz-types`](crates/ssz-types) | Bounded collections: `SszVector`, `SszList`, `SszBitvector`, `SszBitlist`, `ProgressiveList`, `ProgressiveBitlist` |
+| [`libssz-merkle`](crates/ssz-merkle) | `HashTreeRoot` trait, `merkleize`, `merkleize_progressive`, precomputed zero hashes |
+| [`libssz-derive`](crates/ssz-derive) | `#[derive(SszEncode, SszDecode, HashTreeRoot)]` |
 
-Dependency graph: `ssz-derive` → `ssz-merkle` → `ssz` ← `ssz-types`
+Dependency graph: `libssz-derive` → `libssz-merkle` → `libssz` ← `libssz-types`
 
 ## Supported Types
 
