@@ -119,27 +119,14 @@ Add libssz to your project from [crates.io](https://crates.io/crates/libssz):
 cargo add libssz libssz-derive libssz-merkle libssz-types
 ```
 
-Or add them to your `Cargo.toml`:
-
-```toml
-[dependencies]
-libssz       = "0.1"
-libssz-types = "0.1"
-libssz-merkle = "0.1"
-libssz-derive = "0.1"
-```
-
 For `no_std` environments (zkVMs, WASM, embedded), disable default features and enable `alloc`:
 
-```toml
-[dependencies]
-libssz       = { version = "0.1", default-features = false, features = ["alloc"] }
-libssz-types = { version = "0.1", default-features = false, features = ["alloc"] }
-libssz-merkle = { version = "0.1", default-features = false, features = ["alloc"] }
-libssz-derive = "0.1"
+```bash
+cargo add libssz --no-default-features --features alloc
+cargo add libssz-types --no-default-features --features alloc
+cargo add libssz-merkle --no-default-features --features alloc
+cargo add libssz-derive
 ```
-
-Features propagate through dependencies: `libssz-types = { features = ["alloc"] }` automatically enables `libssz/alloc` and `libssz-merkle/alloc`.
 
 ### Encode and decode
 
