@@ -1,6 +1,6 @@
 [package]
 name = "libssz-types"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Bounded SSZ collection types: Vector, List, Bitvector, Bitlist"
 license = "MIT OR Apache-2.0"
@@ -15,6 +15,6 @@ std = ["alloc", "libssz/std", "libssz-merkle/std"]
 alloc = ["libssz/alloc", "libssz-merkle/alloc"]
 
 [dependencies]
-libssz = { version = "0.2.0", path = "../ssz", default-features = false }
-libssz-merkle = { version = "0.2.0", path = "../ssz-merkle", default-features = false }
+libssz = { version = "0.2.1", path = "../ssz", default-features = false }
+libssz-merkle = { version = "0.2.1", path = "../ssz-merkle", default-features = false }
 smallvec = { version = "1.13", default-features = false }

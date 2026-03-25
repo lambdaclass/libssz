@@ -12,10 +12,10 @@ libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
 
 # Our library (renamed to avoid collision with ethereum_ssz which also exports as "ssz")
-libssz = { version = "0.2.0", path = "../crates/ssz" }
-libssz_types = { package = "libssz-types", version = "0.2.0", path = "../crates/ssz-types" }
-libssz_merkle = { package = "libssz-merkle", version = "0.2.0", path = "../crates/ssz-merkle" }
-libssz_derive = { package = "libssz-derive", version = "0.2.0", path = "../crates/ssz-derive" }
+libssz = { version = "0.2.1", path = "../crates/ssz" }
+libssz_types = { package = "libssz-types", version = "0.2.1", path = "../crates/ssz-types" }
+libssz_merkle = { package = "libssz-merkle", version = "0.2.1", path = "../crates/ssz-merkle" }
+libssz_derive = { package = "libssz-derive", version = "0.2.1", path = "../crates/ssz-derive" }
 
 # Lighthouse reference (encode/decode + hash tree root)
 # ethereum_ssz's lib name is "ssz", so we alias to avoid collision with our crate
