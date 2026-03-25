@@ -6,10 +6,10 @@ publish = false
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-libssz = { version = "0.1.0", path = "../crates/ssz" }
-libssz-types = { version = "0.1.0", path = "../crates/ssz-types" }
-libssz-merkle = { version = "0.1.0", path = "../crates/ssz-merkle" }
-libssz-derive = { version = "0.1.0", path = "../crates/ssz-derive" }
+libssz = { version = "0.2.0", path = "../crates/ssz" }
+libssz-types = { version = "0.2.0", path = "../crates/ssz-types" }
+libssz-merkle = { version = "0.2.0", path = "../crates/ssz-merkle" }
+libssz-derive = { version = "0.2.0", path = "../crates/ssz-derive" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
