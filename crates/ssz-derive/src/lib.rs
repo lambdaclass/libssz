@@ -707,8 +707,8 @@ fn derive_htr_transparent(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> libssz_merkle::Node {
-                libssz_merkle::HashTreeRoot::hash_tree_root(&#field_access)
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
+                libssz_merkle::HashTreeRoot::hash_tree_root(&#field_access, hasher)
             }
         }
     }
@@ -729,7 +729,7 @@ fn derive_htr_struct(
     let field_roots = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
         quote! {
-            libssz_merkle::HashTreeRoot::hash_tree_root(&self.#field_name)
+            libssz_merkle::HashTreeRoot::hash_tree_root(&self.#field_name, hasher)
         }
     });
 
@@ -737,11 +737,11 @@ fn derive_htr_struct(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
                 let field_roots: [libssz_merkle::Node; #num_fields] = [
                     #(#field_roots,)*
                 ];
-                libssz_merkle::merkleize(&field_roots, None)
+                libssz_merkle::merkleize(hasher, &field_roots, None)
             }
         }
     }
@@ -765,8 +765,8 @@ fn derive_htr_union_enum(
                 Fields::Unnamed(_) => {
                     quote! {
                         #name::#variant_name(inner) => {
-                            let root = libssz_merkle::HashTreeRoot::hash_tree_root(inner);
-                            libssz_merkle::mix_in_selector(&root, #selector)
+                            let root = libssz_merkle::HashTreeRoot::hash_tree_root(inner, hasher);
+                            libssz_merkle::mix_in_selector(hasher, &root, #selector)
                         }
                     }
                 }
@@ -774,7 +774,7 @@ fn derive_htr_union_enum(
                     quote! {
                         #name::#variant_name => {
                             let root = libssz_merkle::ZERO_HASHES[0];
-                            libssz_merkle::mix_in_selector(&root, #selector)
+                            libssz_merkle::mix_in_selector(hasher, &root, #selector)
                         }
                     }
                 }
@@ -785,7 +785,7 @@ fn derive_htr_union_enum(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
                 match self {
                     #(#variant_arms)*
                 }

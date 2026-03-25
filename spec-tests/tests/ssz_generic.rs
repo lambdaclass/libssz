@@ -27,7 +27,7 @@ fn boolean_valid() {
         assert_eq!(reencoded, ssz, "{case_name}: re-encoded bytes mismatch");
 
         // Hash tree root
-        let root = decoded.hash_tree_root();
+        let root = decoded.hash_tree_root(&libssz_merkle::Sha2Hasher);
         assert_eq!(root, expected_root, "{case_name}: hash tree root mismatch");
     }
 }
@@ -148,7 +148,7 @@ fn check_uint<T: UintTestable>(
     let reencoded = decoded.to_ssz();
     assert_eq!(reencoded, ssz, "{case_name}: roundtrip mismatch");
 
-    let root = decoded.hash_tree_root();
+    let root = decoded.hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(&root, expected_root, "{case_name}: hash tree root mismatch");
 }
 
@@ -169,7 +169,7 @@ fn check_uint_256(ssz: &[u8], yaml_str: &str, expected_root: &[u8; 32], case_nam
 
     // Hash tree root: for a basic type of 32 bytes, the root IS the value
     // (already chunk-sized, no padding needed)
-    let root = decoded.hash_tree_root();
+    let root = decoded.hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(&root, expected_root, "{case_name}: hash tree root mismatch");
 }
 
@@ -260,7 +260,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -307,7 +307,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -354,7 +354,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -401,7 +401,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -448,7 +448,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -495,7 +495,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -542,7 +542,7 @@ fn basic_vector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -909,7 +909,7 @@ fn bitlist_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -1018,7 +1018,7 @@ fn bitvector_valid() {
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
         assert_eq!(
-            decoded.hash_tree_root(),
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
             *expected_root,
             "{case_name}: root"
         );
@@ -1185,7 +1185,7 @@ fn check_container<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debug>(
         T::from_ssz_bytes(ssz).unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
     assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
     assert_eq!(
-        &decoded.hash_tree_root(),
+        &decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
         expected_root,
         "{case_name}: root"
     );
@@ -1275,7 +1275,7 @@ fn check_roundtrip_root<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debu
         T::from_ssz_bytes(ssz).unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
     assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
     assert_eq!(
-        decoded.hash_tree_root(),
+        decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
         *expected_root,
         "{case_name}: root"
     );
@@ -1294,7 +1294,11 @@ fn progressive_bitlist_valid() {
         let decoded = ProgressiveBitlist::from_ssz_bytes(&ssz)
             .unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
         assert_eq!(decoded.to_ssz(), ssz, "{case_name}: roundtrip");
-        assert_eq!(decoded.hash_tree_root(), expected_root, "{case_name}: root");
+        assert_eq!(
+            decoded.hash_tree_root(&libssz_merkle::Sha2Hasher),
+            expected_root,
+            "{case_name}: root"
+        );
     }
 }
 

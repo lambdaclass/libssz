@@ -11,7 +11,7 @@ fn check_roundtrip_root<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debu
         T::from_ssz_bytes(ssz).unwrap_or_else(|e| panic!("{case_name}: decode failed: {e:?}"));
     let reencoded = decoded.to_ssz();
     assert_eq!(reencoded, ssz, "{case_name}: roundtrip mismatch");
-    let root = decoded.hash_tree_root();
+    let root = decoded.hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(root, *expected_root, "{case_name}: hash tree root mismatch");
 }
 

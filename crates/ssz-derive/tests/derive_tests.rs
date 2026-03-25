@@ -1,7 +1,6 @@
 use libssz::{DecodeError, SszDecode, SszEncode};
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_merkle::HashTreeRoot;
-
+use libssz_merkle::{HashTreeRoot, Sha2Hasher};
 // ── All-fixed struct ──
 
 #[derive(Debug, PartialEq, SszEncode, SszDecode)]
@@ -139,12 +138,12 @@ struct SimpleContainer {
 #[test]
 fn hash_tree_root_struct() {
     let s = SimpleContainer { a: 1, b: 2 };
-    let root = s.hash_tree_root();
+    let root = s.hash_tree_root(&Sha2Hasher);
 
     // Manual: merkleize([hash_tree_root(a), hash_tree_root(b)])
-    let root_a = 1u64.hash_tree_root();
-    let root_b = 2u64.hash_tree_root();
-    let expected = libssz_merkle::merkleize(&[root_a, root_b], None);
+    let root_a = 1u64.hash_tree_root(&Sha2Hasher);
+    let root_b = 2u64.hash_tree_root(&Sha2Hasher);
+    let expected = libssz_merkle::merkleize(&Sha2Hasher, &[root_a, root_b], None);
     assert_eq!(root, expected);
 }
 
@@ -204,10 +203,10 @@ fn union_decode_invalid_selector() {
 #[test]
 fn union_hash_tree_root() {
     let val = TestUnion::A(42);
-    let root = val.hash_tree_root();
+    let root = val.hash_tree_root(&Sha2Hasher);
 
-    let inner_root = 42u32.hash_tree_root();
-    let expected = libssz_merkle::mix_in_selector(&inner_root, 0);
+    let inner_root = 42u32.hash_tree_root(&Sha2Hasher);
+    let expected = libssz_merkle::mix_in_selector(&Sha2Hasher, &inner_root, 0);
     assert_eq!(root, expected);
 }
 
@@ -235,7 +234,10 @@ fn transparent_decode_round_trip() {
 #[test]
 fn transparent_hash_tree_root() {
     let val = Wrapper(42);
-    assert_eq!(val.hash_tree_root(), 42u64.hash_tree_root());
+    assert_eq!(
+        val.hash_tree_root(&Sha2Hasher),
+        42u64.hash_tree_root(&Sha2Hasher)
+    );
 }
 
 // ── Named-field transparent ──

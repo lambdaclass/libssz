@@ -37,26 +37,26 @@ fuzz_target!(|input: FuzzInput| {
     let bytes32_variant = TestUnion::Bytes32Val(input.bytes32_val);
     let vec_variant = TestUnion::VecU8Val(vec_u8);
 
-    let _ = u64_variant.hash_tree_root();
-    let _ = bool_variant.hash_tree_root();
-    let _ = bytes32_variant.hash_tree_root();
-    let _ = vec_variant.hash_tree_root();
+    let _ = u64_variant.hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let _ = bool_variant.hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let _ = bytes32_variant.hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let _ = vec_variant.hash_tree_root(&libssz_merkle::Sha2Hasher);
 
     // Verify determinism: same input → same root
-    let root1 = TestUnion::U64Val(input.u64_val).hash_tree_root();
-    let root2 = TestUnion::U64Val(input.u64_val).hash_tree_root();
+    let root1 = TestUnion::U64Val(input.u64_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let root2 = TestUnion::U64Val(input.u64_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(root1, root2, "U64Val HTR not deterministic");
 
-    let root1 = TestUnion::BoolVal(input.bool_val).hash_tree_root();
-    let root2 = TestUnion::BoolVal(input.bool_val).hash_tree_root();
+    let root1 = TestUnion::BoolVal(input.bool_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let root2 = TestUnion::BoolVal(input.bool_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(root1, root2, "BoolVal HTR not deterministic");
 
-    let root1 = TestUnion::Bytes32Val(input.bytes32_val).hash_tree_root();
-    let root2 = TestUnion::Bytes32Val(input.bytes32_val).hash_tree_root();
+    let root1 = TestUnion::Bytes32Val(input.bytes32_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let root2 = TestUnion::Bytes32Val(input.bytes32_val).hash_tree_root(&libssz_merkle::Sha2Hasher);
     assert_eq!(root1, root2, "Bytes32Val HTR not deterministic");
 
     // Decode from raw bytes; if successful, hash_tree_root must not panic
     if let Ok(val) = TestUnion::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 });

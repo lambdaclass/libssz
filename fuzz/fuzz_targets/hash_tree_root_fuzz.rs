@@ -33,9 +33,9 @@ struct FuzzInput {
 
 fuzz_target!(|input: FuzzInput| {
     // Primitives
-    let _ = input.val_u64.hash_tree_root();
-    let _ = input.val_bool.hash_tree_root();
-    let _ = input.val_bytes32.hash_tree_root();
+    let _ = input.val_u64.hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let _ = input.val_bool.hash_tree_root(&libssz_merkle::Sha2Hasher);
+    let _ = input.val_bytes32.hash_tree_root(&libssz_merkle::Sha2Hasher);
 
     // Container
     let header = BeaconBlockHeader {
@@ -45,65 +45,65 @@ fuzz_target!(|input: FuzzInput| {
         state_root: input.state_root,
         body_root: input.body_root,
     };
-    let _ = header.hash_tree_root();
+    let _ = header.hash_tree_root(&libssz_merkle::Sha2Hasher);
 
     // Decode-then-hash from raw bytes (cap sizes for performance)
     if let Ok(val) = Vec::<u64>::from_ssz_bytes(&input.raw) {
         if val.len() <= 4096 {
-            let _ = val.hash_tree_root();
+            let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
         }
     }
     if let Ok(val) = SszList::<u64, 1_048_576>::from_ssz_bytes(&input.raw) {
         if val.len() <= 4096 {
-            let _ = val.hash_tree_root();
+            let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
         }
     }
     if let Ok(val) = SszVector::<[u8; 32], 64>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitlist::<2048>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<512>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 
     // -- Additional bitfield sizes --
     if let Ok(val) = SszBitlist::<8>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitlist::<64>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<8>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<64>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 
     // -- Non-byte-aligned bitvector sizes for excess bit validation --
     if let Ok(val) = SszBitvector::<3>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<7>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<9>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
     if let Ok(val) = SszBitvector::<15>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 
     // -- Boundary collections --
     if let Ok(val) = SszVector::<u64, 1>::from_ssz_bytes(&input.raw) {
-        let _ = val.hash_tree_root();
+        let _ = val.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 
     // -- Empty collection HTR --
-    let _ = Vec::<u64>::new().hash_tree_root();
+    let _ = Vec::<u64>::new().hash_tree_root(&libssz_merkle::Sha2Hasher);
     if let Ok(bl) = SszBitlist::<2048>::from_ssz_bytes(&[1u8]) {
-        let _ = bl.hash_tree_root();
+        let _ = bl.hash_tree_root(&libssz_merkle::Sha2Hasher);
     }
 });

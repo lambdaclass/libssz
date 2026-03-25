@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ops::Deref;
 use libssz::{DecodeError, SszDecode, SszEncode};
-use libssz_merkle::{merkleize_progressive, mix_in_length, pack, HashTreeRoot, Node};
+use libssz_merkle::{merkleize_progressive, mix_in_length, pack, HashTreeRoot, Node, Sha256Hasher};
 
 /// A progressive list: ordered variable-length homogeneous collection **without limit**.
 ///
@@ -110,7 +110,7 @@ impl<T: SszDecode> SszDecode for ProgressiveList<T> {
 // mix_in_length(merkleize_progressive(chunks), len)
 
 impl<T: HashTreeRoot + SszEncode> HashTreeRoot for ProgressiveList<T> {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let length = self.len();
 
         let chunks: Vec<Node> = if T::is_basic_type() {
@@ -120,10 +120,13 @@ impl<T: HashTreeRoot + SszEncode> HashTreeRoot for ProgressiveList<T> {
             }
             pack(&serialized)
         } else {
-            self.0.iter().map(|item| item.hash_tree_root()).collect()
+            self.0
+                .iter()
+                .map(|item| item.hash_tree_root(hasher))
+                .collect()
         };
 
-        let root = merkleize_progressive(&chunks);
-        mix_in_length(&root, length)
+        let root = merkleize_progressive(hasher, &chunks);
+        mix_in_length(hasher, &root, length)
     }
 }
