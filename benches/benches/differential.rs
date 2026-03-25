@@ -987,7 +987,7 @@ fn diff_htr(c: &mut Criterion) {
 
     // bool
     group.bench_function("libssz/bool", |b| {
-        b.iter(|| black_box(true).hash_tree_root())
+        b.iter(|| black_box(true).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
     group.bench_function("lighthouse/bool", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&true)).0)
@@ -1002,7 +1002,7 @@ fn diff_htr(c: &mut Criterion) {
     // u64
     let val_u64 = 0x1234_5678_9ABC_DEF0u64;
     group.bench_function("libssz/u64", |b| {
-        b.iter(|| black_box(val_u64).hash_tree_root())
+        b.iter(|| black_box(val_u64).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
     group.bench_function("lighthouse/u64", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&val_u64)).0)
@@ -1017,7 +1017,7 @@ fn diff_htr(c: &mut Criterion) {
     // [u8; 32]
     let val_bytes32 = [0xABu8; 32];
     group.bench_function("libssz/bytes32", |b| {
-        b.iter(|| black_box(&val_bytes32).hash_tree_root())
+        b.iter(|| black_box(&val_bytes32).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
     group.bench_function("lighthouse/bytes32", |b| {
         b.iter(|| tree_hash::TreeHash::tree_hash_root(black_box(&val_bytes32)).0)
@@ -1149,22 +1149,22 @@ fn diff_htr_consensus_containers(c: &mut Criterion) {
 
     let fork = make_fork();
     group.bench_function("libssz/fork", |b| {
-        b.iter(|| black_box(&fork).hash_tree_root())
+        b.iter(|| black_box(&fork).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
 
     let checkpoint = make_checkpoint(42);
     group.bench_function("libssz/checkpoint", |b| {
-        b.iter(|| black_box(&checkpoint).hash_tree_root())
+        b.iter(|| black_box(&checkpoint).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
 
     let eth1_data = make_eth1_data(42);
     group.bench_function("libssz/eth1_data", |b| {
-        b.iter(|| black_box(&eth1_data).hash_tree_root())
+        b.iter(|| black_box(&eth1_data).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
 
     let attestation_data = make_attestation_data(42);
     group.bench_function("libssz/attestation_data", |b| {
-        b.iter(|| black_box(&attestation_data).hash_tree_root())
+        b.iter(|| black_box(&attestation_data).hash_tree_root(&libssz_merkle::Sha2Hasher))
     });
 
     group.finish();
@@ -1283,7 +1283,7 @@ fn diff_htr_beacon_state(c: &mut Criterion) {
             BenchmarkId::new("libssz", n_validators),
             &state,
             |b, state| {
-                b.iter(|| black_box(state).hash_tree_root());
+                b.iter(|| black_box(state).hash_tree_root(&libssz_merkle::Sha2Hasher));
             },
         );
         group.bench_with_input(

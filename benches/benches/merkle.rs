@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node};
-
+use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node, Sha2Hasher};
 fn make_chunks(n: usize) -> Vec<Node> {
     (0..n)
         .map(|i| {
@@ -16,7 +15,7 @@ fn bench_hash_nodes(c: &mut Criterion) {
     let a: Node = [0xaa; 32];
     let b: Node = [0xbb; 32];
     group.bench_function("single", |bench| {
-        bench.iter(|| hash_nodes(black_box(&a), black_box(&b)))
+        bench.iter(|| hash_nodes(&Sha2Hasher, black_box(&a), black_box(&b)))
     });
     group.finish();
 }
@@ -53,7 +52,7 @@ fn bench_merkleize(c: &mut Criterion) {
     for &n in &[1, 4, 16, 64, 256, 1024, 4096] {
         let chunks = make_chunks(n);
         group.bench_with_input(BenchmarkId::from_parameter(n), &chunks, |b, chunks| {
-            b.iter(|| merkleize(black_box(chunks), None));
+            b.iter(|| merkleize(&Sha2Hasher, black_box(chunks), None));
         });
     }
     group.finish();
@@ -66,7 +65,7 @@ fn bench_merkleize_with_limit(c: &mut Criterion) {
         let chunks = make_chunks(n);
         let label = format!("{n}_of_{limit}");
         group.bench_with_input(BenchmarkId::new("chunks", &label), &chunks, |b, chunks| {
-            b.iter(|| merkleize(black_box(chunks), Some(limit)));
+            b.iter(|| merkleize(&Sha2Hasher, black_box(chunks), Some(limit)));
         });
     }
     group.finish();
@@ -76,7 +75,7 @@ fn bench_mix_in_length(c: &mut Criterion) {
     let mut group = c.benchmark_group("merkle/mix_in_length");
     let root: Node = [0xcc; 32];
     group.bench_function("single", |b| {
-        b.iter(|| mix_in_length(black_box(&root), black_box(1_000_000)))
+        b.iter(|| mix_in_length(&Sha2Hasher, black_box(&root), black_box(1_000_000)))
     });
     group.finish();
 }

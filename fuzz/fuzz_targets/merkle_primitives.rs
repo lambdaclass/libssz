@@ -5,7 +5,11 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node};
+use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node, Sha2Hasher};
+
+fn h() -> Sha2Hasher {
+    Sha2Hasher
+}
 
 #[derive(Debug, Arbitrary)]
 struct FuzzInput {
@@ -21,7 +25,7 @@ struct FuzzInput {
 
 fuzz_target!(|input: FuzzInput| {
     // hash_nodes — must never panic
-    let _ = hash_nodes(&input.node_a, &input.node_b);
+    let _ = hash_nodes(&h(), &input.node_a, &input.node_b);
 
     // pack — any byte slice, must not panic
     if input.pack_data.len() <= 32768 {
@@ -50,20 +54,20 @@ fuzz_target!(|input: FuzzInput| {
             .collect();
 
         // Without limit — must not panic
-        let _ = merkleize(&chunks, None);
+        let _ = merkleize(&h(), &chunks, None);
 
         // With limit >= chunks — must not panic
         if let Some(raw_limit) = input.limit {
             let limit = (raw_limit as usize).max(n);
-            let _ = merkleize(&chunks, Some(limit));
+            let _ = merkleize(&h(), &chunks, Some(limit));
         }
     }
 
     // merkleize with 0 chunks — edge case
-    let _ = merkleize(&[], None);
-    let _ = merkleize(&[], Some(1));
-    let _ = merkleize(&[], Some(0));
+    let _ = merkleize(&h(), &[], None);
+    let _ = merkleize(&h(), &[], Some(1));
+    let _ = merkleize(&h(), &[], Some(0));
 
     // mix_in_length — must not panic
-    let _ = mix_in_length(&input.node_a, input.mix_length);
+    let _ = mix_in_length(&h(), &input.node_a, input.mix_length);
 });

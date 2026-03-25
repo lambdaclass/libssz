@@ -11,13 +11,14 @@ categories = ["encoding", "cryptography::cryptocurrencies"]
 
 [features]
 default = ["std"]
-std = ["alloc", "libssz/std"]
+std = ["alloc", "libssz/std", "sha2-backend"]
 alloc = ["libssz/alloc"]
+sha2-backend = ["dep:sha2"]
 ethereum_types = ["dep:ethereum-types", "libssz/ethereum_types"]
 
 [dependencies]
 libssz = { version = "0.1.0", path = "../ssz", default-features = false }
-sha2 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false, optional = true }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
 
 [build-dependencies]

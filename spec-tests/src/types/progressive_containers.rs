@@ -1,5 +1,7 @@
 use libssz_derive::{SszDecode, SszEncode};
-use libssz_merkle::{merkleize_progressive, mix_in_active_fields, HashTreeRoot, Node};
+use libssz_merkle::{
+    merkleize_progressive, mix_in_active_fields, HashTreeRoot, Node, Sha256Hasher,
+};
 use libssz_types::{ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList};
 
 use super::containers::SmallTestStruct;
@@ -31,12 +33,12 @@ pub struct ProgressiveSingleFieldContainerTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveSingleFieldContainerTestStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let active_fields = &[true];
-        let field_roots = [self.a.hash_tree_root()];
+        let field_roots = [self.a.hash_tree_root(hasher)];
         let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(&chunks);
-        mix_in_active_fields(&root, active_fields)
+        let root = merkleize_progressive(hasher, &chunks);
+        mix_in_active_fields(hasher, &root, active_fields)
     }
 }
 
@@ -49,12 +51,12 @@ pub struct ProgressiveSingleListContainerTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveSingleListContainerTestStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let active_fields = &[false, false, false, false, true];
-        let field_roots = [self.c.hash_tree_root()];
+        let field_roots = [self.c.hash_tree_root(hasher)];
         let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(&chunks);
-        mix_in_active_fields(&root, active_fields)
+        let root = merkleize_progressive(hasher, &chunks);
+        mix_in_active_fields(hasher, &root, active_fields)
     }
 }
 
@@ -69,16 +71,16 @@ pub struct ProgressiveVarTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveVarTestStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let active_fields = &[true, false, true, false, true];
         let field_roots = [
-            self.a.hash_tree_root(),
-            self.b.hash_tree_root(),
-            self.c.hash_tree_root(),
+            self.a.hash_tree_root(hasher),
+            self.b.hash_tree_root(hasher),
+            self.c.hash_tree_root(hasher),
         ];
         let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(&chunks);
-        mix_in_active_fields(&root, active_fields)
+        let root = merkleize_progressive(hasher, &chunks);
+        mix_in_active_fields(hasher, &root, active_fields)
     }
 }
 
@@ -98,24 +100,24 @@ pub struct ProgressiveComplexTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveComplexTestStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let active_fields = &[
             true, false, true, false, true, false, false, false, true, false, false, false, true,
             true, false, false, false, false, false, false, true, true,
         ];
         let field_roots = [
-            self.a.hash_tree_root(),
-            self.b.hash_tree_root(),
-            self.c.hash_tree_root(),
-            self.d.hash_tree_root(),
-            self.e.hash_tree_root(),
-            self.f.hash_tree_root(),
-            self.g.hash_tree_root(),
-            self.h.hash_tree_root(),
+            self.a.hash_tree_root(hasher),
+            self.b.hash_tree_root(hasher),
+            self.c.hash_tree_root(hasher),
+            self.d.hash_tree_root(hasher),
+            self.e.hash_tree_root(hasher),
+            self.f.hash_tree_root(hasher),
+            self.g.hash_tree_root(hasher),
+            self.h.hash_tree_root(hasher),
         ];
         let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(&chunks);
-        mix_in_active_fields(&root, active_fields)
+        let root = merkleize_progressive(hasher, &chunks);
+        mix_in_active_fields(hasher, &root, active_fields)
     }
 }
 
@@ -153,15 +155,15 @@ pub struct ProgressiveTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveTestStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         // Regular container merkleization (not progressive)
         let field_roots: [Node; 4] = [
-            self.a.hash_tree_root(),
-            self.b.hash_tree_root(),
-            self.c.hash_tree_root(),
-            self.d.hash_tree_root(),
+            self.a.hash_tree_root(hasher),
+            self.b.hash_tree_root(hasher),
+            self.c.hash_tree_root(hasher),
+            self.d.hash_tree_root(hasher),
         ];
-        libssz_merkle::merkleize(&field_roots, None)
+        libssz_merkle::merkleize(hasher, &field_roots, None)
     }
 }
 
@@ -200,21 +202,21 @@ pub struct ProgressiveBitsStruct {
 }
 
 impl HashTreeRoot for ProgressiveBitsStruct {
-    fn hash_tree_root(&self) -> Node {
+    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let field_roots: [Node; 12] = [
-            self.a.hash_tree_root(),
-            self.b.hash_tree_root(),
-            self.c.hash_tree_root(),
-            self.d.hash_tree_root(),
-            self.e.hash_tree_root(),
-            self.f.hash_tree_root(),
-            self.g.hash_tree_root(),
-            self.h.hash_tree_root(),
-            self.i.hash_tree_root(),
-            self.j.hash_tree_root(),
-            self.k.hash_tree_root(),
-            self.l.hash_tree_root(),
+            self.a.hash_tree_root(hasher),
+            self.b.hash_tree_root(hasher),
+            self.c.hash_tree_root(hasher),
+            self.d.hash_tree_root(hasher),
+            self.e.hash_tree_root(hasher),
+            self.f.hash_tree_root(hasher),
+            self.g.hash_tree_root(hasher),
+            self.h.hash_tree_root(hasher),
+            self.i.hash_tree_root(hasher),
+            self.j.hash_tree_root(hasher),
+            self.k.hash_tree_root(hasher),
+            self.l.hash_tree_root(hasher),
         ];
-        libssz_merkle::merkleize(&field_roots, None)
+        libssz_merkle::merkleize(hasher, &field_roots, None)
     }
 }
