@@ -75,17 +75,14 @@ fn decode_uint<const N: usize, T>(
 
 /// Bulk-decode `bytes` into a `Vec<T>` via a single `memcpy`.
 ///
-/// # Safety contract (not enforced by the type system)
+/// # Safety
 ///
 /// `T` must satisfy:
 /// - No padding bytes (`size_of::<T>()` equals its data width).
 /// - Valid for any bit pattern (no invalid representations).
 /// - Little-endian in-memory layout matching SSZ wire format.
-///
-/// Only called for primitive integers (u8, u16, u32, u64, u128), which
-/// satisfy all three requirements on little-endian targets.
 #[cfg(feature = "alloc")]
-fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
+unsafe fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
         let item_size = core::mem::size_of::<T>();
@@ -97,18 +94,11 @@ fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
         }
         let count = bytes.len() / item_size;
         let mut result = Vec::<T>::with_capacity(count);
-        // SAFETY: caller upholds the safety contract above. The length check
-        // guarantees `count * size_of::<T>() == bytes.len()`, and
-        // `with_capacity(count)` allocates at least that many bytes, so the
-        // copy and `set_len` stay within the allocated capacity.
-        unsafe {
-            core::ptr::copy_nonoverlapping(
-                bytes.as_ptr(),
-                result.as_mut_ptr() as *mut u8,
-                bytes.len(),
-            );
-            result.set_len(count);
-        }
+        // The length check guarantees `count * size_of::<T>() == bytes.len()`,
+        // and `with_capacity(count)` allocates at least that many bytes, so
+        // the copy and `set_len` stay within the allocated capacity.
+        core::ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, bytes.len());
+        result.set_len(count);
         Ok(result)
     }
     #[cfg(not(target_endian = "little"))]
@@ -136,7 +126,8 @@ impl SszDecode for u8 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes)
+            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -163,7 +154,8 @@ impl SszDecode for u16 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes)
+            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -190,7 +182,8 @@ impl SszDecode for u32 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes)
+            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -217,7 +210,8 @@ impl SszDecode for u64 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes)
+            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -244,7 +238,8 @@ impl SszDecode for u128 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes)
+            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
