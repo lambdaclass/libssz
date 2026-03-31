@@ -73,6 +73,17 @@ fn decode_uint<const N: usize, T>(
     Ok(from_le_bytes(arr))
 }
 
+/// Bulk-decode `bytes` into a `Vec<T>` via a single `memcpy`.
+///
+/// # Safety contract (not enforced by the type system)
+///
+/// `T` must satisfy:
+/// - No padding bytes (`size_of::<T>()` equals its data width).
+/// - Valid for any bit pattern (no invalid representations).
+/// - Little-endian in-memory layout matching SSZ wire format.
+///
+/// Only called for primitive integers (u8, u16, u32, u64, u128), which
+/// satisfy all three requirements on little-endian targets.
 #[cfg(feature = "alloc")]
 fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
@@ -86,11 +97,10 @@ fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
         }
         let count = bytes.len() / item_size;
         let mut result = Vec::<T>::with_capacity(count);
-        // SAFETY: `T` is a primitive integer (u8/u16/u32/u64/u128) with no
-        // padding and a valid representation for any bit pattern. The
-        // little-endian memory layout matches SSZ wire format (cfg-guarded).
-        // The length check guarantees `count * size_of::<T>() == bytes.len()`,
-        // so the copy stays within the allocated capacity.
+        // SAFETY: caller upholds the safety contract above. The length check
+        // guarantees `count * size_of::<T>() == bytes.len()`, and
+        // `with_capacity(count)` allocates at least that many bytes, so the
+        // copy and `set_len` stay within the allocated capacity.
         unsafe {
             core::ptr::copy_nonoverlapping(
                 bytes.as_ptr(),
