@@ -77,7 +77,7 @@ fn decode_uint<const N: usize, T>(
 fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
-        if bytes.len() % item_size != 0 {
+        if !bytes.len().is_multiple_of(item_size) {
             return Err(DecodeError::InvalidByteLength {
                 expected: item_size,
                 got: bytes.len(),
