@@ -77,6 +77,7 @@ fn decode_uint<const N: usize, T>(
 fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
+        debug_assert_eq!(item_size, core::mem::size_of::<T>(), "item_size must equal size_of::<T>() for safe memcpy");
         if !bytes.len().is_multiple_of(item_size) {
             return Err(DecodeError::InvalidByteLength {
                 expected: item_size,
@@ -85,6 +86,12 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
         }
         let count = bytes.len() / item_size;
         let mut result = Vec::<T>::with_capacity(count);
+        // SAFETY: `T` is a primitive integer (u8/u16/u32/u64/u128) with no
+        // padding and a valid representation for any bit pattern. `item_size`
+        // equals `size_of::<T>()` (asserted above), and the little-endian
+        // memory layout matches SSZ wire format (cfg-guarded). The length
+        // check guarantees `count * size_of::<T>() == bytes.len()`, so the
+        // copy stays within the allocated capacity.
         unsafe {
             core::ptr::copy_nonoverlapping(
                 bytes.as_ptr(),
