@@ -130,7 +130,7 @@ impl SszDecode for u8 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            // SAFETY: primitive integers are valid for any bit pattern.
             unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
@@ -158,7 +158,7 @@ impl SszDecode for u16 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            // SAFETY: primitive integers are valid for any bit pattern.
             unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
@@ -186,7 +186,7 @@ impl SszDecode for u32 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            // SAFETY: primitive integers are valid for any bit pattern.
             unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
@@ -214,7 +214,7 @@ impl SszDecode for u64 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            // SAFETY: primitive integers are valid for any bit pattern.
             unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
@@ -242,7 +242,7 @@ impl SszDecode for u128 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding and are valid for any bit pattern.
+            // SAFETY: primitive integers are valid for any bit pattern.
             unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
