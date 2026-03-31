@@ -262,6 +262,11 @@ fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, D
     }
     let count = bytes.len() / N;
     let mut result = Vec::<[u8; N]>::with_capacity(count);
+    // SAFETY: `[u8; N]` has size `N`, alignment 1, no padding, and is valid
+    // for any bit pattern. The length check guarantees `count * N ==
+    // bytes.len()`, and `with_capacity(count)` allocates at least `count * N`
+    // bytes, so the copy stays in bounds. No endianness concern since the
+    // element type is raw bytes.
     unsafe {
         core::ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, bytes.len());
         result.set_len(count);

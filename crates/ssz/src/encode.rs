@@ -45,6 +45,12 @@ pub trait SszEncode {
 
 #[cfg(feature = "alloc")]
 fn append_fixed_slice_as_bytes<T>(items: &[T], buf: &mut Vec<u8>) {
+    // SAFETY: Callers must only invoke this with types `T` that have no
+    // padding bytes and a valid representation for any bit pattern. Integer
+    // callers (u8..u128) are additionally cfg-guarded to little-endian
+    // platforms so the memory layout matches SSZ wire format. The [u8; N]
+    // caller is endianness-independent. Current callers: u8, u16, u32, u64,
+    // u128, [u8; N].
     let byte_slice = unsafe {
         core::slice::from_raw_parts(items.as_ptr().cast::<u8>(), core::mem::size_of_val(items))
     };
