@@ -77,10 +77,14 @@ fn decode_uint<const N: usize, T>(
 ///
 /// # Safety
 ///
-/// `T` must satisfy:
-/// - No padding bytes (`size_of::<T>()` equals its data width).
-/// - Valid for any bit pattern (no invalid representations).
-/// - Little-endian in-memory layout matching SSZ wire format.
+/// `T` must be valid for any bit pattern (no invalid representations),
+/// since arbitrary wire bytes are reinterpreted as `T` values.
+///
+/// # Correctness
+///
+/// `T` must have a little-endian in-memory layout matching SSZ wire
+/// format. This is enforced at compile time by the `#[cfg(target_endian)]`
+/// gate on the only code path that calls this function.
 #[cfg(feature = "alloc")]
 unsafe fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
