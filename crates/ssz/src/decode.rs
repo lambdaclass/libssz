@@ -77,7 +77,11 @@ fn decode_uint<const N: usize, T>(
 fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
-        debug_assert_eq!(item_size, core::mem::size_of::<T>(), "item_size must equal size_of::<T>() for safe memcpy");
+        debug_assert_eq!(
+            item_size,
+            core::mem::size_of::<T>(),
+            "item_size must equal size_of::<T>() for safe memcpy"
+        );
         if !bytes.len().is_multiple_of(item_size) {
             return Err(DecodeError::InvalidByteLength {
                 expected: item_size,
