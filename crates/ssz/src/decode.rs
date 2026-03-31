@@ -74,14 +74,10 @@ fn decode_uint<const N: usize, T>(
 }
 
 #[cfg(feature = "alloc")]
-fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
+fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
-        debug_assert_eq!(
-            item_size,
-            core::mem::size_of::<T>(),
-            "item_size must equal size_of::<T>() for safe memcpy"
-        );
+        let item_size = core::mem::size_of::<T>();
         if !bytes.len().is_multiple_of(item_size) {
             return Err(DecodeError::InvalidByteLength {
                 expected: item_size,
@@ -91,11 +87,10 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
         let count = bytes.len() / item_size;
         let mut result = Vec::<T>::with_capacity(count);
         // SAFETY: `T` is a primitive integer (u8/u16/u32/u64/u128) with no
-        // padding and a valid representation for any bit pattern. `item_size`
-        // equals `size_of::<T>()` (asserted above), and the little-endian
-        // memory layout matches SSZ wire format (cfg-guarded). The length
-        // check guarantees `count * size_of::<T>() == bytes.len()`, so the
-        // copy stays within the allocated capacity.
+        // padding and a valid representation for any bit pattern. The
+        // little-endian memory layout matches SSZ wire format (cfg-guarded).
+        // The length check guarantees `count * size_of::<T>() == bytes.len()`,
+        // so the copy stays within the allocated capacity.
         unsafe {
             core::ptr::copy_nonoverlapping(
                 bytes.as_ptr(),
@@ -109,7 +104,6 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
     #[cfg(not(target_endian = "little"))]
     {
         let _ = bytes;
-        let _ = item_size;
         unreachable!()
     }
 }
@@ -132,7 +126,7 @@ impl SszDecode for u8 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 1)
+            decode_fixed_vec_le(bytes)
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -159,7 +153,7 @@ impl SszDecode for u16 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 2)
+            decode_fixed_vec_le(bytes)
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -186,7 +180,7 @@ impl SszDecode for u32 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 4)
+            decode_fixed_vec_le(bytes)
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -213,7 +207,7 @@ impl SszDecode for u64 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 8)
+            decode_fixed_vec_le(bytes)
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -240,7 +234,7 @@ impl SszDecode for u128 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 16)
+            decode_fixed_vec_le(bytes)
         }
         #[cfg(not(target_endian = "little"))]
         {
