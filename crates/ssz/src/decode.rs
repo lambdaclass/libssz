@@ -369,6 +369,12 @@ fn decode_variable_length_items_with_max<T: SszDecode>(
         });
     }
 
+    // Reject an out-of-bounds first offset *before* deriving `num_items` and
+    // reserving capacity below. `first_offset` is attacker-controlled (it is the
+    // declared start of the element data), so without this guard a few input
+    // bytes could request a multi-gigabyte `Vec::with_capacity` and OOM the
+    // process. The per-offset loop also checks this, but only after allocating —
+    // keep this early check (do not "deduplicate" it away).
     if first_offset > bytes.len() {
         return Err(DecodeError::OffsetOutOfBounds {
             offset: first_offset,
