@@ -60,8 +60,16 @@ fn bench_merkleize(c: &mut Criterion) {
 
 fn bench_merkleize_with_limit(c: &mut Criterion) {
     let mut group = c.benchmark_group("merkle/merkleize_with_limit");
-    // Chunks present < limit — tests zero-hash padding path
-    for &(n, limit) in &[(64, 1024), (256, 4096), (1024, 1_048_576)] {
+    // Chunks present < limit — tests zero-hash padding path.
+    // The 65_536/65_537 pair straddles a power-of-two boundary: cost must stay
+    // flat across it, since the extra chunk only adds virtual zero subtrees.
+    for &(n, limit) in &[
+        (64, 1024),
+        (256, 4096),
+        (1024, 1_048_576),
+        (65_536, 1 << 18),
+        (65_537, 1 << 18),
+    ] {
         let chunks = make_chunks(n);
         let label = format!("{n}_of_{limit}");
         group.bench_with_input(BenchmarkId::new("chunks", &label), &chunks, |b, chunks| {

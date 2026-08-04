@@ -74,9 +74,12 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 
 /// Compute the Merkle root of a list of chunks.
 ///
-/// If `limit` is `Some(n)`, the tree is padded as if there were `n` leaf chunks
-/// (using precomputed zero hashes). The padding is virtual — only the real chunks
-/// are materialized, and the remaining subtree roots come from precomputed zero hashes.
+/// If `limit` is `Some(n)`, the tree is padded as if there were `n` leaf chunks.
+/// The padding is virtual: any subtree lying entirely beyond `chunks.len()` is
+/// all zeros, so its root is read from [`ZERO_HASHES`] instead of being hashed.
+///
+/// Cost is `O(chunks.len())` hashes regardless of `limit`, and one `Vec` of
+/// `chunks.len()` nodes is allocated.
 #[cfg(feature = "alloc")]
 pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usize>) -> Node {
     let count = match limit {
@@ -96,36 +99,39 @@ pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usiz
         return ZERO_HASHES[0];
     }
 
-    let leaf_count = count.next_power_of_two();
-    let depth = leaf_count.trailing_zeros() as usize;
+    let depth = count.next_power_of_two().trailing_zeros() as usize;
 
-    // Only allocate for real data, padded to the next power of two.
-    // The rest of the tree is handled via precomputed zero hashes.
-    let real_leaf_count = if chunks.is_empty() {
-        1
-    } else {
-        chunks.len().next_power_of_two()
-    };
-    let real_depth = real_leaf_count.trailing_zeros() as usize;
-
-    // Build bottom layer from real chunks only
-    let mut layer: Vec<Node> = Vec::with_capacity(real_leaf_count);
-    layer.extend_from_slice(chunks);
-    layer.resize(real_leaf_count, ZERO_HASHES[0]);
-
-    // Hash layer by layer up to real_depth
-    for zero_hash in ZERO_HASHES.iter().take(real_depth) {
-        let mut next = Vec::with_capacity(layer.len() / 2);
-        for pair in layer.chunks(2) {
-            let left = &pair[0];
-            let right = if pair.len() == 2 { &pair[1] } else { zero_hash };
-            next.push(hash_nodes(hasher, left, right));
-        }
-        layer = next;
+    // With no real chunks the whole tree is zeros, so the root is precomputed.
+    if chunks.is_empty() {
+        return ZERO_HASHES[depth];
     }
 
-    // Now layer[0] is the root of the real data subtree.
-    // Merge with zero hashes for the remaining virtual depth levels.
+    // Depth of the smallest subtree covering all real chunks. Every level above
+    // it pairs the running root with an all-zero sibling.
+    let real_depth = chunks.len().next_power_of_two().trailing_zeros() as usize;
+
+    // Fold the real chunks one level per iteration, swapping between two buffers
+    // that are allocated once and reused, so no level allocates.
+    //
+    // Only full pairs of real nodes are hashed. A level with an odd node count
+    // ends on the frontier, where the missing right sibling roots an all-zero
+    // subtree, so `ZERO_HASHES[level]` stands in for it rather than being hashed.
+    let mut layer: Vec<Node> = chunks.to_vec();
+    let mut next: Vec<Node> = Vec::with_capacity(layer.len().div_ceil(2));
+
+    for zero_hash in ZERO_HASHES.iter().take(real_depth) {
+        next.clear();
+        let mut pairs = layer.chunks_exact(2);
+        for pair in &mut pairs {
+            next.push(hash_nodes(hasher, &pair[0], &pair[1]));
+        }
+        if let [odd] = pairs.remainder() {
+            next.push(hash_nodes(hasher, odd, zero_hash));
+        }
+        core::mem::swap(&mut layer, &mut next);
+    }
+
+    // `layer[0]` now roots the real-data subtree. Merge in the virtual levels.
     let mut root = layer[0];
     for zero_hash in ZERO_HASHES.iter().take(depth).skip(real_depth) {
         root = hash_nodes(hasher, &root, zero_hash);
@@ -555,6 +561,154 @@ mod tests {
     fn merkleize_panics_if_count_exceeds_limit() {
         let chunks = [[0u8; 32]; 3];
         merkleize(&Sha2Hasher, &chunks, Some(2));
+    }
+
+    // ── merkleize: zero-subtree elision ──
+
+    /// Naive merkleization: materializes every leaf up to `limit`, including the
+    /// all-zero ones. Reference oracle for [`merkleize`], which must produce
+    /// identical roots while skipping the zero subtrees.
+    #[cfg(feature = "sha2-backend")]
+    fn merkleize_fully_materialized(chunks: &[Node], limit: Option<usize>) -> Node {
+        let count = core::cmp::max(limit.unwrap_or(chunks.len()), chunks.len());
+        if count == 0 {
+            return ZERO_HASHES[0];
+        }
+        let mut layer = chunks.to_vec();
+        layer.resize(count.next_power_of_two(), ZERO_HASHES[0]);
+        while layer.len() > 1 {
+            layer = layer
+                .chunks(2)
+                .map(|pair| hash_nodes(&Sha2Hasher, &pair[0], &pair[1]))
+                .collect();
+        }
+        layer[0]
+    }
+
+    /// Counts `hash_nodes` invocations while delegating to the real hasher, so
+    /// tree shape is unaffected.
+    #[cfg(feature = "sha2-backend")]
+    struct CountingHasher {
+        calls: core::cell::Cell<usize>,
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    impl CountingHasher {
+        fn new() -> Self {
+            Self {
+                calls: core::cell::Cell::new(0),
+            }
+        }
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    impl Sha256Hasher for CountingHasher {
+        fn hash(&self, data: &[u8]) -> [u8; 32] {
+            self.calls.set(self.calls.get() + 1);
+            Sha2Hasher.hash(data)
+        }
+    }
+
+    /// Hash count for a merkleization that treats every subtree beyond
+    /// `chunk_count` as a precomputed zero hash: one hash per node on the real
+    /// frontier, plus one per virtual level above it.
+    fn zero_aware_hash_count(chunk_count: usize, limit: Option<usize>) -> usize {
+        let count = limit.unwrap_or(chunk_count);
+        if count == 0 || chunk_count == 0 {
+            return 0;
+        }
+        let depth = count.next_power_of_two().trailing_zeros() as usize;
+        let real_depth = chunk_count.next_power_of_two().trailing_zeros() as usize;
+
+        let mut total = depth - real_depth;
+        let mut len = chunk_count;
+        for _ in 0..real_depth {
+            len = len.div_ceil(2);
+            total += len;
+        }
+        total
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_matches_fully_materialized_oracle() {
+        for n in 0..=70 {
+            let chunks: Vec<Node> = (0..n).map(|i| [i as u8 + 1; 32]).collect();
+            assert_eq!(
+                merkleize(&Sha2Hasher, &chunks, None),
+                merkleize_fully_materialized(&chunks, None),
+                "no limit, {n} chunks"
+            );
+            for limit in [n, n + 1, n + 7, 64, 128, 1024] {
+                if limit < n {
+                    continue;
+                }
+                assert_eq!(
+                    merkleize(&Sha2Hasher, &chunks, Some(limit)),
+                    merkleize_fully_materialized(&chunks, Some(limit)),
+                    "limit {limit}, {n} chunks"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_does_not_hash_zero_subtrees() {
+        for n in [1usize, 2, 3, 5, 9, 17, 33, 65, 100, 1025] {
+            let chunks: Vec<Node> = (0..n).map(|i| [i as u8; 32]).collect();
+            for limit in [
+                None,
+                Some(n),
+                Some(n.next_power_of_two() * 4),
+                Some(1 << 18),
+            ] {
+                if limit.is_some_and(|l| l < n) {
+                    continue;
+                }
+                let hasher = CountingHasher::new();
+                merkleize(&hasher, &chunks, limit);
+                assert_eq!(
+                    hasher.calls.get(),
+                    zero_aware_hash_count(n, limit),
+                    "{n} chunks, limit {limit:?}"
+                );
+            }
+        }
+    }
+
+    /// The regression this guards: crossing a power-of-two boundary used to
+    /// double the hash count, because the padding leaves were materialized and
+    /// hashed as if they held data.
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_cost_is_linear_across_power_of_two_boundary() {
+        let count_for = |n: usize| {
+            let chunks: Vec<Node> = (0..n).map(|i| [i as u8; 32]).collect();
+            let hasher = CountingHasher::new();
+            merkleize(&hasher, &chunks, Some(1 << 18));
+            hasher.calls.get()
+        };
+
+        let below = count_for(1024);
+        let above = count_for(1025);
+        assert!(
+            above < below + 20,
+            "one extra chunk added {} hashes (1024 -> {below}, 1025 -> {above})",
+            above - below
+        );
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_empty_with_limit_is_the_precomputed_zero_hash() {
+        for (depth, zero_hash) in ZERO_HASHES.iter().enumerate().take(8) {
+            let limit = 1usize << depth;
+            assert_eq!(merkleize(&Sha2Hasher, &[], Some(limit)), *zero_hash);
+        }
+        // Non-power-of-two limits round up to the enclosing subtree.
+        assert_eq!(merkleize(&Sha2Hasher, &[], Some(3)), ZERO_HASHES[2]);
+        assert_eq!(merkleize(&Sha2Hasher, &[], Some(100)), ZERO_HASHES[7]);
     }
 
     // ── mix_in_length tests ──
