@@ -47,7 +47,11 @@ pub trait SszEncode {
 ///
 /// # Safety
 ///
-/// `T` must not have padding bytes.
+/// Every byte of `T` must always be initialized. That rules out `T` with
+/// padding bytes, and also types that permit uninitialized bytes without
+/// having padding (`MaybeUninit<u8>` and anything containing it). A `&[u8]`
+/// covering uninitialized memory is UB: a reference must point to valid
+/// values, and an uninitialized `u8` is not a valid `u8`.
 ///
 /// # Correctness
 ///
@@ -55,9 +59,8 @@ pub trait SszEncode {
 /// format, unless `T` is endianness-independent (e.g. `[u8; N]`).
 #[cfg(feature = "alloc")]
 unsafe fn append_fixed_slice_as_bytes<T>(items: &[T], buf: &mut Vec<u8>) {
-    // Padding bytes in a valid `T` may be uninitialized, and a `&[u8]`
-    // covering uninitialized bytes is UB (a reference must point to
-    // valid values, and uninitialized `u8` is invalid).
+    // SAFETY: the caller guarantees every byte of `T` is initialized, so the
+    // whole `items` range is a valid `[u8]` of `size_of_val(items)` bytes.
     let byte_slice =
         core::slice::from_raw_parts(items.as_ptr().cast::<u8>(), core::mem::size_of_val(items));
     buf.extend_from_slice(byte_slice);
@@ -107,7 +110,7 @@ impl SszEncode for u8 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding.
+            // SAFETY: every byte of a primitive integer is initialized.
             unsafe { append_fixed_slice_as_bytes(items, buf) };
         }
         #[cfg(not(target_endian = "little"))]
@@ -141,7 +144,7 @@ impl SszEncode for u16 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding.
+            // SAFETY: every byte of a primitive integer is initialized.
             unsafe { append_fixed_slice_as_bytes(items, buf) };
         }
         #[cfg(not(target_endian = "little"))]
@@ -175,7 +178,7 @@ impl SszEncode for u32 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding.
+            // SAFETY: every byte of a primitive integer is initialized.
             unsafe { append_fixed_slice_as_bytes(items, buf) };
         }
         #[cfg(not(target_endian = "little"))]
@@ -209,7 +212,7 @@ impl SszEncode for u64 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding.
+            // SAFETY: every byte of a primitive integer is initialized.
             unsafe { append_fixed_slice_as_bytes(items, buf) };
         }
         #[cfg(not(target_endian = "little"))]
@@ -243,7 +246,7 @@ impl SszEncode for u128 {
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
         #[cfg(target_endian = "little")]
         {
-            // SAFETY: primitive integers have no padding.
+            // SAFETY: every byte of a primitive integer is initialized.
             unsafe { append_fixed_slice_as_bytes(items, buf) };
         }
         #[cfg(not(target_endian = "little"))]
@@ -277,7 +280,7 @@ impl<const N: usize> SszEncode for [u8; N] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        // SAFETY: [u8; N] has no padding.
+        // SAFETY: every byte of `[u8; N]` is initialized.
         unsafe { append_fixed_slice_as_bytes(items, buf) };
     }
 }
