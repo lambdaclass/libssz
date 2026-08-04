@@ -10,7 +10,7 @@ mod error;
 #[cfg(feature = "ethereum_types")]
 mod ethereum_types;
 
-pub use decode::{ContainerDecoder, SszDecode};
+pub use decode::{decode_list_with_max, ContainerDecoder, SszDecode};
 pub use encode::{ContainerEncoder, SszEncode};
 pub use error::DecodeError;
 

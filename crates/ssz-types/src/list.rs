@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 
 use core::ops::{Deref, Index};
 
-use libssz::{DecodeError, SszDecode, SszEncode};
+use libssz::{decode_list_with_max, DecodeError, SszDecode, SszEncode};
 
 use crate::error::TypeError;
 
@@ -136,14 +136,7 @@ impl<T: SszDecode, const N: usize> SszDecode for SszList<T, N> {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let vec = Vec::<T>::from_ssz_bytes(bytes)?;
-        if vec.len() > N {
-            return Err(DecodeError::InvalidByteLength {
-                expected: N,
-                got: vec.len(),
-            });
-        }
-        Ok(Self(vec))
+        decode_list_with_max(bytes, N).map(Self)
     }
 }
 
@@ -152,6 +145,40 @@ mod tests {
     use alloc::vec;
 
     use super::*;
+
+    #[derive(Debug)]
+    struct FixedTenBytes;
+
+    impl SszDecode for FixedTenBytes {
+        fn is_fixed_size() -> bool {
+            true
+        }
+
+        fn fixed_size() -> usize {
+            10
+        }
+
+        fn from_ssz_bytes(_bytes: &[u8]) -> Result<Self, DecodeError> {
+            panic!("fixed item decoder should not run for an over-capacity list")
+        }
+    }
+
+    #[derive(Debug)]
+    struct VariableItem;
+
+    impl SszDecode for VariableItem {
+        fn is_fixed_size() -> bool {
+            false
+        }
+
+        fn fixed_size() -> usize {
+            0
+        }
+
+        fn from_ssz_bytes(_bytes: &[u8]) -> Result<Self, DecodeError> {
+            panic!("variable item decoder should not run for an over-capacity list")
+        }
+    }
 
     #[test]
     fn empty_list() {
@@ -236,6 +263,37 @@ mod tests {
         let list: SszList<u16, 10> = SszList::try_from(vec![1u16, 2, 3, 4]).unwrap();
         let encoded = list.to_ssz();
         let err = SszList::<u16, 3>::from_ssz_bytes(&encoded).unwrap_err();
+        assert_eq!(
+            err,
+            DecodeError::InvalidByteLength {
+                expected: 3,
+                got: 4
+            }
+        );
+    }
+
+    #[test]
+    fn decode_over_capacity_fixed_elements_rejects_before_item_decode() {
+        let bytes = vec![0; 40];
+        let err = SszList::<FixedTenBytes, 3>::from_ssz_bytes(&bytes).unwrap_err();
+        assert_eq!(
+            err,
+            DecodeError::InvalidByteLength {
+                expected: 3,
+                got: 4
+            }
+        );
+    }
+
+    #[test]
+    fn decode_over_capacity_variable_elements_rejects_before_item_decode() {
+        let encoded = vec![
+            16, 0, 0, 0, // item 0 offset
+            16, 0, 0, 0, // item 1 offset
+            16, 0, 0, 0, // item 2 offset
+            16, 0, 0, 0, // item 3 offset
+        ];
+        let err = SszList::<VariableItem, 3>::from_ssz_bytes(&encoded).unwrap_err();
         assert_eq!(
             err,
             DecodeError::InvalidByteLength {

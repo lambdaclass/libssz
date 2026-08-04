@@ -317,27 +317,56 @@ impl<T: SszDecode> SszDecode for Vec<T> {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        if bytes.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        if T::is_fixed_size() {
-            let item_size = T::fixed_size();
-            if !bytes.len().is_multiple_of(item_size) {
-                return Err(DecodeError::InvalidByteLength {
-                    expected: item_size,
-                    got: bytes.len(),
-                });
-            }
-            T::ssz_decode_fixed_vec(bytes)
-        } else {
-            decode_variable_length_items(bytes)
-        }
+        decode_list_with_max(bytes, usize::MAX)
     }
 }
 
-/// Decode a list of variable-length items from SSZ bytes.
-fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
+/// Decode an SSZ list, rejecting inputs with more than `max_len` items before
+/// decoding item bodies.
+#[inline]
+pub fn decode_list_with_max<T: SszDecode>(
+    bytes: &[u8],
+    max_len: usize,
+) -> Result<Vec<T>, DecodeError> {
+    if bytes.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    if T::is_fixed_size() {
+        let item_size = T::fixed_size();
+        if item_size == 0 {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 0,
+                got: bytes.len(),
+            });
+        }
+
+        if !bytes.len().is_multiple_of(item_size) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: item_size,
+                got: bytes.len(),
+            });
+        }
+
+        let len = bytes.len() / item_size;
+        if len > max_len {
+            return Err(DecodeError::InvalidByteLength {
+                expected: max_len,
+                got: len,
+            });
+        }
+
+        T::ssz_decode_fixed_vec(bytes)
+    } else {
+        decode_variable_length_items_with_max(bytes, max_len)
+    }
+}
+
+/// Decode a bounded list of variable-length items from SSZ bytes.
+fn decode_variable_length_items_with_max<T: SszDecode>(
+    bytes: &[u8],
+    max_len: usize,
+) -> Result<Vec<T>, DecodeError> {
     if bytes.len() < BYTES_PER_LENGTH_OFFSET {
         return Err(DecodeError::InvalidByteLength {
             expected: BYTES_PER_LENGTH_OFFSET,
@@ -354,11 +383,24 @@ fn decode_variable_length_items<T: SszDecode>(bytes: &[u8]) -> Result<Vec<T>, De
         });
     }
 
+    if first_offset > bytes.len() {
+        return Err(DecodeError::OffsetOutOfBounds {
+            offset: first_offset,
+            length: bytes.len(),
+        });
+    }
+
     let num_items = first_offset / BYTES_PER_LENGTH_OFFSET;
     if num_items == 0 {
         return Err(DecodeError::InvalidFirstOffset {
             expected: BYTES_PER_LENGTH_OFFSET,
             got: 0,
+        });
+    }
+    if num_items > max_len {
+        return Err(DecodeError::InvalidByteLength {
+            expected: max_len,
+            got: num_items,
         });
     }
 
