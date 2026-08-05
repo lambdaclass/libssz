@@ -33,6 +33,7 @@ fn run_ssz_static_type<T: SszDecode + SszEncode + HashTreeRoot + std::fmt::Debug
     }
 }
 
+use spec_tests::types::fulu;
 use spec_tests::types::minimal::*;
 use spec_tests::types::phase0;
 
@@ -225,10 +226,6 @@ fn altair_minimal_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>("altair", "IndexedAttestation");
 }
 #[test]
-fn altair_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("altair", "PendingAttestation");
-}
-#[test]
 fn altair_minimal_attestation() {
     run_ssz_static_type::<Attestation>("altair", "Attestation");
 }
@@ -398,10 +395,6 @@ fn bellatrix_minimal_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>("bellatrix", "IndexedAttestation");
 }
 #[test]
-fn bellatrix_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("bellatrix", "PendingAttestation");
-}
-#[test]
 fn bellatrix_minimal_attestation() {
     run_ssz_static_type::<Attestation>("bellatrix", "Attestation");
 }
@@ -569,16 +562,8 @@ fn capella_minimal_proposer_slashing() {
     run_ssz_static_type::<phase0::ProposerSlashing>("capella", "ProposerSlashing");
 }
 #[test]
-fn capella_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("capella", "HistoricalBatch");
-}
-#[test]
 fn capella_minimal_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>("capella", "IndexedAttestation");
-}
-#[test]
-fn capella_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("capella", "PendingAttestation");
 }
 #[test]
 fn capella_minimal_attestation() {
@@ -757,16 +742,8 @@ fn deneb_minimal_proposer_slashing() {
     run_ssz_static_type::<phase0::ProposerSlashing>("deneb", "ProposerSlashing");
 }
 #[test]
-fn deneb_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("deneb", "HistoricalBatch");
-}
-#[test]
 fn deneb_minimal_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>("deneb", "IndexedAttestation");
-}
-#[test]
-fn deneb_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("deneb", "PendingAttestation");
 }
 #[test]
 fn deneb_minimal_attestation() {
@@ -948,14 +925,6 @@ fn electra_minimal_signed_voluntary_exit() {
 #[test]
 fn electra_minimal_proposer_slashing() {
     run_ssz_static_type::<phase0::ProposerSlashing>("electra", "ProposerSlashing");
-}
-#[test]
-fn electra_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("electra", "HistoricalBatch");
-}
-#[test]
-fn electra_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("electra", "PendingAttestation");
 }
 #[test]
 fn electra_minimal_sync_aggregate() {
@@ -1183,14 +1152,6 @@ fn fulu_minimal_proposer_slashing() {
     run_ssz_static_type::<phase0::ProposerSlashing>("fulu", "ProposerSlashing");
 }
 #[test]
-fn fulu_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("fulu", "HistoricalBatch");
-}
-#[test]
-fn fulu_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("fulu", "PendingAttestation");
-}
-#[test]
 fn fulu_minimal_sync_aggregate() {
     run_ssz_static_type::<SyncAggregate>("fulu", "SyncAggregate");
 }
@@ -1236,14 +1197,6 @@ fn fulu_minimal_signed_bls_to_execution_change() {
 #[test]
 fn fulu_minimal_historical_summary() {
     run_ssz_static_type::<HistoricalSummary>("fulu", "HistoricalSummary");
-}
-#[test]
-fn fulu_minimal_blob_identifier() {
-    run_ssz_static_type::<BlobIdentifier>("fulu", "BlobIdentifier");
-}
-#[test]
-fn fulu_minimal_blob_sidecar() {
-    run_ssz_static_type::<BlobSidecar>("fulu", "BlobSidecar");
 }
 #[test]
 fn fulu_minimal_pow_block() {
@@ -1427,14 +1380,6 @@ fn gloas_minimal_proposer_slashing() {
     run_ssz_static_type::<phase0::ProposerSlashing>("gloas", "ProposerSlashing");
 }
 #[test]
-fn gloas_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("gloas", "HistoricalBatch");
-}
-#[test]
-fn gloas_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("gloas", "PendingAttestation");
-}
-#[test]
 fn gloas_minimal_sync_aggregate() {
     run_ssz_static_type::<SyncAggregate>("gloas", "SyncAggregate");
 }
@@ -1482,14 +1427,6 @@ fn gloas_minimal_historical_summary() {
     run_ssz_static_type::<HistoricalSummary>("gloas", "HistoricalSummary");
 }
 #[test]
-fn gloas_minimal_blob_identifier() {
-    run_ssz_static_type::<BlobIdentifier>("gloas", "BlobIdentifier");
-}
-#[test]
-fn gloas_minimal_blob_sidecar() {
-    run_ssz_static_type::<BlobSidecar>("gloas", "BlobSidecar");
-}
-#[test]
 fn gloas_minimal_pow_block() {
     run_ssz_static_type::<PowBlock>("gloas", "PowBlock");
 }
@@ -1503,7 +1440,7 @@ fn gloas_minimal_deposit_request() {
 }
 #[test]
 fn gloas_minimal_execution_requests() {
-    run_ssz_static_type::<ExecutionRequests>("gloas", "ExecutionRequests");
+    run_ssz_static_type::<GloasExecutionRequests>("gloas", "ExecutionRequests");
 }
 #[test]
 fn gloas_minimal_pending_consolidation() {
@@ -1527,54 +1464,47 @@ fn gloas_minimal_withdrawal_request() {
 }
 #[test]
 fn gloas_minimal_attestation() {
-    run_ssz_static_type::<ElectraAttestation>("gloas", "Attestation");
+    run_ssz_static_type::<GloasAttestation>("gloas", "Attestation");
 }
 #[test]
 fn gloas_minimal_indexed_attestation() {
-    run_ssz_static_type::<ElectraIndexedAttestation>("gloas", "IndexedAttestation");
+    run_ssz_static_type::<GloasIndexedAttestation>("gloas", "IndexedAttestation");
 }
 #[test]
 fn gloas_minimal_attester_slashing() {
-    run_ssz_static_type::<ElectraAttesterSlashing>("gloas", "AttesterSlashing");
+    run_ssz_static_type::<GloasAttesterSlashing>("gloas", "AttesterSlashing");
 }
 #[test]
 fn gloas_minimal_aggregate_and_proof() {
-    run_ssz_static_type::<ElectraAggregateAndProof>("gloas", "AggregateAndProof");
+    run_ssz_static_type::<GloasAggregateAndProof>("gloas", "AggregateAndProof");
 }
 #[test]
 fn gloas_minimal_signed_aggregate_and_proof() {
-    run_ssz_static_type::<ElectraSignedAggregateAndProof>("gloas", "SignedAggregateAndProof");
+    run_ssz_static_type::<GloasSignedAggregateAndProof>("gloas", "SignedAggregateAndProof");
 }
 #[test]
 fn gloas_minimal_execution_payload() {
-    run_ssz_static_type::<DenebExecutionPayload>("gloas", "ExecutionPayload");
-}
-#[test]
-fn gloas_minimal_execution_payload_header() {
-    run_ssz_static_type::<DenebExecutionPayloadHeader>("gloas", "ExecutionPayloadHeader");
+    run_ssz_static_type::<GloasExecutionPayload>("gloas", "ExecutionPayload");
 }
 #[test]
 fn gloas_minimal_light_client_header() {
-    run_ssz_static_type::<ElectraLightClientHeader>("gloas", "LightClientHeader");
+    run_ssz_static_type::<GloasLightClientHeader>("gloas", "LightClientHeader");
 }
 #[test]
 fn gloas_minimal_light_client_bootstrap() {
-    run_ssz_static_type::<ElectraLightClientBootstrap>("gloas", "LightClientBootstrap");
+    run_ssz_static_type::<GloasLightClientBootstrap>("gloas", "LightClientBootstrap");
 }
 #[test]
 fn gloas_minimal_light_client_update() {
-    run_ssz_static_type::<ElectraLightClientUpdate>("gloas", "LightClientUpdate");
+    run_ssz_static_type::<GloasLightClientUpdate>("gloas", "LightClientUpdate");
 }
 #[test]
 fn gloas_minimal_light_client_finality_update() {
-    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("gloas", "LightClientFinalityUpdate");
+    run_ssz_static_type::<GloasLightClientFinalityUpdate>("gloas", "LightClientFinalityUpdate");
 }
 #[test]
 fn gloas_minimal_light_client_optimistic_update() {
-    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
-        "gloas",
-        "LightClientOptimisticUpdate",
-    );
+    run_ssz_static_type::<GloasLightClientOptimisticUpdate>("gloas", "LightClientOptimisticUpdate");
 }
 #[test]
 fn gloas_minimal_data_columns_by_root_identifier() {
@@ -1595,10 +1525,6 @@ fn gloas_minimal_execution_payload_bid() {
 #[test]
 fn gloas_minimal_execution_payload_envelope() {
     run_ssz_static_type::<GloasExecutionPayloadEnvelope>("gloas", "ExecutionPayloadEnvelope");
-}
-#[test]
-fn gloas_minimal_fork_choice_node() {
-    run_ssz_static_type::<ForkChoiceNode>("gloas", "ForkChoiceNode");
 }
 #[test]
 fn gloas_minimal_payload_attestation() {
@@ -1648,254 +1574,379 @@ fn gloas_minimal_beacon_state() {
     run_ssz_static_type::<GloasBeaconState>("gloas", "BeaconState");
 }
 
-// ── EIP7805 minimal ──
+// ── New in consensus-specs v1.7.0-alpha.13 ──
+
 #[test]
-fn eip7805_minimal_fork() {
-    run_ssz_static_type::<phase0::Fork>("eip7805", "Fork");
+fn capella_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("capella", "PowBlock");
 }
 #[test]
-fn eip7805_minimal_fork_data() {
-    run_ssz_static_type::<phase0::ForkData>("eip7805", "ForkData");
+fn deneb_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("deneb", "PowBlock");
 }
 #[test]
-fn eip7805_minimal_checkpoint() {
-    run_ssz_static_type::<phase0::Checkpoint>("eip7805", "Checkpoint");
+fn fulu_minimal_partial_data_column_group_i_d() {
+    run_ssz_static_type::<fulu::PartialDataColumnGroupID>("fulu", "PartialDataColumnGroupID");
 }
 #[test]
-fn eip7805_minimal_validator() {
-    run_ssz_static_type::<phase0::Validator>("eip7805", "Validator");
+fn fulu_minimal_partial_data_column_header() {
+    run_ssz_static_type::<fulu::PartialDataColumnHeader>("fulu", "PartialDataColumnHeader");
 }
 #[test]
-fn eip7805_minimal_attestation_data() {
-    run_ssz_static_type::<phase0::AttestationData>("eip7805", "AttestationData");
+fn fulu_minimal_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<fulu::PartialDataColumnPartsMetadata>(
+        "fulu",
+        "PartialDataColumnPartsMetadata",
+    );
 }
 #[test]
-fn eip7805_minimal_eth1_data() {
-    run_ssz_static_type::<phase0::Eth1Data>("eip7805", "Eth1Data");
+fn fulu_minimal_partial_data_column_sidecar() {
+    run_ssz_static_type::<fulu::PartialDataColumnSidecar>("fulu", "PartialDataColumnSidecar");
 }
 #[test]
-fn eip7805_minimal_eth1_block() {
-    run_ssz_static_type::<phase0::Eth1Block>("eip7805", "Eth1Block");
+fn gloas_minimal_builder_deposit_request() {
+    run_ssz_static_type::<BuilderDepositRequest>("gloas", "BuilderDepositRequest");
 }
 #[test]
-fn eip7805_minimal_deposit_message() {
-    run_ssz_static_type::<phase0::DepositMessage>("eip7805", "DepositMessage");
+fn gloas_minimal_builder_exit_request() {
+    run_ssz_static_type::<BuilderExitRequest>("gloas", "BuilderExitRequest");
 }
 #[test]
-fn eip7805_minimal_deposit_data() {
-    run_ssz_static_type::<phase0::DepositData>("eip7805", "DepositData");
+fn gloas_minimal_matrix_entry() {
+    run_ssz_static_type::<fulu::MatrixEntry>("gloas", "MatrixEntry");
 }
 #[test]
-fn eip7805_minimal_deposit() {
-    run_ssz_static_type::<phase0::Deposit>("eip7805", "Deposit");
+fn gloas_minimal_partial_data_column_group_i_d() {
+    run_ssz_static_type::<PartialDataColumnGroupID>("gloas", "PartialDataColumnGroupID");
 }
 #[test]
-fn eip7805_minimal_beacon_block_header() {
-    run_ssz_static_type::<phase0::BeaconBlockHeader>("eip7805", "BeaconBlockHeader");
+fn gloas_minimal_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<fulu::PartialDataColumnPartsMetadata>(
+        "gloas",
+        "PartialDataColumnPartsMetadata",
+    );
 }
 #[test]
-fn eip7805_minimal_signed_beacon_block_header() {
-    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("eip7805", "SignedBeaconBlockHeader");
+fn gloas_minimal_partial_data_column_sidecar() {
+    run_ssz_static_type::<PartialDataColumnSidecar>("gloas", "PartialDataColumnSidecar");
 }
 #[test]
-fn eip7805_minimal_signing_data() {
-    run_ssz_static_type::<phase0::SigningData>("eip7805", "SigningData");
+fn gloas_minimal_proposer_preferences() {
+    run_ssz_static_type::<ProposerPreferences>("gloas", "ProposerPreferences");
 }
 #[test]
-fn eip7805_minimal_voluntary_exit() {
-    run_ssz_static_type::<phase0::VoluntaryExit>("eip7805", "VoluntaryExit");
+fn gloas_minimal_signed_proposer_preferences() {
+    run_ssz_static_type::<SignedProposerPreferences>("gloas", "SignedProposerPreferences");
+}
+
+// ── Heze minimal ──
+
+#[test]
+fn heze_minimal_aggregate_and_proof() {
+    run_ssz_static_type::<GloasAggregateAndProof>("heze", "AggregateAndProof");
 }
 #[test]
-fn eip7805_minimal_signed_voluntary_exit() {
-    run_ssz_static_type::<phase0::SignedVoluntaryExit>("eip7805", "SignedVoluntaryExit");
+fn heze_minimal_attestation() {
+    run_ssz_static_type::<GloasAttestation>("heze", "Attestation");
 }
 #[test]
-fn eip7805_minimal_proposer_slashing() {
-    run_ssz_static_type::<phase0::ProposerSlashing>("eip7805", "ProposerSlashing");
+fn heze_minimal_attestation_data() {
+    run_ssz_static_type::<phase0::AttestationData>("heze", "AttestationData");
 }
 #[test]
-fn eip7805_minimal_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>("eip7805", "HistoricalBatch");
+fn heze_minimal_attester_slashing() {
+    run_ssz_static_type::<GloasAttesterSlashing>("heze", "AttesterSlashing");
 }
 #[test]
-fn eip7805_minimal_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>("eip7805", "PendingAttestation");
+fn heze_minimal_b_l_s_to_execution_change() {
+    run_ssz_static_type::<BLSToExecutionChange>("heze", "BLSToExecutionChange");
 }
 #[test]
-fn eip7805_minimal_sync_aggregate() {
-    run_ssz_static_type::<SyncAggregate>("eip7805", "SyncAggregate");
+fn heze_minimal_beacon_block() {
+    run_ssz_static_type::<HezeBeaconBlock>("heze", "BeaconBlock");
 }
 #[test]
-fn eip7805_minimal_sync_committee() {
-    run_ssz_static_type::<SyncCommittee>("eip7805", "SyncCommittee");
+fn heze_minimal_beacon_block_body() {
+    run_ssz_static_type::<HezeBeaconBlockBody>("heze", "BeaconBlockBody");
 }
 #[test]
-fn eip7805_minimal_sync_committee_contribution() {
-    run_ssz_static_type::<SyncCommitteeContribution>("eip7805", "SyncCommitteeContribution");
+fn heze_minimal_beacon_block_header() {
+    run_ssz_static_type::<phase0::BeaconBlockHeader>("heze", "BeaconBlockHeader");
 }
 #[test]
-fn eip7805_minimal_contribution_and_proof() {
-    run_ssz_static_type::<ContributionAndProof>("eip7805", "ContributionAndProof");
+fn heze_minimal_beacon_state() {
+    run_ssz_static_type::<HezeBeaconState>("heze", "BeaconState");
 }
 #[test]
-fn eip7805_minimal_signed_contribution_and_proof() {
-    run_ssz_static_type::<SignedContributionAndProof>("eip7805", "SignedContributionAndProof");
+fn heze_minimal_builder_deposit_request() {
+    run_ssz_static_type::<BuilderDepositRequest>("heze", "BuilderDepositRequest");
 }
 #[test]
-fn eip7805_minimal_sync_committee_message() {
-    run_ssz_static_type::<altair::SyncCommitteeMessage>("eip7805", "SyncCommitteeMessage");
+fn heze_minimal_builder_exit_request() {
+    run_ssz_static_type::<BuilderExitRequest>("heze", "BuilderExitRequest");
 }
 #[test]
-fn eip7805_minimal_sync_aggregator_selection_data() {
+fn heze_minimal_builder_pending_payment() {
+    run_ssz_static_type::<BuilderPendingPayment>("heze", "BuilderPendingPayment");
+}
+#[test]
+fn heze_minimal_builder_pending_withdrawal() {
+    run_ssz_static_type::<BuilderPendingWithdrawal>("heze", "BuilderPendingWithdrawal");
+}
+#[test]
+fn heze_minimal_checkpoint() {
+    run_ssz_static_type::<phase0::Checkpoint>("heze", "Checkpoint");
+}
+#[test]
+fn heze_minimal_consolidation_request() {
+    run_ssz_static_type::<ConsolidationRequest>("heze", "ConsolidationRequest");
+}
+#[test]
+fn heze_minimal_contribution_and_proof() {
+    run_ssz_static_type::<ContributionAndProof>("heze", "ContributionAndProof");
+}
+#[test]
+fn heze_minimal_data_column_sidecar() {
+    run_ssz_static_type::<GloasDataColumnSidecar>("heze", "DataColumnSidecar");
+}
+#[test]
+fn heze_minimal_data_columns_by_root_identifier() {
+    run_ssz_static_type::<DataColumnsByRootIdentifier>("heze", "DataColumnsByRootIdentifier");
+}
+#[test]
+fn heze_minimal_deposit() {
+    run_ssz_static_type::<phase0::Deposit>("heze", "Deposit");
+}
+#[test]
+fn heze_minimal_deposit_data() {
+    run_ssz_static_type::<phase0::DepositData>("heze", "DepositData");
+}
+#[test]
+fn heze_minimal_deposit_message() {
+    run_ssz_static_type::<phase0::DepositMessage>("heze", "DepositMessage");
+}
+#[test]
+fn heze_minimal_deposit_request() {
+    run_ssz_static_type::<DepositRequest>("heze", "DepositRequest");
+}
+#[test]
+fn heze_minimal_eth1_block() {
+    run_ssz_static_type::<phase0::Eth1Block>("heze", "Eth1Block");
+}
+#[test]
+fn heze_minimal_eth1_data() {
+    run_ssz_static_type::<phase0::Eth1Data>("heze", "Eth1Data");
+}
+#[test]
+fn heze_minimal_execution_payload() {
+    run_ssz_static_type::<GloasExecutionPayload>("heze", "ExecutionPayload");
+}
+#[test]
+fn heze_minimal_execution_payload_bid() {
+    run_ssz_static_type::<HezeExecutionPayloadBid>("heze", "ExecutionPayloadBid");
+}
+#[test]
+fn heze_minimal_execution_payload_envelope() {
+    run_ssz_static_type::<GloasExecutionPayloadEnvelope>("heze", "ExecutionPayloadEnvelope");
+}
+#[test]
+fn heze_minimal_execution_requests() {
+    run_ssz_static_type::<GloasExecutionRequests>("heze", "ExecutionRequests");
+}
+#[test]
+fn heze_minimal_fork() {
+    run_ssz_static_type::<phase0::Fork>("heze", "Fork");
+}
+#[test]
+fn heze_minimal_fork_data() {
+    run_ssz_static_type::<phase0::ForkData>("heze", "ForkData");
+}
+#[test]
+fn heze_minimal_historical_summary() {
+    run_ssz_static_type::<HistoricalSummary>("heze", "HistoricalSummary");
+}
+#[test]
+fn heze_minimal_inclusion_list() {
+    run_ssz_static_type::<InclusionList>("heze", "InclusionList");
+}
+#[test]
+fn heze_minimal_indexed_attestation() {
+    run_ssz_static_type::<GloasIndexedAttestation>("heze", "IndexedAttestation");
+}
+#[test]
+fn heze_minimal_indexed_payload_attestation() {
+    run_ssz_static_type::<GloasIndexedPayloadAttestation>("heze", "IndexedPayloadAttestation");
+}
+#[test]
+fn heze_minimal_light_client_bootstrap() {
+    run_ssz_static_type::<HezeLightClientBootstrap>("heze", "LightClientBootstrap");
+}
+#[test]
+fn heze_minimal_light_client_finality_update() {
+    run_ssz_static_type::<HezeLightClientFinalityUpdate>("heze", "LightClientFinalityUpdate");
+}
+#[test]
+fn heze_minimal_light_client_header() {
+    run_ssz_static_type::<HezeLightClientHeader>("heze", "LightClientHeader");
+}
+#[test]
+fn heze_minimal_light_client_optimistic_update() {
+    run_ssz_static_type::<HezeLightClientOptimisticUpdate>("heze", "LightClientOptimisticUpdate");
+}
+#[test]
+fn heze_minimal_light_client_update() {
+    run_ssz_static_type::<HezeLightClientUpdate>("heze", "LightClientUpdate");
+}
+#[test]
+fn heze_minimal_matrix_entry() {
+    run_ssz_static_type::<fulu::MatrixEntry>("heze", "MatrixEntry");
+}
+#[test]
+fn heze_minimal_partial_data_column_group_i_d() {
+    run_ssz_static_type::<PartialDataColumnGroupID>("heze", "PartialDataColumnGroupID");
+}
+#[test]
+fn heze_minimal_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<fulu::PartialDataColumnPartsMetadata>(
+        "heze",
+        "PartialDataColumnPartsMetadata",
+    );
+}
+#[test]
+fn heze_minimal_partial_data_column_sidecar() {
+    run_ssz_static_type::<PartialDataColumnSidecar>("heze", "PartialDataColumnSidecar");
+}
+#[test]
+fn heze_minimal_payload_attestation() {
+    run_ssz_static_type::<GloasPayloadAttestation>("heze", "PayloadAttestation");
+}
+#[test]
+fn heze_minimal_payload_attestation_data() {
+    run_ssz_static_type::<PayloadAttestationData>("heze", "PayloadAttestationData");
+}
+#[test]
+fn heze_minimal_payload_attestation_message() {
+    run_ssz_static_type::<PayloadAttestationMessage>("heze", "PayloadAttestationMessage");
+}
+#[test]
+fn heze_minimal_pending_consolidation() {
+    run_ssz_static_type::<PendingConsolidation>("heze", "PendingConsolidation");
+}
+#[test]
+fn heze_minimal_pending_deposit() {
+    run_ssz_static_type::<PendingDeposit>("heze", "PendingDeposit");
+}
+#[test]
+fn heze_minimal_pending_partial_withdrawal() {
+    run_ssz_static_type::<PendingPartialWithdrawal>("heze", "PendingPartialWithdrawal");
+}
+#[test]
+fn heze_minimal_pow_block() {
+    run_ssz_static_type::<PowBlock>("heze", "PowBlock");
+}
+#[test]
+fn heze_minimal_proposer_preferences() {
+    run_ssz_static_type::<ProposerPreferences>("heze", "ProposerPreferences");
+}
+#[test]
+fn heze_minimal_proposer_slashing() {
+    run_ssz_static_type::<phase0::ProposerSlashing>("heze", "ProposerSlashing");
+}
+#[test]
+fn heze_minimal_signed_aggregate_and_proof() {
+    run_ssz_static_type::<GloasSignedAggregateAndProof>("heze", "SignedAggregateAndProof");
+}
+#[test]
+fn heze_minimal_signed_b_l_s_to_execution_change() {
+    run_ssz_static_type::<SignedBLSToExecutionChange>("heze", "SignedBLSToExecutionChange");
+}
+#[test]
+fn heze_minimal_signed_beacon_block() {
+    run_ssz_static_type::<HezeSignedBeaconBlock>("heze", "SignedBeaconBlock");
+}
+#[test]
+fn heze_minimal_signed_beacon_block_header() {
+    run_ssz_static_type::<phase0::SignedBeaconBlockHeader>("heze", "SignedBeaconBlockHeader");
+}
+#[test]
+fn heze_minimal_signed_contribution_and_proof() {
+    run_ssz_static_type::<SignedContributionAndProof>("heze", "SignedContributionAndProof");
+}
+#[test]
+fn heze_minimal_signed_execution_payload_bid() {
+    run_ssz_static_type::<HezeSignedExecutionPayloadBid>("heze", "SignedExecutionPayloadBid");
+}
+#[test]
+fn heze_minimal_signed_execution_payload_envelope() {
+    run_ssz_static_type::<GloasSignedExecutionPayloadEnvelope>(
+        "heze",
+        "SignedExecutionPayloadEnvelope",
+    );
+}
+#[test]
+fn heze_minimal_signed_inclusion_list() {
+    run_ssz_static_type::<SignedInclusionList>("heze", "SignedInclusionList");
+}
+#[test]
+fn heze_minimal_signed_proposer_preferences() {
+    run_ssz_static_type::<SignedProposerPreferences>("heze", "SignedProposerPreferences");
+}
+#[test]
+fn heze_minimal_signed_voluntary_exit() {
+    run_ssz_static_type::<phase0::SignedVoluntaryExit>("heze", "SignedVoluntaryExit");
+}
+#[test]
+fn heze_minimal_signing_data() {
+    run_ssz_static_type::<phase0::SigningData>("heze", "SigningData");
+}
+#[test]
+fn heze_minimal_single_attestation() {
+    run_ssz_static_type::<SingleAttestation>("heze", "SingleAttestation");
+}
+#[test]
+fn heze_minimal_sync_aggregate() {
+    run_ssz_static_type::<SyncAggregate>("heze", "SyncAggregate");
+}
+#[test]
+fn heze_minimal_sync_aggregator_selection_data() {
     run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
-        "eip7805",
+        "heze",
         "SyncAggregatorSelectionData",
     );
 }
 #[test]
-fn eip7805_minimal_withdrawal() {
-    run_ssz_static_type::<Withdrawal>("eip7805", "Withdrawal");
+fn heze_minimal_sync_committee() {
+    run_ssz_static_type::<SyncCommittee>("heze", "SyncCommittee");
 }
 #[test]
-fn eip7805_minimal_bls_to_execution_change() {
-    run_ssz_static_type::<BLSToExecutionChange>("eip7805", "BLSToExecutionChange");
+fn heze_minimal_sync_committee_contribution() {
+    run_ssz_static_type::<SyncCommitteeContribution>("heze", "SyncCommitteeContribution");
 }
 #[test]
-fn eip7805_minimal_signed_bls_to_execution_change() {
-    run_ssz_static_type::<SignedBLSToExecutionChange>("eip7805", "SignedBLSToExecutionChange");
+fn heze_minimal_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>("heze", "SyncCommitteeMessage");
 }
 #[test]
-fn eip7805_minimal_historical_summary() {
-    run_ssz_static_type::<HistoricalSummary>("eip7805", "HistoricalSummary");
+fn heze_minimal_validator() {
+    run_ssz_static_type::<phase0::Validator>("heze", "Validator");
 }
 #[test]
-fn eip7805_minimal_blob_identifier() {
-    run_ssz_static_type::<BlobIdentifier>("eip7805", "BlobIdentifier");
+fn heze_minimal_voluntary_exit() {
+    run_ssz_static_type::<phase0::VoluntaryExit>("heze", "VoluntaryExit");
 }
 #[test]
-fn eip7805_minimal_blob_sidecar() {
-    run_ssz_static_type::<BlobSidecar>("eip7805", "BlobSidecar");
+fn heze_minimal_withdrawal() {
+    run_ssz_static_type::<Withdrawal>("heze", "Withdrawal");
 }
 #[test]
-fn eip7805_minimal_pow_block() {
-    run_ssz_static_type::<PowBlock>("eip7805", "PowBlock");
+fn heze_minimal_withdrawal_request() {
+    run_ssz_static_type::<WithdrawalRequest>("heze", "WithdrawalRequest");
 }
 #[test]
-fn eip7805_minimal_consolidation_request() {
-    run_ssz_static_type::<ConsolidationRequest>("eip7805", "ConsolidationRequest");
+fn heze_minimal_builder() {
+    run_ssz_static_type::<Builder>("heze", "Builder");
 }
 #[test]
-fn eip7805_minimal_deposit_request() {
-    run_ssz_static_type::<DepositRequest>("eip7805", "DepositRequest");
-}
-#[test]
-fn eip7805_minimal_execution_requests() {
-    run_ssz_static_type::<ExecutionRequests>("eip7805", "ExecutionRequests");
-}
-#[test]
-fn eip7805_minimal_pending_consolidation() {
-    run_ssz_static_type::<PendingConsolidation>("eip7805", "PendingConsolidation");
-}
-#[test]
-fn eip7805_minimal_pending_deposit() {
-    run_ssz_static_type::<PendingDeposit>("eip7805", "PendingDeposit");
-}
-#[test]
-fn eip7805_minimal_pending_partial_withdrawal() {
-    run_ssz_static_type::<PendingPartialWithdrawal>("eip7805", "PendingPartialWithdrawal");
-}
-#[test]
-fn eip7805_minimal_single_attestation() {
-    run_ssz_static_type::<SingleAttestation>("eip7805", "SingleAttestation");
-}
-#[test]
-fn eip7805_minimal_withdrawal_request() {
-    run_ssz_static_type::<WithdrawalRequest>("eip7805", "WithdrawalRequest");
-}
-#[test]
-fn eip7805_minimal_attestation() {
-    run_ssz_static_type::<ElectraAttestation>("eip7805", "Attestation");
-}
-#[test]
-fn eip7805_minimal_indexed_attestation() {
-    run_ssz_static_type::<ElectraIndexedAttestation>("eip7805", "IndexedAttestation");
-}
-#[test]
-fn eip7805_minimal_attester_slashing() {
-    run_ssz_static_type::<ElectraAttesterSlashing>("eip7805", "AttesterSlashing");
-}
-#[test]
-fn eip7805_minimal_aggregate_and_proof() {
-    run_ssz_static_type::<ElectraAggregateAndProof>("eip7805", "AggregateAndProof");
-}
-#[test]
-fn eip7805_minimal_signed_aggregate_and_proof() {
-    run_ssz_static_type::<ElectraSignedAggregateAndProof>("eip7805", "SignedAggregateAndProof");
-}
-#[test]
-fn eip7805_minimal_execution_payload() {
-    run_ssz_static_type::<DenebExecutionPayload>("eip7805", "ExecutionPayload");
-}
-#[test]
-fn eip7805_minimal_execution_payload_header() {
-    run_ssz_static_type::<DenebExecutionPayloadHeader>("eip7805", "ExecutionPayloadHeader");
-}
-#[test]
-fn eip7805_minimal_light_client_header() {
-    run_ssz_static_type::<ElectraLightClientHeader>("eip7805", "LightClientHeader");
-}
-#[test]
-fn eip7805_minimal_light_client_bootstrap() {
-    run_ssz_static_type::<ElectraLightClientBootstrap>("eip7805", "LightClientBootstrap");
-}
-#[test]
-fn eip7805_minimal_light_client_update() {
-    run_ssz_static_type::<ElectraLightClientUpdate>("eip7805", "LightClientUpdate");
-}
-#[test]
-fn eip7805_minimal_light_client_finality_update() {
-    run_ssz_static_type::<ElectraLightClientFinalityUpdate>("eip7805", "LightClientFinalityUpdate");
-}
-#[test]
-fn eip7805_minimal_light_client_optimistic_update() {
-    run_ssz_static_type::<ElectraLightClientOptimisticUpdate>(
-        "eip7805",
-        "LightClientOptimisticUpdate",
-    );
-}
-#[test]
-fn eip7805_minimal_beacon_block_body() {
-    run_ssz_static_type::<ElectraBeaconBlockBody>("eip7805", "BeaconBlockBody");
-}
-#[test]
-fn eip7805_minimal_beacon_block() {
-    run_ssz_static_type::<ElectraBeaconBlock>("eip7805", "BeaconBlock");
-}
-#[test]
-fn eip7805_minimal_signed_beacon_block() {
-    run_ssz_static_type::<ElectraSignedBeaconBlock>("eip7805", "SignedBeaconBlock");
-}
-#[test]
-fn eip7805_minimal_data_column_sidecar() {
-    run_ssz_static_type::<DataColumnSidecar>("eip7805", "DataColumnSidecar");
-}
-#[test]
-fn eip7805_minimal_data_columns_by_root_identifier() {
-    run_ssz_static_type::<DataColumnsByRootIdentifier>("eip7805", "DataColumnsByRootIdentifier");
-}
-#[test]
-fn eip7805_minimal_matrix_entry() {
-    run_ssz_static_type::<MatrixEntry>("eip7805", "MatrixEntry");
-}
-#[test]
-fn eip7805_minimal_inclusion_list() {
-    run_ssz_static_type::<InclusionList>("eip7805", "InclusionList");
-}
-#[test]
-fn eip7805_minimal_signed_inclusion_list() {
-    run_ssz_static_type::<SignedInclusionList>("eip7805", "SignedInclusionList");
-}
-#[test]
-fn eip7805_minimal_beacon_state() {
-    run_ssz_static_type::<FuluBeaconState>("eip7805", "BeaconState");
+fn gloas_minimal_builder_type() {
+    run_ssz_static_type::<Builder>("gloas", "Builder");
 }

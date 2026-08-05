@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="v1.6.1"
+VERSION="v1.7.0-alpha.13"
 BASE_URL="https://github.com/ethereum/consensus-specs/releases/download/${VERSION}"
 DEST_DIR="${SPEC_TESTS_DIR:-$(dirname "$0")/../target/spec-tests/${VERSION}}"
 
