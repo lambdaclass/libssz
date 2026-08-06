@@ -425,7 +425,10 @@ mod tests {
         let mut list: SszList<u32, 3> = SszList::try_from(vec![1, 2, 3]).unwrap();
         list.reverse();
         assert_eq!(list.len(), 3);
-        assert_eq!(list.push(4), Err(TypeError::OverCapacity { max: 3, got: 4 }));
+        assert_eq!(
+            list.push(4),
+            Err(TypeError::OverCapacity { max: 3, got: 4 })
+        );
     }
 
     #[test]
