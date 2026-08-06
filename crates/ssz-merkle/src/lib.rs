@@ -78,8 +78,8 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 /// The padding is virtual: any subtree lying entirely beyond `chunks.len()` is
 /// all zeros, so its root is read from [`ZERO_HASHES`] instead of being hashed.
 ///
-/// Cost is `O(chunks.len())` hashes regardless of `limit`, and one `Vec` of
-/// `chunks.len()` nodes is allocated.
+/// Cost is `O(chunks.len())` plus one hash per virtual level above the real subtree.
+/// Two buffers are allocated and reused (≈ `chunks.len()` and `chunks.len().div_ceil(2)` nodes).
 #[cfg(feature = "alloc")]
 pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usize>) -> Node {
     let count = match limit {
