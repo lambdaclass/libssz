@@ -1,7 +1,7 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use core::ops::{Deref, Index};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 
 use libssz::{decode_list_with_max, DecodeError, SszDecode, SszEncode};
 
@@ -78,11 +78,31 @@ impl<T, const N: usize> Deref for SszList<T, N> {
     }
 }
 
+/// Mutable access to the elements, but not to the length.
+///
+/// A `&mut [T]` cannot grow or shrink, so handing one out cannot break the
+/// invariant that a `SszList` holds at most `N` elements; growing still has to go
+/// through [`SszList::push`], which enforces the bound. This is what lets a
+/// consumer mutate an element in place (`list[i] = x`, `iter_mut`, `get_mut`,
+/// `sort`) instead of having to take the inner `Vec` apart and rebuild it, which
+/// would be O(n) per mutation.
+impl<T, const N: usize> DerefMut for SszList<T, N> {
+    fn deref_mut(&mut self) -> &mut [T] {
+        &mut self.0
+    }
+}
+
 impl<T, const N: usize, I: core::slice::SliceIndex<[T]>> Index<I> for SszList<T, N> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
         &self.0[index]
+    }
+}
+
+impl<T, const N: usize, I: core::slice::SliceIndex<[T]>> IndexMut<I> for SszList<T, N> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 
@@ -101,6 +121,15 @@ impl<'a, T, const N: usize> IntoIterator for &'a SszList<T, N> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'a, T, const N: usize> IntoIterator for &'a mut SszList<T, N> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
     }
 }
 
@@ -373,5 +402,38 @@ mod tests {
     fn decode_is_always_variable_size() {
         assert!(!<SszList<u32, 10> as SszDecode>::is_fixed_size());
         assert_eq!(<SszList<u32, 10> as SszDecode>::fixed_size(), 0);
+    }
+
+    #[test]
+    fn elements_can_be_mutated_in_place() {
+        let mut list: SszList<u32, 10> = SszList::try_from(vec![1, 2, 3]).unwrap();
+
+        list[1] = 20;
+        *list.get_mut(2).unwrap() = 30;
+        for value in list.iter_mut() {
+            *value += 1;
+        }
+
+        assert_eq!(&*list, &[2, 21, 31]);
+    }
+
+    #[test]
+    fn mutation_cannot_change_the_length() {
+        // The point of handing out `&mut [T]` rather than `&mut Vec<T>`: a slice
+        // has no way to grow, so the capacity bound cannot be bypassed. Growing
+        // still has to go through `push`.
+        let mut list: SszList<u32, 3> = SszList::try_from(vec![1, 2, 3]).unwrap();
+        list.reverse();
+        assert_eq!(list.len(), 3);
+        assert_eq!(list.push(4), Err(TypeError::OverCapacity { max: 3, got: 4 }));
+    }
+
+    #[test]
+    fn mutable_iteration_borrows_the_list() {
+        let mut list: SszList<u32, 4> = SszList::try_from(vec![5, 6]).unwrap();
+        for value in &mut list {
+            *value *= 2;
+        }
+        assert_eq!(&*list, &[10, 12]);
     }
 }

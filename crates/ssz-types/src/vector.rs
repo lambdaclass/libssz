@@ -1,7 +1,7 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use core::ops::{Deref, Index};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 
 use libssz::{DecodeError, SszDecode, SszEncode};
 
@@ -50,11 +50,30 @@ impl<T, const N: usize> Deref for SszVector<T, N> {
     }
 }
 
+/// Mutable access to the elements, but not to the length.
+///
+/// A `&mut [T]` cannot grow or shrink, so handing one out cannot break the
+/// invariant that a `SszVector` holds exactly `N` elements. This is what lets a
+/// consumer mutate an element in place (`vector[i] = x`, `iter_mut`, `get_mut`,
+/// `sort`) instead of having to take the inner `Vec` apart and rebuild it, which
+/// would be O(n) per mutation.
+impl<T, const N: usize> DerefMut for SszVector<T, N> {
+    fn deref_mut(&mut self) -> &mut [T] {
+        &mut self.0
+    }
+}
+
 impl<T, const N: usize, I: core::slice::SliceIndex<[T]>> Index<I> for SszVector<T, N> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
         &self.0[index]
+    }
+}
+
+impl<T, const N: usize, I: core::slice::SliceIndex<[T]>> IndexMut<I> for SszVector<T, N> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 
@@ -73,6 +92,15 @@ impl<'a, T, const N: usize> IntoIterator for &'a SszVector<T, N> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'a, T, const N: usize> IntoIterator for &'a mut SszVector<T, N> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
     }
 }
 
@@ -278,5 +306,37 @@ mod tests {
 
         assert!(!<SszVector<Vec<u8>, 3> as SszDecode>::is_fixed_size());
         assert_eq!(<SszVector<Vec<u8>, 3> as SszDecode>::fixed_size(), 0);
+    }
+
+    #[test]
+    fn elements_can_be_mutated_in_place() {
+        let mut vector: SszVector<u32, 3> = SszVector::try_from(vec![1, 2, 3]).unwrap();
+
+        vector[0] = 10;
+        *vector.get_mut(1).unwrap() = 20;
+        for value in vector.iter_mut() {
+            *value += 1;
+        }
+
+        assert_eq!(&*vector, &[11, 21, 4]);
+    }
+
+    #[test]
+    fn mutation_cannot_change_the_length() {
+        // The point of handing out `&mut [T]` rather than `&mut Vec<T>`: a slice
+        // has no way to grow or shrink, so the exactly-`N` invariant holds.
+        let mut vector: SszVector<u32, 3> = SszVector::try_from(vec![1, 2, 3]).unwrap();
+        vector.reverse();
+        assert_eq!(vector.len(), 3);
+        assert_eq!(&*vector, &[3, 2, 1]);
+    }
+
+    #[test]
+    fn mutable_iteration_borrows_the_vector() {
+        let mut vector: SszVector<u32, 2> = SszVector::try_from(vec![5, 6]).unwrap();
+        for value in &mut vector {
+            *value *= 2;
+        }
+        assert_eq!(&*vector, &[10, 12]);
     }
 }
