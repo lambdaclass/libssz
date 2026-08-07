@@ -4,11 +4,13 @@
 //! All other types are reused from the mainnet modules.
 
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
+use libssz_types::{
+    ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList, SszVector,
+};
 
 use super::phase0::{
     AttestationData, BeaconBlockHeader, Checkpoint, Deposit, Eth1Data, Fork, ProposerSlashing,
-    SignedBeaconBlockHeader, SignedVoluntaryExit, Validator,
+    SignedVoluntaryExit, Validator,
 };
 
 // ── Minimal preset constants ──
@@ -38,9 +40,7 @@ pub const MAX_ATTESTATIONS_ELECTRA: usize = 8;
 pub const PENDING_DEPOSITS_LIMIT: usize = 134_217_728;
 pub const PENDING_PARTIAL_WITHDRAWALS_LIMIT: usize = 64;
 pub const PENDING_CONSOLIDATIONS_LIMIT: usize = 64;
-pub const PTC_SIZE: usize = 2;
-pub const MAX_PAYLOAD_ATTESTATIONS: usize = 4;
-pub const BUILDER_PENDING_WITHDRAWALS_LIMIT: usize = 1_048_576;
+pub const PTC_SIZE: usize = 16;
 
 // Derived constants
 const ETH1_DATA_VOTES_LIMIT: usize = EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH; // 32
@@ -54,8 +54,6 @@ use super::bellatrix::{
     BYTES_PER_LOGS_BLOOM, MAX_BYTES_PER_TRANSACTION, MAX_EXTRA_DATA_BYTES,
     MAX_TRANSACTIONS_PER_PAYLOAD,
 };
-use super::deneb::{BYTES_PER_BLOB, KZG_COMMITMENT_INCLUSION_PROOF_DEPTH};
-use super::fulu::{BYTES_PER_CELL, KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH, NUMBER_OF_COLUMNS};
 
 // Reused unchanged types
 pub use super::capella::{
@@ -66,8 +64,7 @@ pub use super::electra::{
     PendingPartialWithdrawal, WithdrawalRequest,
 };
 pub use super::gloas::{
-    BuilderPendingPayment, BuilderPendingWithdrawal, ExecutionPayloadBid, ForkChoiceNode,
-    PayloadAttestationData,
+    BuilderPendingPayment, BuilderPendingWithdrawal, ExecutionPayloadBid, PayloadAttestationData,
 };
 
 // ── Phase 0 types that differ ──
@@ -532,7 +529,8 @@ pub struct CapellaBeaconState {
 }
 
 // ── Deneb types ──
-// ExecutionPayload/Header add blob_gas_used + excess_blob_gas, BeaconBlockBody adds blob_kzg_commitments
+// ExecutionPayload/Header add blob_gas_used + excess_blob_gas;
+// BeaconBlockBody adds blob_kzg_commitments.
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
 pub struct DenebExecutionPayload {
@@ -892,8 +890,58 @@ pub struct FuluBeaconState {
 }
 
 // ── Gloas types ──
+//
+// Gloas adopts EIP-7688, so most bounded lists became `ProgressiveList`. Types
+// whose bounds all became progressive are preset-independent and reused from
+// the mainnet module; only the ones still tied to a preset value are redefined.
+
+pub use super::gloas::{
+    AttesterSlashing as GloasAttesterSlashing, Builder, BuilderDepositRequest, BuilderExitRequest,
+    DataColumnSidecar as GloasDataColumnSidecar, ExecutionPayload as GloasExecutionPayload,
+    ExecutionPayloadEnvelope as GloasExecutionPayloadEnvelope,
+    ExecutionRequests as GloasExecutionRequests, IndexedAttestation as GloasIndexedAttestation,
+    PartialDataColumnGroupID, PartialDataColumnSidecar, ProposerPreferences,
+    SignedExecutionPayloadEnvelope as GloasSignedExecutionPayloadEnvelope,
+    SignedProposerPreferences,
+};
+pub use super::gloas::{PayloadAttestationMessage, SignedExecutionPayloadBid};
+
+// Light client branch lengths are preset-independent, so Gloas and Heze reuse
+// the mainnet values along with the gindex derivations documented there.
+use super::gloas::{
+    CURRENT_SYNC_COMMITTEE_BRANCH_LEN, EXECUTION_BRANCH_LEN, FINALITY_BRANCH_LEN,
+    NEXT_SYNC_COMMITTEE_BRANCH_LEN,
+};
+
+const GLOAS_PROPOSER_LOOKAHEAD_LEN: usize =
+    (super::gloas::MIN_SEED_LOOKAHEAD + 1) * SLOTS_PER_EPOCH;
+const GLOAS_PTC_WINDOW_LEN: usize = (2 + super::gloas::MIN_SEED_LOOKAHEAD) * SLOTS_PER_EPOCH;
+const GLOAS_BUILDER_PENDING_PAYMENTS_LEN: usize = 2 * SLOTS_PER_EPOCH;
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
+pub struct GloasAttestation {
+    pub aggregation_bits: ProgressiveBitlist,
+    pub data: AttestationData,
+    pub signature: [u8; 96],
+    pub committee_bits: SszBitvector<MAX_COMMITTEES_PER_SLOT>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasAggregateAndProof {
+    pub aggregator_index: u64,
+    pub aggregate: GloasAttestation,
+    pub selection_proof: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasSignedAggregateAndProof {
+    pub message: GloasAggregateAndProof,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
 pub struct GloasPayloadAttestation {
     pub aggregation_bits: SszBitvector<PTC_SIZE>,
     pub data: PayloadAttestationData,
@@ -901,57 +949,29 @@ pub struct GloasPayloadAttestation {
 }
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
 pub struct GloasIndexedPayloadAttestation {
     pub attesting_indices: SszList<u64, PTC_SIZE>,
     pub data: PayloadAttestationData,
     pub signature: [u8; 96],
 }
 
-pub use super::gloas::SignedExecutionPayloadBid;
-
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
-pub struct GloasExecutionPayloadEnvelope {
-    pub payload: DenebExecutionPayload,
-    pub execution_requests: ExecutionRequests,
-    pub builder_index: u64,
-    pub beacon_block_root: [u8; 32],
-    pub slot: u64,
-    pub blob_kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
-    pub state_root: [u8; 32],
-}
-
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
-pub struct GloasSignedExecutionPayloadEnvelope {
-    pub message: GloasExecutionPayloadEnvelope,
-    pub signature: [u8; 96],
-}
-
-pub use super::gloas::PayloadAttestationMessage;
-
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
-pub struct GloasDataColumnSidecar {
-    pub index: u64,
-    pub column: SszList<SszVector<u8, BYTES_PER_CELL>, MAX_BLOB_COMMITMENTS_PER_BLOCK>,
-    pub kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
-    pub kzg_proofs: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
-    pub slot: u64,
-    pub beacon_block_root: [u8; 32],
-}
-
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
 pub struct GloasBeaconBlockBody {
     pub randao_reveal: [u8; 96],
     pub eth1_data: Eth1Data,
     pub graffiti: [u8; 32],
-    pub proposer_slashings: SszList<ProposerSlashing, MAX_PROPOSER_SLASHINGS>,
-    pub attester_slashings: SszList<ElectraAttesterSlashing, MAX_ATTESTER_SLASHINGS_ELECTRA>,
-    pub attestations: SszList<ElectraAttestation, MAX_ATTESTATIONS_ELECTRA>,
-    pub deposits: SszList<Deposit, MAX_DEPOSITS>,
-    pub voluntary_exits: SszList<SignedVoluntaryExit, MAX_VOLUNTARY_EXITS>,
+    pub proposer_slashings: ProgressiveList<ProposerSlashing>,
+    pub attester_slashings: ProgressiveList<GloasAttesterSlashing>,
+    pub attestations: ProgressiveList<GloasAttestation>,
+    pub deposits: ProgressiveList<Deposit>,
+    pub voluntary_exits: ProgressiveList<SignedVoluntaryExit>,
     pub sync_aggregate: SyncAggregate,
-    pub bls_to_execution_changes: SszList<SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES>,
+    pub bls_to_execution_changes: ProgressiveList<SignedBLSToExecutionChange>,
     pub signed_execution_payload_bid: SignedExecutionPayloadBid,
-    pub payload_attestations: SszList<GloasPayloadAttestation, MAX_PAYLOAD_ATTESTATIONS>,
+    pub payload_attestations: ProgressiveList<GloasPayloadAttestation>,
+    pub parent_execution_requests: GloasExecutionRequests,
 }
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
@@ -970,6 +990,7 @@ pub struct GloasSignedBeaconBlock {
 }
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
 pub struct GloasBeaconState {
     pub genesis_time: u64,
     pub genesis_validators_root: [u8; 32],
@@ -982,20 +1003,20 @@ pub struct GloasBeaconState {
     pub eth1_data: Eth1Data,
     pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
     pub eth1_deposit_index: u64,
-    pub validators: SszList<Validator, VALIDATOR_REGISTRY_LIMIT>,
-    pub balances: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub validators: ProgressiveList<Validator>,
+    pub balances: ProgressiveList<u64>,
     pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
     pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
-    pub previous_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
-    pub current_epoch_participation: SszList<u8, VALIDATOR_REGISTRY_LIMIT>,
+    pub previous_epoch_participation: ProgressiveList<u8>,
+    pub current_epoch_participation: ProgressiveList<u8>,
     pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
     pub previous_justified_checkpoint: Checkpoint,
     pub current_justified_checkpoint: Checkpoint,
     pub finalized_checkpoint: Checkpoint,
-    pub inactivity_scores: SszList<u64, VALIDATOR_REGISTRY_LIMIT>,
+    pub inactivity_scores: ProgressiveList<u64>,
     pub current_sync_committee: SyncCommittee,
     pub next_sync_committee: SyncCommittee,
-    pub latest_execution_payload_bid: ExecutionPayloadBid,
+    pub latest_block_hash: [u8; 32],
     pub next_withdrawal_index: u64,
     pub next_withdrawal_validator_index: u64,
     pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
@@ -1005,18 +1026,198 @@ pub struct GloasBeaconState {
     pub earliest_exit_epoch: u64,
     pub consolidation_balance_to_consume: u64,
     pub earliest_consolidation_epoch: u64,
-    pub pending_deposits: SszList<PendingDeposit, PENDING_DEPOSITS_LIMIT>,
-    pub pending_partial_withdrawals:
-        SszList<PendingPartialWithdrawal, PENDING_PARTIAL_WITHDRAWALS_LIMIT>,
-    pub pending_consolidations: SszList<PendingConsolidation, PENDING_CONSOLIDATIONS_LIMIT>,
-    pub proposer_lookahead: SszVector<u64, PROPOSER_LOOKAHEAD_LEN>,
+    pub pending_deposits: ProgressiveList<PendingDeposit>,
+    pub pending_partial_withdrawals: ProgressiveList<PendingPartialWithdrawal>,
+    pub pending_consolidations: ProgressiveList<PendingConsolidation>,
+    pub proposer_lookahead: SszVector<u64, GLOAS_PROPOSER_LOOKAHEAD_LEN>,
+    pub builders: ProgressiveList<Builder>,
+    pub next_withdrawal_builder_index: u64,
     pub execution_payload_availability: SszBitvector<SLOTS_PER_HISTORICAL_ROOT>,
-    pub builder_pending_payments: SszVector<BuilderPendingPayment, { 2 * SLOTS_PER_EPOCH }>,
-    pub builder_pending_withdrawals:
-        SszList<BuilderPendingWithdrawal, BUILDER_PENDING_WITHDRAWALS_LIMIT>,
-    pub latest_block_hash: [u8; 32],
-    pub latest_withdrawals_root: [u8; 32],
+    pub builder_pending_payments:
+        SszVector<BuilderPendingPayment, GLOAS_BUILDER_PENDING_PAYMENTS_LEN>,
+    pub builder_pending_withdrawals: ProgressiveList<BuilderPendingWithdrawal>,
+    pub latest_execution_payload_bid: ExecutionPayloadBid,
+    pub payload_expected_withdrawals: ProgressiveList<Withdrawal>,
+    pub ptc_window: SszVector<SszVector<u64, PTC_SIZE>, GLOAS_PTC_WINDOW_LEN>,
 }
 
-// eip7805 types — reuse fulu + InclusionList (preset-independent)
-pub use super::eip7805::{InclusionList, SignedInclusionList};
+// ── Gloas light client ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasLightClientHeader {
+    pub beacon: BeaconBlockHeader,
+    pub execution_block_hash: [u8; 32],
+    pub execution_branch: SszVector<[u8; 32], EXECUTION_BRANCH_LEN>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasLightClientBootstrap {
+    pub header: GloasLightClientHeader,
+    pub current_sync_committee: SyncCommittee,
+    pub current_sync_committee_branch: SszVector<[u8; 32], CURRENT_SYNC_COMMITTEE_BRANCH_LEN>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasLightClientUpdate {
+    pub attested_header: GloasLightClientHeader,
+    pub next_sync_committee: SyncCommittee,
+    pub next_sync_committee_branch: SszVector<[u8; 32], NEXT_SYNC_COMMITTEE_BRANCH_LEN>,
+    pub finalized_header: GloasLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], FINALITY_BRANCH_LEN>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasLightClientFinalityUpdate {
+    pub attested_header: GloasLightClientHeader,
+    pub finalized_header: GloasLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], FINALITY_BRANCH_LEN>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct GloasLightClientOptimisticUpdate {
+    pub attested_header: GloasLightClientHeader,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+// ── Heze types ──
+//
+// Preset-independent Heze containers are reused; only those tied to a preset
+// value (via `SyncAggregate`, `SyncCommittee`, or a vector length) are redefined.
+
+pub use super::heze::{
+    ExecutionPayloadBid as HezeExecutionPayloadBid, InclusionList,
+    SignedExecutionPayloadBid as HezeSignedExecutionPayloadBid, SignedInclusionList,
+};
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
+pub struct HezeBeaconBlockBody {
+    pub randao_reveal: [u8; 96],
+    pub eth1_data: Eth1Data,
+    pub graffiti: [u8; 32],
+    pub proposer_slashings: ProgressiveList<ProposerSlashing>,
+    pub attester_slashings: ProgressiveList<GloasAttesterSlashing>,
+    pub attestations: ProgressiveList<GloasAttestation>,
+    pub deposits: ProgressiveList<Deposit>,
+    pub voluntary_exits: ProgressiveList<SignedVoluntaryExit>,
+    pub sync_aggregate: SyncAggregate,
+    pub bls_to_execution_changes: ProgressiveList<SignedBLSToExecutionChange>,
+    pub signed_execution_payload_bid: HezeSignedExecutionPayloadBid,
+    pub payload_attestations: ProgressiveList<GloasPayloadAttestation>,
+    pub parent_execution_requests: GloasExecutionRequests,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeBeaconBlock {
+    pub slot: u64,
+    pub proposer_index: u64,
+    pub parent_root: [u8; 32],
+    pub state_root: [u8; 32],
+    pub body: HezeBeaconBlockBody,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeSignedBeaconBlock {
+    pub message: HezeBeaconBlock,
+    pub signature: [u8; 96],
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
+pub struct HezeBeaconState {
+    pub genesis_time: u64,
+    pub genesis_validators_root: [u8; 32],
+    pub slot: u64,
+    pub fork: Fork,
+    pub latest_block_header: BeaconBlockHeader,
+    pub block_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub state_roots: SszVector<[u8; 32], SLOTS_PER_HISTORICAL_ROOT>,
+    pub historical_roots: SszList<[u8; 32], HISTORICAL_ROOTS_LIMIT>,
+    pub eth1_data: Eth1Data,
+    pub eth1_data_votes: SszList<Eth1Data, ETH1_DATA_VOTES_LIMIT>,
+    pub eth1_deposit_index: u64,
+    pub validators: ProgressiveList<Validator>,
+    pub balances: ProgressiveList<u64>,
+    pub randao_mixes: SszVector<[u8; 32], EPOCHS_PER_HISTORICAL_VECTOR>,
+    pub slashings: SszVector<u64, EPOCHS_PER_SLASHINGS_VECTOR>,
+    pub previous_epoch_participation: ProgressiveList<u8>,
+    pub current_epoch_participation: ProgressiveList<u8>,
+    pub justification_bits: SszBitvector<JUSTIFICATION_BITS_LENGTH>,
+    pub previous_justified_checkpoint: Checkpoint,
+    pub current_justified_checkpoint: Checkpoint,
+    pub finalized_checkpoint: Checkpoint,
+    pub inactivity_scores: ProgressiveList<u64>,
+    pub current_sync_committee: SyncCommittee,
+    pub next_sync_committee: SyncCommittee,
+    pub latest_block_hash: [u8; 32],
+    pub next_withdrawal_index: u64,
+    pub next_withdrawal_validator_index: u64,
+    pub historical_summaries: SszList<HistoricalSummary, HISTORICAL_ROOTS_LIMIT>,
+    pub deposit_requests_start_index: u64,
+    pub deposit_balance_to_consume: u64,
+    pub exit_balance_to_consume: u64,
+    pub earliest_exit_epoch: u64,
+    pub consolidation_balance_to_consume: u64,
+    pub earliest_consolidation_epoch: u64,
+    pub pending_deposits: ProgressiveList<PendingDeposit>,
+    pub pending_partial_withdrawals: ProgressiveList<PendingPartialWithdrawal>,
+    pub pending_consolidations: ProgressiveList<PendingConsolidation>,
+    pub proposer_lookahead: SszVector<u64, GLOAS_PROPOSER_LOOKAHEAD_LEN>,
+    pub builders: ProgressiveList<Builder>,
+    pub next_withdrawal_builder_index: u64,
+    pub execution_payload_availability: SszBitvector<SLOTS_PER_HISTORICAL_ROOT>,
+    pub builder_pending_payments:
+        SszVector<BuilderPendingPayment, GLOAS_BUILDER_PENDING_PAYMENTS_LEN>,
+    pub builder_pending_withdrawals: ProgressiveList<BuilderPendingWithdrawal>,
+    pub latest_execution_payload_bid: HezeExecutionPayloadBid,
+    pub payload_expected_withdrawals: ProgressiveList<Withdrawal>,
+    pub ptc_window: SszVector<SszVector<u64, PTC_SIZE>, GLOAS_PTC_WINDOW_LEN>,
+}
+
+// ── Heze light client ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeLightClientHeader {
+    pub beacon: BeaconBlockHeader,
+    pub execution_block_hash: [u8; 32],
+    pub execution_branch: SszVector<[u8; 32], EXECUTION_BRANCH_LEN>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeLightClientBootstrap {
+    pub header: HezeLightClientHeader,
+    pub current_sync_committee: SyncCommittee,
+    pub current_sync_committee_branch: SszVector<[u8; 32], CURRENT_SYNC_COMMITTEE_BRANCH_LEN>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeLightClientUpdate {
+    pub attested_header: HezeLightClientHeader,
+    pub next_sync_committee: SyncCommittee,
+    pub next_sync_committee_branch: SszVector<[u8; 32], NEXT_SYNC_COMMITTEE_BRANCH_LEN>,
+    pub finalized_header: HezeLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], FINALITY_BRANCH_LEN>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeLightClientFinalityUpdate {
+    pub attested_header: HezeLightClientHeader,
+    pub finalized_header: HezeLightClientHeader,
+    pub finality_branch: SszVector<[u8; 32], FINALITY_BRANCH_LEN>,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct HezeLightClientOptimisticUpdate {
+    pub attested_header: HezeLightClientHeader,
+    pub sync_aggregate: SyncAggregate,
+    pub signature_slot: u64,
+}

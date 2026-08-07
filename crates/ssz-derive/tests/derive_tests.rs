@@ -255,3 +255,97 @@ fn named_transparent_round_trip() {
     let decoded = NamedWrapper::from_ssz_bytes(&encoded).unwrap();
     assert_eq!(decoded, original);
 }
+
+// ── HashTreeRoot for progressive containers ──
+
+#[derive(Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container)]
+struct ProgressiveThreeFields {
+    a: u64,
+    b: u64,
+    c: u64,
+}
+
+#[test]
+fn hash_tree_root_progressive_container() {
+    let s = ProgressiveThreeFields { a: 1, b: 2, c: 3 };
+    let root = s.hash_tree_root(&Sha2Hasher);
+
+    // Manual: mix_in_active_fields(merkleize_progressive(field_roots), [1, 1, 1])
+    let field_roots = [
+        1u64.hash_tree_root(&Sha2Hasher),
+        2u64.hash_tree_root(&Sha2Hasher),
+        3u64.hash_tree_root(&Sha2Hasher),
+    ];
+    let progressive = libssz_merkle::merkleize_progressive(&Sha2Hasher, &field_roots);
+    let expected = libssz_merkle::mix_in_active_fields(&Sha2Hasher, &progressive, &[true; 3]);
+    assert_eq!(root, expected);
+}
+
+#[derive(Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+struct PlainThreeFields {
+    a: u64,
+    b: u64,
+    c: u64,
+}
+
+/// A progressive container merkleizes differently from a plain container even
+/// though the two serialize identically.
+#[test]
+fn progressive_container_root_differs_from_plain_container() {
+    let progressive = ProgressiveThreeFields { a: 1, b: 2, c: 3 };
+    let plain = PlainThreeFields { a: 1, b: 2, c: 3 };
+
+    assert_eq!(progressive.to_ssz(), plain.to_ssz());
+    assert_ne!(
+        progressive.hash_tree_root(&Sha2Hasher),
+        plain.hash_tree_root(&Sha2Hasher)
+    );
+}
+
+// ── HashTreeRoot for progressive containers with inactive fields ──
+
+#[derive(Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container, active_fields = [1, 0, 1, 0, 1])]
+struct ProgressiveInactiveFields {
+    a: u64,
+    b: u64,
+    c: u64,
+}
+
+/// Inactive positions contribute a zero chunk, and the mixed-in bitvector has
+/// the corresponding bits clear.
+#[test]
+fn hash_tree_root_progressive_container_with_inactive_fields() {
+    let s = ProgressiveInactiveFields { a: 1, b: 2, c: 3 };
+
+    let zero = [0u8; 32];
+    let chunks = [
+        1u64.hash_tree_root(&Sha2Hasher),
+        zero,
+        2u64.hash_tree_root(&Sha2Hasher),
+        zero,
+        3u64.hash_tree_root(&Sha2Hasher),
+    ];
+    let progressive = libssz_merkle::merkleize_progressive(&Sha2Hasher, &chunks);
+    let expected = libssz_merkle::mix_in_active_fields(
+        &Sha2Hasher,
+        &progressive,
+        &[true, false, true, false, true],
+    );
+    assert_eq!(s.hash_tree_root(&Sha2Hasher), expected);
+}
+
+/// `active_fields` changes only merkleization: the serialization is the same as
+/// the all-active container with the same fields.
+#[test]
+fn inactive_fields_change_root_but_not_encoding() {
+    let inactive = ProgressiveInactiveFields { a: 1, b: 2, c: 3 };
+    let all_active = ProgressiveThreeFields { a: 1, b: 2, c: 3 };
+
+    assert_eq!(inactive.to_ssz(), all_active.to_ssz());
+    assert_ne!(
+        inactive.hash_tree_root(&Sha2Hasher),
+        all_active.hash_tree_root(&Sha2Hasher)
+    );
+}

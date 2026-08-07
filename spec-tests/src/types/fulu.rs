@@ -1,5 +1,5 @@
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_types::{SszList, SszVector};
+use libssz_types::{SszBitlist, SszList, SszVector};
 
 use super::deneb::MAX_BLOB_COMMITMENTS_PER_BLOCK;
 use super::phase0::SignedBeaconBlockHeader;
@@ -32,4 +32,32 @@ pub struct MatrixEntry {
 pub struct DataColumnsByRootIdentifier {
     pub block_root: [u8; 32],
     pub columns: SszList<u64, NUMBER_OF_COLUMNS>,
+}
+
+// ── Partial data columns ──
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct PartialDataColumnHeader {
+    pub kzg_commitments: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub signed_block_header: SignedBeaconBlockHeader,
+    pub kzg_commitments_inclusion_proof: SszVector<[u8; 32], KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct PartialDataColumnSidecar {
+    pub cells_present_bitmap: SszBitlist<MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub partial_column: SszList<SszVector<u8, BYTES_PER_CELL>, MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub kzg_proofs: SszList<[u8; 48], MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub header: SszList<PartialDataColumnHeader, 1>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct PartialDataColumnPartsMetadata {
+    pub available: SszBitlist<MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+    pub requests: SszBitlist<MAX_BLOB_COMMITMENTS_PER_BLOCK>,
+}
+
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+pub struct PartialDataColumnGroupID {
+    pub beacon_block_root: [u8; 32],
 }

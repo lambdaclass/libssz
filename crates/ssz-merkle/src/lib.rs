@@ -166,10 +166,10 @@ fn merkleize_progressive_inner(
     let take = core::cmp::min(num_leaves, chunks.len());
     let subtree = merkleize(hasher, &chunks[..take], Some(num_leaves));
     let rest = merkleize_progressive_inner(hasher, &chunks[take..], num_leaves * 4);
-    // Note: the tree layout places the progressive remainder on the left
-    // and the current subtree on the right, matching the reference implementation
-    // in ethereum/remerkleable (commit 667eab00).
-    hash_nodes(hasher, &rest, &subtree)
+    // EIP-7916 computes `hash(a, b)` with `a` the fixed-size subtree over the
+    // first `num_leaves` chunks and `b` the recursive remainder, so the subtree
+    // is the left child and the remainder the right one.
+    hash_nodes(hasher, &subtree, &rest)
 }
 
 /// Mix in an active_fields bitvector: hash_nodes(root, pack_bits(active_fields)).
@@ -709,6 +709,140 @@ mod tests {
         // Non-power-of-two limits round up to the enclosing subtree.
         assert_eq!(merkleize(&Sha2Hasher, &[], Some(3)), ZERO_HASHES[2]);
         assert_eq!(merkleize(&Sha2Hasher, &[], Some(100)), ZERO_HASHES[7]);
+    }
+
+    // ── merkleize_progressive tests ──
+
+    /// Decode a 64-character hex string into a `Node`.
+    #[cfg(feature = "sha2-backend")]
+    fn node_from_hex(s: &str) -> Node {
+        let bytes = s.as_bytes();
+        assert_eq!(bytes.len(), 64, "expected 64 hex characters");
+        let mut out = [0u8; 32];
+        for (i, byte) in out.iter_mut().enumerate() {
+            let hi = char::from(bytes[i * 2]).to_digit(16).expect("hex digit");
+            let lo = char::from(bytes[i * 2 + 1])
+                .to_digit(16)
+                .expect("hex digit");
+            *byte = ((hi << 4) | lo) as u8;
+        }
+        out
+    }
+
+    /// `hash_tree_root` of a `ProgressiveList[uint64]` holding `values`.
+    #[cfg(feature = "sha2-backend")]
+    fn progressive_u64_list_root(values: &[u64]) -> Node {
+        let mut serialized = Vec::with_capacity(values.len() * 8);
+        for value in values {
+            serialized.extend_from_slice(&value.to_le_bytes());
+        }
+        let root = merkleize_progressive(&Sha2Hasher, &pack(&serialized));
+        mix_in_length(&Sha2Hasher, &root, values.len())
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_progressive_empty_is_zero_node() {
+        assert_eq!(merkleize_progressive(&Sha2Hasher, &[]), [0u8; 32]);
+    }
+
+    /// EIP-7916 puts the fixed-size subtree on the left and the recursive
+    /// remainder on the right, so a lone chunk hashes as `hash(chunk, zero)`.
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_progressive_puts_subtree_on_the_left() {
+        let chunk = [0x11u8; 32];
+        assert_eq!(
+            merkleize_progressive(&Sha2Hasher, &[chunk]),
+            hash_nodes(&Sha2Hasher, &chunk, &[0u8; 32])
+        );
+    }
+
+    /// Roots of `ProgressiveList[uint64]([1, ..., n])` as computed by
+    /// ethereum/remerkleable. Four `uint64`s pack into one chunk, so these
+    /// sizes pack into 0, 1, 1, 2 and 6 chunks: `n = 5` spans the first two
+    /// subtrees (leaf counts 1 then 4) and `n = 21` reaches the third (16),
+    /// so the larger two exercise the recursion rather than the base case.
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_progressive_matches_reference_roots() {
+        let cases: [(u64, &str); 5] = [
+            (
+                0,
+                "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+            ),
+            (
+                1,
+                "905efb51c2764c2c7a4efb0548e372569df06db82115c3b1896c186632f3fe5b",
+            ),
+            (
+                2,
+                "4250789d7838bee417a2b0d7639d928b05e8b75f1fc59588a4301b6e8f70ba58",
+            ),
+            (
+                5,
+                "29918e0447260511bc5be0f7dbb9817201e16e30c56af228b9cb931a16e8799d",
+            ),
+            (
+                21,
+                "ed360c03ecbdfbb6f4b1cf5d9cbf6887038423e31121700797de968a9969aaed",
+            ),
+        ];
+        for (n, expected) in cases {
+            let values: Vec<u64> = (1..=n).collect();
+            assert_eq!(
+                progressive_u64_list_root(&values),
+                node_from_hex(expected),
+                "ProgressiveList[uint64] of 1..={n}"
+            );
+        }
+    }
+
+    /// Roots pinned from the consensus-specs `basic_progressive_list` vectors
+    /// (v1.7.0-alpha.13, `tests/general/phase0/ssz_generic`).
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_progressive_matches_consensus_spec_vectors() {
+        let cases: [(usize, u64, &str, &str); 5] = [
+            (
+                1,
+                u64::MAX,
+                "7bea313629252f757f27d17a1ce515715beedeff41a3f7f6c9ac47bfddcf447c",
+                "proglist_uint64_max_1",
+            ),
+            (
+                4,
+                u64::MAX,
+                "06e8318500bbdb0b6e9b55e63e819cbed45668f6481c24c67bd1d8eaf8703ca8",
+                "proglist_uint64_max_20",
+            ),
+            (
+                21,
+                u64::MAX,
+                "d444bef5f61103078f3ca9bdb2857a9b5e883d738b213a1607a9f3a770a332d2",
+                "proglist_uint64_max_22",
+            ),
+            (
+                7,
+                0,
+                "13a56a67f02ea52c0841043aba35de738bec8519fee07860658d13e2d0442782",
+                "proglist_uint64_zero_8",
+            ),
+            (
+                53,
+                0,
+                "2935884058446007e2592494fe88884e83ee80ecd2041779447c30642fe63ac8",
+                "proglist_uint64_zero_86",
+            ),
+        ];
+        for (count, value, expected, case_name) in cases {
+            let values = vec![value; count];
+            assert_eq!(
+                progressive_u64_list_root(&values),
+                node_from_hex(expected),
+                "{case_name}"
+            );
+        }
     }
 
     // ── mix_in_length tests ──

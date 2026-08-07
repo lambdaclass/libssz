@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const VERSION: &str = "v1.6.1";
+const VERSION: &str = "v1.7.0-alpha.13";
 
 /// The three test archives published by the consensus-specs repo.
 #[derive(Debug, Clone, Copy)]
