@@ -1,93 +1,47 @@
-use libssz_derive::{SszDecode, SszEncode};
-use libssz_merkle::{
-    merkleize_progressive, mix_in_active_fields, HashTreeRoot, Node, Sha256Hasher,
-};
+use libssz_derive::{HashTreeRoot as HashTreeRootDerive, SszDecode, SszEncode};
+use libssz_merkle::{HashTreeRoot, Node, Sha256Hasher};
 use libssz_types::{ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList};
 
-use super::containers::SmallTestStruct;
+use super::containers::{SmallTestStruct, VarTestStruct};
 
-// Helper: build chunks for progressive container merkleization.
-// Places field roots at positions corresponding to `1` entries in active_fields,
-// fills `0` positions with zero nodes.
-fn progressive_container_chunks(field_roots: &[Node], active_fields: &[bool]) -> Vec<Node> {
-    let mut chunks = Vec::with_capacity(active_fields.len());
-    let mut field_idx = 0;
-    for &active in active_fields {
-        if active {
-            chunks.push(field_roots[field_idx]);
-            field_idx += 1;
-        } else {
-            chunks.push([0u8; 32]);
-        }
-    }
-    assert_eq!(field_idx, field_roots.len());
-    chunks
-}
+// The `ProgressiveContainer` types below carry their `active_fields` in the
+// derive attribute; the two plain `Container` types at the bottom of the file
+// merkleize normally and keep hand-written impls.
 
 // ── ProgressiveSingleFieldContainerTestStruct ──
 // active_fields = [1]
 
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRootDerive)]
+#[ssz(progressive_container)]
 pub struct ProgressiveSingleFieldContainerTestStruct {
     pub a: u8,
 }
 
-impl HashTreeRoot for ProgressiveSingleFieldContainerTestStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let active_fields = &[true];
-        let field_roots = [self.a.hash_tree_root(hasher)];
-        let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(hasher, &chunks);
-        mix_in_active_fields(hasher, &root, active_fields)
-    }
-}
-
 // ── ProgressiveSingleListContainerTestStruct ──
-// active_fields = [0, 0, 0, 0, 1]
 
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRootDerive)]
+#[ssz(progressive_container, active_fields = [0, 0, 0, 0, 1])]
 pub struct ProgressiveSingleListContainerTestStruct {
     pub c: ProgressiveBitlist,
 }
 
-impl HashTreeRoot for ProgressiveSingleListContainerTestStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let active_fields = &[false, false, false, false, true];
-        let field_roots = [self.c.hash_tree_root(hasher)];
-        let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(hasher, &chunks);
-        mix_in_active_fields(hasher, &root, active_fields)
-    }
-}
-
 // ── ProgressiveVarTestStruct ──
-// active_fields = [1, 0, 1, 0, 1]
 
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRootDerive)]
+#[ssz(progressive_container, active_fields = [1, 0, 1, 0, 1])]
 pub struct ProgressiveVarTestStruct {
     pub a: u8,
     pub b: SszList<u16, 123>,
     pub c: ProgressiveBitlist,
 }
 
-impl HashTreeRoot for ProgressiveVarTestStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let active_fields = &[true, false, true, false, true];
-        let field_roots = [
-            self.a.hash_tree_root(hasher),
-            self.b.hash_tree_root(hasher),
-            self.c.hash_tree_root(hasher),
-        ];
-        let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(hasher, &chunks);
-        mix_in_active_fields(hasher, &root, active_fields)
-    }
-}
-
 // ── ProgressiveComplexTestStruct ──
-// active_fields = [1,0,1,0,1,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,1,1]
 
-#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
+#[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRootDerive)]
+#[ssz(
+    progressive_container,
+    active_fields = [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1]
+)]
 pub struct ProgressiveComplexTestStruct {
     pub a: u8,
     pub b: SszList<u16, 123>,
@@ -99,52 +53,11 @@ pub struct ProgressiveComplexTestStruct {
     pub h: ProgressiveList<ProgressiveVarTestStruct>,
 }
 
-impl HashTreeRoot for ProgressiveComplexTestStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let active_fields = &[
-            true, false, true, false, true, false, false, false, true, false, false, false, true,
-            true, false, false, false, false, false, false, true, true,
-        ];
-        let field_roots = [
-            self.a.hash_tree_root(hasher),
-            self.b.hash_tree_root(hasher),
-            self.c.hash_tree_root(hasher),
-            self.d.hash_tree_root(hasher),
-            self.e.hash_tree_root(hasher),
-            self.f.hash_tree_root(hasher),
-            self.g.hash_tree_root(hasher),
-            self.h.hash_tree_root(hasher),
-        ];
-        let chunks = progressive_container_chunks(&field_roots, active_fields);
-        let root = merkleize_progressive(hasher, &chunks);
-        mix_in_active_fields(hasher, &root, active_fields)
-    }
-}
-
 // ── ProgressiveTestStruct ──
-// From the containers handler (not progressive_containers)
-// active_fields implied from test spec:
-// class ProgressiveTestStruct(Container):
-//     A: ProgressiveList[byte]
-//     B: ProgressiveList[uint64]
-//     C: ProgressiveList[SmallTestStruct]
-//     D: ProgressiveList[ProgressiveList[VarTestStruct]]
 //
-// Wait - ProgressiveTestStruct in the containers handler is actually a regular Container
-// with progressive fields, NOT a ProgressiveContainer.
-
-// Let me check what the spec says...
-// From the spec README:
-// class ProgressiveTestStruct(Container):
-//     A: ProgressiveList[byte]
-//     B: ProgressiveList[uint64]
-//     C: ProgressiveList[SmallTestStruct]
-//     D: ProgressiveList[ProgressiveList[VarTestStruct]]
-//
-// This is a REGULAR container (not ProgressiveContainer) whose fields happen
-// to be progressive types. So it uses normal container merkleization.
-
-use super::containers::VarTestStruct;
+// From the `containers` handler, not `progressive_containers`: a regular
+// `Container` whose fields happen to be progressive types, so it merkleizes as
+// an ordinary container.
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
 pub struct ProgressiveTestStruct {
@@ -168,22 +81,9 @@ impl HashTreeRoot for ProgressiveTestStruct {
 }
 
 // ── ProgressiveBitsStruct ──
-// From the containers handler:
-// class ProgressiveBitsStruct(Container):
-//     A: Bitvector[256]
-//     B: Bitlist[256]
-//     C: ProgressiveBitlist
-//     D: Bitvector[257]
-//     E: Bitlist[257]
-//     F: ProgressiveBitlist
-//     G: Bitvector[1280]
-//     H: Bitlist[1280]
-//     I: ProgressiveBitlist
-//     J: Bitvector[1281]
-//     K: Bitlist[1281]
-//     L: ProgressiveBitlist
 //
-// Also a regular Container.
+// Also a regular `Container`, pairing each bounded bit type with a
+// `ProgressiveBitlist` across the 256/257 and 1280/1281 chunk boundaries.
 
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode)]
 pub struct ProgressiveBitsStruct {

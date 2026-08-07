@@ -188,6 +188,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: target/spec-tests
-          key: consensus-spec-vectors-v1.6.1
+          key: consensus-spec-vectors-v1.7.0-alpha.13
       - run: ./spec-tests/download-vectors.sh
       - run: cargo test -p spec-tests

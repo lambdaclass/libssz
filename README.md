@@ -2,7 +2,7 @@
 
 A fast, zkVM-friendly [Simple Serialize (SSZ)](https://ethereum.github.io/consensus-specs/ssz/simple-serialize) library for Ethereum consensus.
 
-`no_std + alloc` from day one. Up to 2.9x faster than Lighthouse on BeaconState encode and decode. Validated against 62,489 official Ethereum consensus spec test cases across all 9 forks (phase0 through eip7805). Fuzz-tested against both reference implementations.
+`no_std + alloc` from day one. Up to 2.9x faster than Lighthouse on BeaconState encode and decode. Validated against 63,385 official Ethereum consensus spec test cases across all 9 forks (phase0 through heze). Fuzz-tested against both reference implementations.
 
 ## Performance
 
@@ -248,6 +248,21 @@ Dependency graph: `libssz-derive` → `libssz-merkle` → `libssz` ← `libssz-t
 | Container | `struct` + derive | Y | Y | Y |
 | Union | `enum` + `#[ssz(enum_behaviour = "union")]` | Y | Y | Y |
 | Transparent | `struct` + `#[ssz(transparent)]` | Y | Y | Y |
+| ProgressiveContainer | `struct` + `#[ssz(progressive_container)]` | Y | Y | Y |
+
+`active_fields` defaults to every field active. For a container with inactive
+(deprecated) fields, pass the configuration explicitly — each `1` takes the next
+field in declaration order:
+
+```rust
+#[derive(SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(progressive_container, active_fields = [1, 0, 1, 0, 1])]
+struct Foo {
+    a: u8,                  // active_fields[0]
+    b: SszList<u16, 123>,   // active_fields[2]
+    c: ProgressiveBitlist,  // active_fields[4]
+}
+```
 
 ## Testing
 
@@ -255,7 +270,7 @@ Dependency graph: `libssz-derive` → `libssz-merkle` → `libssz` ← `libssz-t
 make test                  # unit + integration tests
 make test-alloc            # no_std + alloc only
 make download-spec-tests   # download consensus spec vectors (~1.25GB, cached)
-make spec-tests            # run 62,489 spec test cases (downloads if needed)
+make spec-tests            # run 63,385 spec test cases (downloads if needed)
 make fuzz-quick            # 10s smoke fuzz per target (19 targets)
 make bench                 # criterion benchmarks
 make ci                    # full CI pipeline locally
@@ -263,10 +278,10 @@ make ci                    # full CI pipeline locally
 
 ### Consensus Spec Tests
 
-The library is validated against the official [Ethereum consensus spec test vectors](https://github.com/ethereum/consensus-specs) (v1.6.1). This covers:
+The library is validated against the official [Ethereum consensus spec test vectors](https://github.com/ethereum/consensus-specs) (v1.7.0-alpha.13). This covers:
 
-- **ssz_generic**: all SSZ primitive types, vectors, lists, bitfields, containers, progressive types (EIP-7916), and compatible unions — valid and invalid cases
-- **ssz_static mainnet**: all Ethereum consensus types (BeaconState, BeaconBlock, Attestation, etc.) across 9 forks (phase0, altair, bellatrix, capella, deneb, electra, fulu, gloas, eip7805) at mainnet parameters
+- **ssz_generic**: all SSZ primitive types, vectors, lists, bitfields, containers, progressive types (EIP-7916), progressive containers (EIP-7495), and compatible unions — valid and invalid cases
+- **ssz_static mainnet**: all Ethereum consensus types (BeaconState, BeaconBlock, Attestation, etc.) across 9 forks (phase0, altair, bellatrix, capella, deneb, electra, fulu, gloas, heze) at mainnet parameters
 - **ssz_static minimal**: same types at minimal preset parameters
 
 Each test case verifies decode, re-encode roundtrip, and hash tree root correctness.

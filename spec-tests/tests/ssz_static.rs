@@ -221,10 +221,6 @@ fn altair_mainnet_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>(Archive::Mainnet, "altair", "IndexedAttestation");
 }
 #[test]
-fn altair_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "altair", "PendingAttestation");
-}
-#[test]
 fn altair_mainnet_proposer_slashing() {
     run_ssz_static_type::<ProposerSlashing>(Archive::Mainnet, "altair", "ProposerSlashing");
 }
@@ -489,10 +485,6 @@ fn bellatrix_mainnet_light_client_update() {
     );
 }
 #[test]
-fn bellatrix_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "bellatrix", "PendingAttestation");
-}
-#[test]
 fn bellatrix_mainnet_proposer_slashing() {
     run_ssz_static_type::<ProposerSlashing>(Archive::Mainnet, "bellatrix", "ProposerSlashing");
 }
@@ -687,16 +679,8 @@ fn capella_mainnet_fork_data() {
     run_ssz_static_type::<ForkData>(Archive::Mainnet, "capella", "ForkData");
 }
 #[test]
-fn capella_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "capella", "HistoricalBatch");
-}
-#[test]
 fn capella_mainnet_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>(Archive::Mainnet, "capella", "IndexedAttestation");
-}
-#[test]
-fn capella_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "capella", "PendingAttestation");
 }
 #[test]
 fn capella_mainnet_proposer_slashing() {
@@ -959,10 +943,6 @@ fn deneb_mainnet_fork_data() {
     run_ssz_static_type::<ForkData>(Archive::Mainnet, "deneb", "ForkData");
 }
 #[test]
-fn deneb_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "deneb", "HistoricalBatch");
-}
-#[test]
 fn deneb_mainnet_historical_summary() {
     run_ssz_static_type::<capella::HistoricalSummary>(
         Archive::Mainnet,
@@ -973,10 +953,6 @@ fn deneb_mainnet_historical_summary() {
 #[test]
 fn deneb_mainnet_indexed_attestation() {
     run_ssz_static_type::<IndexedAttestation>(Archive::Mainnet, "deneb", "IndexedAttestation");
-}
-#[test]
-fn deneb_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "deneb", "PendingAttestation");
 }
 #[test]
 fn deneb_mainnet_proposer_slashing() {
@@ -1211,20 +1187,12 @@ fn electra_mainnet_fork_data() {
     run_ssz_static_type::<ForkData>(Archive::Mainnet, "electra", "ForkData");
 }
 #[test]
-fn electra_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "electra", "HistoricalBatch");
-}
-#[test]
 fn electra_mainnet_historical_summary() {
     run_ssz_static_type::<capella::HistoricalSummary>(
         Archive::Mainnet,
         "electra",
         "HistoricalSummary",
     );
-}
-#[test]
-fn electra_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "electra", "PendingAttestation");
 }
 #[test]
 fn electra_mainnet_pow_block() {
@@ -1515,14 +1483,6 @@ fn fulu_mainnet_beacon_block_header() {
     run_ssz_static_type::<BeaconBlockHeader>(Archive::Mainnet, "fulu", "BeaconBlockHeader");
 }
 #[test]
-fn fulu_mainnet_blob_identifier() {
-    run_ssz_static_type::<deneb::BlobIdentifier>(Archive::Mainnet, "fulu", "BlobIdentifier");
-}
-#[test]
-fn fulu_mainnet_blob_sidecar() {
-    run_ssz_static_type::<deneb::BlobSidecar>(Archive::Mainnet, "fulu", "BlobSidecar");
-}
-#[test]
 fn fulu_mainnet_bls_to_execution_change() {
     run_ssz_static_type::<capella::BLSToExecutionChange>(
         Archive::Mainnet,
@@ -1603,10 +1563,6 @@ fn fulu_mainnet_fork_data() {
     run_ssz_static_type::<ForkData>(Archive::Mainnet, "fulu", "ForkData");
 }
 #[test]
-fn fulu_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "fulu", "HistoricalBatch");
-}
-#[test]
 fn fulu_mainnet_historical_summary() {
     run_ssz_static_type::<capella::HistoricalSummary>(
         Archive::Mainnet,
@@ -1621,10 +1577,6 @@ fn fulu_mainnet_indexed_attestation() {
         "fulu",
         "IndexedAttestation",
     );
-}
-#[test]
-fn fulu_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "fulu", "PendingAttestation");
 }
 #[test]
 fn fulu_mainnet_pending_consolidation() {
@@ -1844,7 +1796,7 @@ use spec_tests::types::gloas;
 // Unchanged from fulu/electra
 #[test]
 fn gloas_mainnet_attestation() {
-    run_ssz_static_type::<electra::Attestation>(Archive::Mainnet, "gloas", "Attestation");
+    run_ssz_static_type::<gloas::Attestation>(Archive::Mainnet, "gloas", "Attestation");
 }
 #[test]
 fn gloas_mainnet_attestation_data() {
@@ -1852,19 +1804,11 @@ fn gloas_mainnet_attestation_data() {
 }
 #[test]
 fn gloas_mainnet_attester_slashing() {
-    run_ssz_static_type::<electra::AttesterSlashing>(Archive::Mainnet, "gloas", "AttesterSlashing");
+    run_ssz_static_type::<gloas::AttesterSlashing>(Archive::Mainnet, "gloas", "AttesterSlashing");
 }
 #[test]
 fn gloas_mainnet_beacon_block_header() {
     run_ssz_static_type::<BeaconBlockHeader>(Archive::Mainnet, "gloas", "BeaconBlockHeader");
-}
-#[test]
-fn gloas_mainnet_blob_identifier() {
-    run_ssz_static_type::<deneb::BlobIdentifier>(Archive::Mainnet, "gloas", "BlobIdentifier");
-}
-#[test]
-fn gloas_mainnet_blob_sidecar() {
-    run_ssz_static_type::<deneb::BlobSidecar>(Archive::Mainnet, "gloas", "BlobSidecar");
 }
 #[test]
 fn gloas_mainnet_bls_to_execution_change() {
@@ -1932,23 +1876,11 @@ fn gloas_mainnet_eth1_data() {
 }
 #[test]
 fn gloas_mainnet_execution_payload() {
-    run_ssz_static_type::<electra::ExecutionPayload>(Archive::Mainnet, "gloas", "ExecutionPayload");
-}
-#[test]
-fn gloas_mainnet_execution_payload_header() {
-    run_ssz_static_type::<electra::ExecutionPayloadHeader>(
-        Archive::Mainnet,
-        "gloas",
-        "ExecutionPayloadHeader",
-    );
+    run_ssz_static_type::<gloas::ExecutionPayload>(Archive::Mainnet, "gloas", "ExecutionPayload");
 }
 #[test]
 fn gloas_mainnet_execution_requests() {
-    run_ssz_static_type::<electra::ExecutionRequests>(
-        Archive::Mainnet,
-        "gloas",
-        "ExecutionRequests",
-    );
+    run_ssz_static_type::<gloas::ExecutionRequests>(Archive::Mainnet, "gloas", "ExecutionRequests");
 }
 #[test]
 fn gloas_mainnet_fork() {
@@ -1957,10 +1889,6 @@ fn gloas_mainnet_fork() {
 #[test]
 fn gloas_mainnet_fork_data() {
     run_ssz_static_type::<ForkData>(Archive::Mainnet, "gloas", "ForkData");
-}
-#[test]
-fn gloas_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "gloas", "HistoricalBatch");
 }
 #[test]
 fn gloas_mainnet_historical_summary() {
@@ -1972,7 +1900,7 @@ fn gloas_mainnet_historical_summary() {
 }
 #[test]
 fn gloas_mainnet_indexed_attestation() {
-    run_ssz_static_type::<electra::IndexedAttestation>(
+    run_ssz_static_type::<gloas::IndexedAttestation>(
         Archive::Mainnet,
         "gloas",
         "IndexedAttestation",
@@ -1981,10 +1909,6 @@ fn gloas_mainnet_indexed_attestation() {
 #[test]
 fn gloas_mainnet_matrix_entry() {
     run_ssz_static_type::<fulu::MatrixEntry>(Archive::Mainnet, "gloas", "MatrixEntry");
-}
-#[test]
-fn gloas_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "gloas", "PendingAttestation");
 }
 #[test]
 fn gloas_mainnet_pending_consolidation() {
@@ -2016,7 +1940,7 @@ fn gloas_mainnet_proposer_slashing() {
 }
 #[test]
 fn gloas_mainnet_signed_aggregate_and_proof() {
-    run_ssz_static_type::<electra::SignedAggregateAndProof>(
+    run_ssz_static_type::<gloas::SignedAggregateAndProof>(
         Archive::Mainnet,
         "gloas",
         "SignedAggregateAndProof",
@@ -2116,15 +2040,11 @@ fn gloas_mainnet_withdrawal_request() {
 }
 #[test]
 fn gloas_mainnet_light_client_header() {
-    run_ssz_static_type::<electra::LightClientHeader>(
-        Archive::Mainnet,
-        "gloas",
-        "LightClientHeader",
-    );
+    run_ssz_static_type::<gloas::LightClientHeader>(Archive::Mainnet, "gloas", "LightClientHeader");
 }
 #[test]
 fn gloas_mainnet_light_client_bootstrap() {
-    run_ssz_static_type::<electra::LightClientBootstrap>(
+    run_ssz_static_type::<gloas::LightClientBootstrap>(
         Archive::Mainnet,
         "gloas",
         "LightClientBootstrap",
@@ -2132,15 +2052,11 @@ fn gloas_mainnet_light_client_bootstrap() {
 }
 #[test]
 fn gloas_mainnet_light_client_update() {
-    run_ssz_static_type::<electra::LightClientUpdate>(
-        Archive::Mainnet,
-        "gloas",
-        "LightClientUpdate",
-    );
+    run_ssz_static_type::<gloas::LightClientUpdate>(Archive::Mainnet, "gloas", "LightClientUpdate");
 }
 #[test]
 fn gloas_mainnet_light_client_finality_update() {
-    run_ssz_static_type::<electra::LightClientFinalityUpdate>(
+    run_ssz_static_type::<gloas::LightClientFinalityUpdate>(
         Archive::Mainnet,
         "gloas",
         "LightClientFinalityUpdate",
@@ -2148,7 +2064,7 @@ fn gloas_mainnet_light_client_finality_update() {
 }
 #[test]
 fn gloas_mainnet_light_client_optimistic_update() {
-    run_ssz_static_type::<electra::LightClientOptimisticUpdate>(
+    run_ssz_static_type::<gloas::LightClientOptimisticUpdate>(
         Archive::Mainnet,
         "gloas",
         "LightClientOptimisticUpdate",
@@ -2158,11 +2074,7 @@ fn gloas_mainnet_light_client_optimistic_update() {
 // New in gloas
 #[test]
 fn gloas_mainnet_aggregate_and_proof() {
-    run_ssz_static_type::<electra::AggregateAndProof>(
-        Archive::Mainnet,
-        "gloas",
-        "AggregateAndProof",
-    );
+    run_ssz_static_type::<gloas::AggregateAndProof>(Archive::Mainnet, "gloas", "AggregateAndProof");
 }
 #[test]
 fn gloas_mainnet_builder_pending_payment() {
@@ -2195,10 +2107,6 @@ fn gloas_mainnet_execution_payload_envelope() {
         "gloas",
         "ExecutionPayloadEnvelope",
     );
-}
-#[test]
-fn gloas_mainnet_fork_choice_node() {
-    run_ssz_static_type::<gloas::ForkChoiceNode>(Archive::Mainnet, "gloas", "ForkChoiceNode");
 }
 #[test]
 fn gloas_mainnet_indexed_payload_attestation() {
@@ -2267,376 +2175,558 @@ fn gloas_mainnet_beacon_state() {
     run_ssz_static_type::<gloas::BeaconState>(Archive::Mainnet, "gloas", "BeaconState");
 }
 
-// ── EIP7805 mainnet ──
+// ── New in consensus-specs v1.7.0-alpha.13 ──
 
-use spec_tests::types::eip7805;
-
-// Reuse electra types for most
 #[test]
-fn eip7805_mainnet_aggregate_and_proof() {
-    run_ssz_static_type::<electra::AggregateAndProof>(
+fn capella_mainnet_pow_block() {
+    run_ssz_static_type::<bellatrix::PowBlock>(Archive::Mainnet, "capella", "PowBlock");
+}
+#[test]
+fn deneb_mainnet_pow_block() {
+    run_ssz_static_type::<bellatrix::PowBlock>(Archive::Mainnet, "deneb", "PowBlock");
+}
+#[test]
+fn fulu_mainnet_partial_data_column_group_i_d() {
+    run_ssz_static_type::<fulu::PartialDataColumnGroupID>(
         Archive::Mainnet,
-        "eip7805",
-        "AggregateAndProof",
+        "fulu",
+        "PartialDataColumnGroupID",
     );
 }
 #[test]
-fn eip7805_mainnet_attestation() {
-    run_ssz_static_type::<electra::Attestation>(Archive::Mainnet, "eip7805", "Attestation");
-}
-#[test]
-fn eip7805_mainnet_attestation_data() {
-    run_ssz_static_type::<AttestationData>(Archive::Mainnet, "eip7805", "AttestationData");
-}
-#[test]
-fn eip7805_mainnet_attester_slashing() {
-    run_ssz_static_type::<electra::AttesterSlashing>(
+fn fulu_mainnet_partial_data_column_header() {
+    run_ssz_static_type::<fulu::PartialDataColumnHeader>(
         Archive::Mainnet,
-        "eip7805",
-        "AttesterSlashing",
+        "fulu",
+        "PartialDataColumnHeader",
     );
 }
 #[test]
-fn eip7805_mainnet_beacon_block_header() {
-    run_ssz_static_type::<BeaconBlockHeader>(Archive::Mainnet, "eip7805", "BeaconBlockHeader");
+fn fulu_mainnet_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<fulu::PartialDataColumnPartsMetadata>(
+        Archive::Mainnet,
+        "fulu",
+        "PartialDataColumnPartsMetadata",
+    );
 }
 #[test]
-fn eip7805_mainnet_beacon_block() {
-    run_ssz_static_type::<electra::BeaconBlock>(Archive::Mainnet, "eip7805", "BeaconBlock");
+fn fulu_mainnet_partial_data_column_sidecar() {
+    run_ssz_static_type::<fulu::PartialDataColumnSidecar>(
+        Archive::Mainnet,
+        "fulu",
+        "PartialDataColumnSidecar",
+    );
 }
 #[test]
-fn eip7805_mainnet_beacon_block_body() {
-    run_ssz_static_type::<electra::BeaconBlockBody>(Archive::Mainnet, "eip7805", "BeaconBlockBody");
+fn gloas_mainnet_builder_deposit_request() {
+    run_ssz_static_type::<gloas::BuilderDepositRequest>(
+        Archive::Mainnet,
+        "gloas",
+        "BuilderDepositRequest",
+    );
 }
 #[test]
-fn eip7805_mainnet_beacon_state() {
-    run_ssz_static_type::<fulu_beacon::BeaconState>(Archive::Mainnet, "eip7805", "BeaconState");
+fn gloas_mainnet_builder_exit_request() {
+    run_ssz_static_type::<gloas::BuilderExitRequest>(
+        Archive::Mainnet,
+        "gloas",
+        "BuilderExitRequest",
+    );
 }
 #[test]
-fn eip7805_mainnet_blob_identifier() {
-    run_ssz_static_type::<deneb::BlobIdentifier>(Archive::Mainnet, "eip7805", "BlobIdentifier");
+fn gloas_mainnet_partial_data_column_group_i_d() {
+    run_ssz_static_type::<gloas::PartialDataColumnGroupID>(
+        Archive::Mainnet,
+        "gloas",
+        "PartialDataColumnGroupID",
+    );
 }
 #[test]
-fn eip7805_mainnet_blob_sidecar() {
-    run_ssz_static_type::<deneb::BlobSidecar>(Archive::Mainnet, "eip7805", "BlobSidecar");
+fn gloas_mainnet_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<gloas::PartialDataColumnPartsMetadata>(
+        Archive::Mainnet,
+        "gloas",
+        "PartialDataColumnPartsMetadata",
+    );
 }
 #[test]
-fn eip7805_mainnet_bls_to_execution_change() {
+fn gloas_mainnet_partial_data_column_sidecar() {
+    run_ssz_static_type::<gloas::PartialDataColumnSidecar>(
+        Archive::Mainnet,
+        "gloas",
+        "PartialDataColumnSidecar",
+    );
+}
+#[test]
+fn gloas_mainnet_proposer_preferences() {
+    run_ssz_static_type::<gloas::ProposerPreferences>(
+        Archive::Mainnet,
+        "gloas",
+        "ProposerPreferences",
+    );
+}
+#[test]
+fn gloas_mainnet_signed_proposer_preferences() {
+    run_ssz_static_type::<gloas::SignedProposerPreferences>(
+        Archive::Mainnet,
+        "gloas",
+        "SignedProposerPreferences",
+    );
+}
+
+// ── Heze mainnet ──
+
+use spec_tests::types::heze;
+
+#[test]
+fn heze_mainnet_aggregate_and_proof() {
+    run_ssz_static_type::<gloas::AggregateAndProof>(Archive::Mainnet, "heze", "AggregateAndProof");
+}
+#[test]
+fn heze_mainnet_attestation() {
+    run_ssz_static_type::<gloas::Attestation>(Archive::Mainnet, "heze", "Attestation");
+}
+#[test]
+fn heze_mainnet_attestation_data() {
+    run_ssz_static_type::<AttestationData>(Archive::Mainnet, "heze", "AttestationData");
+}
+#[test]
+fn heze_mainnet_attester_slashing() {
+    run_ssz_static_type::<gloas::AttesterSlashing>(Archive::Mainnet, "heze", "AttesterSlashing");
+}
+#[test]
+fn heze_mainnet_b_l_s_to_execution_change() {
     run_ssz_static_type::<capella::BLSToExecutionChange>(
         Archive::Mainnet,
-        "eip7805",
+        "heze",
         "BLSToExecutionChange",
     );
 }
 #[test]
-fn eip7805_mainnet_checkpoint() {
-    run_ssz_static_type::<Checkpoint>(Archive::Mainnet, "eip7805", "Checkpoint");
+fn heze_mainnet_beacon_block() {
+    run_ssz_static_type::<heze::BeaconBlock>(Archive::Mainnet, "heze", "BeaconBlock");
 }
 #[test]
-fn eip7805_mainnet_consolidation_request() {
+fn heze_mainnet_beacon_block_body() {
+    run_ssz_static_type::<heze::BeaconBlockBody>(Archive::Mainnet, "heze", "BeaconBlockBody");
+}
+#[test]
+fn heze_mainnet_beacon_block_header() {
+    run_ssz_static_type::<BeaconBlockHeader>(Archive::Mainnet, "heze", "BeaconBlockHeader");
+}
+#[test]
+fn heze_mainnet_beacon_state() {
+    run_ssz_static_type::<heze::BeaconState>(Archive::Mainnet, "heze", "BeaconState");
+}
+#[test]
+fn heze_mainnet_builder_deposit_request() {
+    run_ssz_static_type::<gloas::BuilderDepositRequest>(
+        Archive::Mainnet,
+        "heze",
+        "BuilderDepositRequest",
+    );
+}
+#[test]
+fn heze_mainnet_builder_exit_request() {
+    run_ssz_static_type::<gloas::BuilderExitRequest>(
+        Archive::Mainnet,
+        "heze",
+        "BuilderExitRequest",
+    );
+}
+#[test]
+fn heze_mainnet_builder_pending_payment() {
+    run_ssz_static_type::<gloas::BuilderPendingPayment>(
+        Archive::Mainnet,
+        "heze",
+        "BuilderPendingPayment",
+    );
+}
+#[test]
+fn heze_mainnet_builder_pending_withdrawal() {
+    run_ssz_static_type::<gloas::BuilderPendingWithdrawal>(
+        Archive::Mainnet,
+        "heze",
+        "BuilderPendingWithdrawal",
+    );
+}
+#[test]
+fn heze_mainnet_checkpoint() {
+    run_ssz_static_type::<Checkpoint>(Archive::Mainnet, "heze", "Checkpoint");
+}
+#[test]
+fn heze_mainnet_consolidation_request() {
     run_ssz_static_type::<electra::ConsolidationRequest>(
         Archive::Mainnet,
-        "eip7805",
+        "heze",
         "ConsolidationRequest",
     );
 }
 #[test]
-fn eip7805_mainnet_contribution_and_proof() {
+fn heze_mainnet_contribution_and_proof() {
     run_ssz_static_type::<altair::ContributionAndProof>(
         Archive::Mainnet,
-        "eip7805",
+        "heze",
         "ContributionAndProof",
     );
 }
 #[test]
-fn eip7805_mainnet_deposit() {
-    run_ssz_static_type::<Deposit>(Archive::Mainnet, "eip7805", "Deposit");
+fn heze_mainnet_data_column_sidecar() {
+    run_ssz_static_type::<gloas::DataColumnSidecar>(Archive::Mainnet, "heze", "DataColumnSidecar");
 }
 #[test]
-fn eip7805_mainnet_deposit_data() {
-    run_ssz_static_type::<DepositData>(Archive::Mainnet, "eip7805", "DepositData");
-}
-#[test]
-fn eip7805_mainnet_deposit_message() {
-    run_ssz_static_type::<DepositMessage>(Archive::Mainnet, "eip7805", "DepositMessage");
-}
-#[test]
-fn eip7805_mainnet_deposit_request() {
-    run_ssz_static_type::<electra::DepositRequest>(Archive::Mainnet, "eip7805", "DepositRequest");
-}
-#[test]
-fn eip7805_mainnet_eth1_block() {
-    run_ssz_static_type::<Eth1Block>(Archive::Mainnet, "eip7805", "Eth1Block");
-}
-#[test]
-fn eip7805_mainnet_eth1_data() {
-    run_ssz_static_type::<Eth1Data>(Archive::Mainnet, "eip7805", "Eth1Data");
-}
-#[test]
-fn eip7805_mainnet_execution_payload() {
-    run_ssz_static_type::<electra::ExecutionPayload>(
-        Archive::Mainnet,
-        "eip7805",
-        "ExecutionPayload",
-    );
-}
-#[test]
-fn eip7805_mainnet_execution_payload_header() {
-    run_ssz_static_type::<electra::ExecutionPayloadHeader>(
-        Archive::Mainnet,
-        "eip7805",
-        "ExecutionPayloadHeader",
-    );
-}
-#[test]
-fn eip7805_mainnet_execution_requests() {
-    run_ssz_static_type::<electra::ExecutionRequests>(
-        Archive::Mainnet,
-        "eip7805",
-        "ExecutionRequests",
-    );
-}
-#[test]
-fn eip7805_mainnet_fork() {
-    run_ssz_static_type::<Fork>(Archive::Mainnet, "eip7805", "Fork");
-}
-#[test]
-fn eip7805_mainnet_fork_data() {
-    run_ssz_static_type::<ForkData>(Archive::Mainnet, "eip7805", "ForkData");
-}
-#[test]
-fn eip7805_mainnet_historical_batch() {
-    run_ssz_static_type::<HistoricalBatch>(Archive::Mainnet, "eip7805", "HistoricalBatch");
-}
-#[test]
-fn eip7805_mainnet_historical_summary() {
-    run_ssz_static_type::<capella::HistoricalSummary>(
-        Archive::Mainnet,
-        "eip7805",
-        "HistoricalSummary",
-    );
-}
-#[test]
-fn eip7805_mainnet_indexed_attestation() {
-    run_ssz_static_type::<electra::IndexedAttestation>(
-        Archive::Mainnet,
-        "eip7805",
-        "IndexedAttestation",
-    );
-}
-#[test]
-fn eip7805_mainnet_pending_attestation() {
-    run_ssz_static_type::<PendingAttestation>(Archive::Mainnet, "eip7805", "PendingAttestation");
-}
-#[test]
-fn eip7805_mainnet_pending_consolidation() {
-    run_ssz_static_type::<electra::PendingConsolidation>(
-        Archive::Mainnet,
-        "eip7805",
-        "PendingConsolidation",
-    );
-}
-#[test]
-fn eip7805_mainnet_pending_deposit() {
-    run_ssz_static_type::<electra::PendingDeposit>(Archive::Mainnet, "eip7805", "PendingDeposit");
-}
-#[test]
-fn eip7805_mainnet_pending_partial_withdrawal() {
-    run_ssz_static_type::<electra::PendingPartialWithdrawal>(
-        Archive::Mainnet,
-        "eip7805",
-        "PendingPartialWithdrawal",
-    );
-}
-#[test]
-fn eip7805_mainnet_pow_block() {
-    run_ssz_static_type::<bellatrix::PowBlock>(Archive::Mainnet, "eip7805", "PowBlock");
-}
-#[test]
-fn eip7805_mainnet_proposer_slashing() {
-    run_ssz_static_type::<ProposerSlashing>(Archive::Mainnet, "eip7805", "ProposerSlashing");
-}
-#[test]
-fn eip7805_mainnet_signed_aggregate_and_proof() {
-    run_ssz_static_type::<electra::SignedAggregateAndProof>(
-        Archive::Mainnet,
-        "eip7805",
-        "SignedAggregateAndProof",
-    );
-}
-#[test]
-fn eip7805_mainnet_signed_beacon_block() {
-    run_ssz_static_type::<electra::SignedBeaconBlock>(
-        Archive::Mainnet,
-        "eip7805",
-        "SignedBeaconBlock",
-    );
-}
-#[test]
-fn eip7805_mainnet_signed_beacon_block_header() {
-    run_ssz_static_type::<SignedBeaconBlockHeader>(
-        Archive::Mainnet,
-        "eip7805",
-        "SignedBeaconBlockHeader",
-    );
-}
-#[test]
-fn eip7805_mainnet_signed_bls_to_execution_change() {
-    run_ssz_static_type::<capella::SignedBLSToExecutionChange>(
-        Archive::Mainnet,
-        "eip7805",
-        "SignedBLSToExecutionChange",
-    );
-}
-#[test]
-fn eip7805_mainnet_signed_contribution_and_proof() {
-    run_ssz_static_type::<altair::SignedContributionAndProof>(
-        Archive::Mainnet,
-        "eip7805",
-        "SignedContributionAndProof",
-    );
-}
-#[test]
-fn eip7805_mainnet_signed_voluntary_exit() {
-    run_ssz_static_type::<SignedVoluntaryExit>(Archive::Mainnet, "eip7805", "SignedVoluntaryExit");
-}
-#[test]
-fn eip7805_mainnet_signing_data() {
-    run_ssz_static_type::<SigningData>(Archive::Mainnet, "eip7805", "SigningData");
-}
-#[test]
-fn eip7805_mainnet_single_attestation() {
-    run_ssz_static_type::<electra::SingleAttestation>(
-        Archive::Mainnet,
-        "eip7805",
-        "SingleAttestation",
-    );
-}
-#[test]
-fn eip7805_mainnet_sync_aggregate() {
-    run_ssz_static_type::<altair::SyncAggregate>(Archive::Mainnet, "eip7805", "SyncAggregate");
-}
-#[test]
-fn eip7805_mainnet_sync_aggregator_selection_data() {
-    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
-        Archive::Mainnet,
-        "eip7805",
-        "SyncAggregatorSelectionData",
-    );
-}
-#[test]
-fn eip7805_mainnet_sync_committee() {
-    run_ssz_static_type::<altair::SyncCommittee>(Archive::Mainnet, "eip7805", "SyncCommittee");
-}
-#[test]
-fn eip7805_mainnet_sync_committee_contribution() {
-    run_ssz_static_type::<altair::SyncCommitteeContribution>(
-        Archive::Mainnet,
-        "eip7805",
-        "SyncCommitteeContribution",
-    );
-}
-#[test]
-fn eip7805_mainnet_sync_committee_message() {
-    run_ssz_static_type::<altair::SyncCommitteeMessage>(
-        Archive::Mainnet,
-        "eip7805",
-        "SyncCommitteeMessage",
-    );
-}
-#[test]
-fn eip7805_mainnet_validator() {
-    run_ssz_static_type::<Validator>(Archive::Mainnet, "eip7805", "Validator");
-}
-#[test]
-fn eip7805_mainnet_voluntary_exit() {
-    run_ssz_static_type::<VoluntaryExit>(Archive::Mainnet, "eip7805", "VoluntaryExit");
-}
-#[test]
-fn eip7805_mainnet_withdrawal() {
-    run_ssz_static_type::<capella::Withdrawal>(Archive::Mainnet, "eip7805", "Withdrawal");
-}
-#[test]
-fn eip7805_mainnet_withdrawal_request() {
-    run_ssz_static_type::<electra::WithdrawalRequest>(
-        Archive::Mainnet,
-        "eip7805",
-        "WithdrawalRequest",
-    );
-}
-#[test]
-fn eip7805_mainnet_light_client_header() {
-    run_ssz_static_type::<electra::LightClientHeader>(
-        Archive::Mainnet,
-        "eip7805",
-        "LightClientHeader",
-    );
-}
-#[test]
-fn eip7805_mainnet_light_client_bootstrap() {
-    run_ssz_static_type::<electra::LightClientBootstrap>(
-        Archive::Mainnet,
-        "eip7805",
-        "LightClientBootstrap",
-    );
-}
-#[test]
-fn eip7805_mainnet_light_client_update() {
-    run_ssz_static_type::<electra::LightClientUpdate>(
-        Archive::Mainnet,
-        "eip7805",
-        "LightClientUpdate",
-    );
-}
-#[test]
-fn eip7805_mainnet_light_client_finality_update() {
-    run_ssz_static_type::<electra::LightClientFinalityUpdate>(
-        Archive::Mainnet,
-        "eip7805",
-        "LightClientFinalityUpdate",
-    );
-}
-#[test]
-fn eip7805_mainnet_light_client_optimistic_update() {
-    run_ssz_static_type::<electra::LightClientOptimisticUpdate>(
-        Archive::Mainnet,
-        "eip7805",
-        "LightClientOptimisticUpdate",
-    );
-}
-
-// Fulu types also in eip7805
-#[test]
-fn eip7805_mainnet_data_column_sidecar() {
-    run_ssz_static_type::<fulu::DataColumnSidecar>(
-        Archive::Mainnet,
-        "eip7805",
-        "DataColumnSidecar",
-    );
-}
-#[test]
-fn eip7805_mainnet_data_columns_by_root_identifier() {
+fn heze_mainnet_data_columns_by_root_identifier() {
     run_ssz_static_type::<fulu::DataColumnsByRootIdentifier>(
         Archive::Mainnet,
-        "eip7805",
+        "heze",
         "DataColumnsByRootIdentifier",
     );
 }
 #[test]
-fn eip7805_mainnet_matrix_entry() {
-    run_ssz_static_type::<fulu::MatrixEntry>(Archive::Mainnet, "eip7805", "MatrixEntry");
-}
-
-// New in eip7805
-#[test]
-fn eip7805_mainnet_inclusion_list() {
-    run_ssz_static_type::<eip7805::InclusionList>(Archive::Mainnet, "eip7805", "InclusionList");
+fn heze_mainnet_deposit() {
+    run_ssz_static_type::<Deposit>(Archive::Mainnet, "heze", "Deposit");
 }
 #[test]
-fn eip7805_mainnet_signed_inclusion_list() {
-    run_ssz_static_type::<eip7805::SignedInclusionList>(
+fn heze_mainnet_deposit_data() {
+    run_ssz_static_type::<DepositData>(Archive::Mainnet, "heze", "DepositData");
+}
+#[test]
+fn heze_mainnet_deposit_message() {
+    run_ssz_static_type::<DepositMessage>(Archive::Mainnet, "heze", "DepositMessage");
+}
+#[test]
+fn heze_mainnet_deposit_request() {
+    run_ssz_static_type::<electra::DepositRequest>(Archive::Mainnet, "heze", "DepositRequest");
+}
+#[test]
+fn heze_mainnet_eth1_block() {
+    run_ssz_static_type::<Eth1Block>(Archive::Mainnet, "heze", "Eth1Block");
+}
+#[test]
+fn heze_mainnet_eth1_data() {
+    run_ssz_static_type::<Eth1Data>(Archive::Mainnet, "heze", "Eth1Data");
+}
+#[test]
+fn heze_mainnet_execution_payload() {
+    run_ssz_static_type::<gloas::ExecutionPayload>(Archive::Mainnet, "heze", "ExecutionPayload");
+}
+#[test]
+fn heze_mainnet_execution_payload_bid() {
+    run_ssz_static_type::<heze::ExecutionPayloadBid>(
         Archive::Mainnet,
-        "eip7805",
+        "heze",
+        "ExecutionPayloadBid",
+    );
+}
+#[test]
+fn heze_mainnet_execution_payload_envelope() {
+    run_ssz_static_type::<gloas::ExecutionPayloadEnvelope>(
+        Archive::Mainnet,
+        "heze",
+        "ExecutionPayloadEnvelope",
+    );
+}
+#[test]
+fn heze_mainnet_execution_requests() {
+    run_ssz_static_type::<gloas::ExecutionRequests>(Archive::Mainnet, "heze", "ExecutionRequests");
+}
+#[test]
+fn heze_mainnet_fork() {
+    run_ssz_static_type::<Fork>(Archive::Mainnet, "heze", "Fork");
+}
+#[test]
+fn heze_mainnet_fork_data() {
+    run_ssz_static_type::<ForkData>(Archive::Mainnet, "heze", "ForkData");
+}
+#[test]
+fn heze_mainnet_historical_summary() {
+    run_ssz_static_type::<capella::HistoricalSummary>(
+        Archive::Mainnet,
+        "heze",
+        "HistoricalSummary",
+    );
+}
+#[test]
+fn heze_mainnet_inclusion_list() {
+    run_ssz_static_type::<heze::InclusionList>(Archive::Mainnet, "heze", "InclusionList");
+}
+#[test]
+fn heze_mainnet_indexed_attestation() {
+    run_ssz_static_type::<gloas::IndexedAttestation>(
+        Archive::Mainnet,
+        "heze",
+        "IndexedAttestation",
+    );
+}
+#[test]
+fn heze_mainnet_indexed_payload_attestation() {
+    run_ssz_static_type::<gloas::IndexedPayloadAttestation>(
+        Archive::Mainnet,
+        "heze",
+        "IndexedPayloadAttestation",
+    );
+}
+#[test]
+fn heze_mainnet_light_client_bootstrap() {
+    run_ssz_static_type::<heze::LightClientBootstrap>(
+        Archive::Mainnet,
+        "heze",
+        "LightClientBootstrap",
+    );
+}
+#[test]
+fn heze_mainnet_light_client_finality_update() {
+    run_ssz_static_type::<heze::LightClientFinalityUpdate>(
+        Archive::Mainnet,
+        "heze",
+        "LightClientFinalityUpdate",
+    );
+}
+#[test]
+fn heze_mainnet_light_client_header() {
+    run_ssz_static_type::<heze::LightClientHeader>(Archive::Mainnet, "heze", "LightClientHeader");
+}
+#[test]
+fn heze_mainnet_light_client_optimistic_update() {
+    run_ssz_static_type::<heze::LightClientOptimisticUpdate>(
+        Archive::Mainnet,
+        "heze",
+        "LightClientOptimisticUpdate",
+    );
+}
+#[test]
+fn heze_mainnet_light_client_update() {
+    run_ssz_static_type::<heze::LightClientUpdate>(Archive::Mainnet, "heze", "LightClientUpdate");
+}
+#[test]
+fn heze_mainnet_matrix_entry() {
+    run_ssz_static_type::<fulu::MatrixEntry>(Archive::Mainnet, "heze", "MatrixEntry");
+}
+#[test]
+fn heze_mainnet_partial_data_column_group_i_d() {
+    run_ssz_static_type::<gloas::PartialDataColumnGroupID>(
+        Archive::Mainnet,
+        "heze",
+        "PartialDataColumnGroupID",
+    );
+}
+#[test]
+fn heze_mainnet_partial_data_column_parts_metadata() {
+    run_ssz_static_type::<gloas::PartialDataColumnPartsMetadata>(
+        Archive::Mainnet,
+        "heze",
+        "PartialDataColumnPartsMetadata",
+    );
+}
+#[test]
+fn heze_mainnet_partial_data_column_sidecar() {
+    run_ssz_static_type::<gloas::PartialDataColumnSidecar>(
+        Archive::Mainnet,
+        "heze",
+        "PartialDataColumnSidecar",
+    );
+}
+#[test]
+fn heze_mainnet_payload_attestation() {
+    run_ssz_static_type::<gloas::PayloadAttestation>(
+        Archive::Mainnet,
+        "heze",
+        "PayloadAttestation",
+    );
+}
+#[test]
+fn heze_mainnet_payload_attestation_data() {
+    run_ssz_static_type::<gloas::PayloadAttestationData>(
+        Archive::Mainnet,
+        "heze",
+        "PayloadAttestationData",
+    );
+}
+#[test]
+fn heze_mainnet_payload_attestation_message() {
+    run_ssz_static_type::<gloas::PayloadAttestationMessage>(
+        Archive::Mainnet,
+        "heze",
+        "PayloadAttestationMessage",
+    );
+}
+#[test]
+fn heze_mainnet_pending_consolidation() {
+    run_ssz_static_type::<electra::PendingConsolidation>(
+        Archive::Mainnet,
+        "heze",
+        "PendingConsolidation",
+    );
+}
+#[test]
+fn heze_mainnet_pending_deposit() {
+    run_ssz_static_type::<electra::PendingDeposit>(Archive::Mainnet, "heze", "PendingDeposit");
+}
+#[test]
+fn heze_mainnet_pending_partial_withdrawal() {
+    run_ssz_static_type::<electra::PendingPartialWithdrawal>(
+        Archive::Mainnet,
+        "heze",
+        "PendingPartialWithdrawal",
+    );
+}
+#[test]
+fn heze_mainnet_pow_block() {
+    run_ssz_static_type::<bellatrix::PowBlock>(Archive::Mainnet, "heze", "PowBlock");
+}
+#[test]
+fn heze_mainnet_proposer_preferences() {
+    run_ssz_static_type::<gloas::ProposerPreferences>(
+        Archive::Mainnet,
+        "heze",
+        "ProposerPreferences",
+    );
+}
+#[test]
+fn heze_mainnet_proposer_slashing() {
+    run_ssz_static_type::<ProposerSlashing>(Archive::Mainnet, "heze", "ProposerSlashing");
+}
+#[test]
+fn heze_mainnet_signed_aggregate_and_proof() {
+    run_ssz_static_type::<gloas::SignedAggregateAndProof>(
+        Archive::Mainnet,
+        "heze",
+        "SignedAggregateAndProof",
+    );
+}
+#[test]
+fn heze_mainnet_signed_b_l_s_to_execution_change() {
+    run_ssz_static_type::<capella::SignedBLSToExecutionChange>(
+        Archive::Mainnet,
+        "heze",
+        "SignedBLSToExecutionChange",
+    );
+}
+#[test]
+fn heze_mainnet_signed_beacon_block() {
+    run_ssz_static_type::<heze::SignedBeaconBlock>(Archive::Mainnet, "heze", "SignedBeaconBlock");
+}
+#[test]
+fn heze_mainnet_signed_beacon_block_header() {
+    run_ssz_static_type::<SignedBeaconBlockHeader>(
+        Archive::Mainnet,
+        "heze",
+        "SignedBeaconBlockHeader",
+    );
+}
+#[test]
+fn heze_mainnet_signed_contribution_and_proof() {
+    run_ssz_static_type::<altair::SignedContributionAndProof>(
+        Archive::Mainnet,
+        "heze",
+        "SignedContributionAndProof",
+    );
+}
+#[test]
+fn heze_mainnet_signed_execution_payload_bid() {
+    run_ssz_static_type::<heze::SignedExecutionPayloadBid>(
+        Archive::Mainnet,
+        "heze",
+        "SignedExecutionPayloadBid",
+    );
+}
+#[test]
+fn heze_mainnet_signed_execution_payload_envelope() {
+    run_ssz_static_type::<gloas::SignedExecutionPayloadEnvelope>(
+        Archive::Mainnet,
+        "heze",
+        "SignedExecutionPayloadEnvelope",
+    );
+}
+#[test]
+fn heze_mainnet_signed_inclusion_list() {
+    run_ssz_static_type::<heze::SignedInclusionList>(
+        Archive::Mainnet,
+        "heze",
         "SignedInclusionList",
     );
+}
+#[test]
+fn heze_mainnet_signed_proposer_preferences() {
+    run_ssz_static_type::<gloas::SignedProposerPreferences>(
+        Archive::Mainnet,
+        "heze",
+        "SignedProposerPreferences",
+    );
+}
+#[test]
+fn heze_mainnet_signed_voluntary_exit() {
+    run_ssz_static_type::<SignedVoluntaryExit>(Archive::Mainnet, "heze", "SignedVoluntaryExit");
+}
+#[test]
+fn heze_mainnet_signing_data() {
+    run_ssz_static_type::<SigningData>(Archive::Mainnet, "heze", "SigningData");
+}
+#[test]
+fn heze_mainnet_single_attestation() {
+    run_ssz_static_type::<electra::SingleAttestation>(
+        Archive::Mainnet,
+        "heze",
+        "SingleAttestation",
+    );
+}
+#[test]
+fn heze_mainnet_sync_aggregate() {
+    run_ssz_static_type::<altair::SyncAggregate>(Archive::Mainnet, "heze", "SyncAggregate");
+}
+#[test]
+fn heze_mainnet_sync_aggregator_selection_data() {
+    run_ssz_static_type::<altair::SyncAggregatorSelectionData>(
+        Archive::Mainnet,
+        "heze",
+        "SyncAggregatorSelectionData",
+    );
+}
+#[test]
+fn heze_mainnet_sync_committee() {
+    run_ssz_static_type::<altair::SyncCommittee>(Archive::Mainnet, "heze", "SyncCommittee");
+}
+#[test]
+fn heze_mainnet_sync_committee_contribution() {
+    run_ssz_static_type::<altair::SyncCommitteeContribution>(
+        Archive::Mainnet,
+        "heze",
+        "SyncCommitteeContribution",
+    );
+}
+#[test]
+fn heze_mainnet_sync_committee_message() {
+    run_ssz_static_type::<altair::SyncCommitteeMessage>(
+        Archive::Mainnet,
+        "heze",
+        "SyncCommitteeMessage",
+    );
+}
+#[test]
+fn heze_mainnet_validator() {
+    run_ssz_static_type::<Validator>(Archive::Mainnet, "heze", "Validator");
+}
+#[test]
+fn heze_mainnet_voluntary_exit() {
+    run_ssz_static_type::<VoluntaryExit>(Archive::Mainnet, "heze", "VoluntaryExit");
+}
+#[test]
+fn heze_mainnet_withdrawal() {
+    run_ssz_static_type::<capella::Withdrawal>(Archive::Mainnet, "heze", "Withdrawal");
+}
+#[test]
+fn heze_mainnet_withdrawal_request() {
+    run_ssz_static_type::<electra::WithdrawalRequest>(
+        Archive::Mainnet,
+        "heze",
+        "WithdrawalRequest",
+    );
+}
+#[test]
+fn heze_mainnet_builder() {
+    run_ssz_static_type::<gloas::Builder>(Archive::Mainnet, "heze", "Builder");
+}
+#[test]
+fn gloas_mainnet_builder_type() {
+    run_ssz_static_type::<gloas::Builder>(Archive::Mainnet, "gloas", "Builder");
 }
