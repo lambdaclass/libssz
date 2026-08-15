@@ -73,10 +73,23 @@ fn decode_uint<const N: usize, T>(
     Ok(from_le_bytes(arr))
 }
 
+/// Bulk-decode `bytes` into a `Vec<T>` via a single `memcpy`.
+///
+/// # Safety
+///
+/// `T` must be valid for any bit pattern (no invalid representations),
+/// since arbitrary wire bytes are reinterpreted as `T` values.
+///
+/// # Correctness
+///
+/// `T` must have a little-endian in-memory layout matching SSZ wire
+/// format. This is enforced at compile time by the `#[cfg(target_endian)]`
+/// gate on the only code path that calls this function.
 #[cfg(feature = "alloc")]
-fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
+unsafe fn decode_fixed_vec_le<T>(bytes: &[u8]) -> Result<Vec<T>, DecodeError> {
     #[cfg(target_endian = "little")]
     {
+        let item_size = core::mem::size_of::<T>();
         if !bytes.len().is_multiple_of(item_size) {
             return Err(DecodeError::InvalidByteLength {
                 expected: item_size,
@@ -85,20 +98,16 @@ fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, Deco
         }
         let count = bytes.len() / item_size;
         let mut result = Vec::<T>::with_capacity(count);
-        unsafe {
-            core::ptr::copy_nonoverlapping(
-                bytes.as_ptr(),
-                result.as_mut_ptr() as *mut u8,
-                bytes.len(),
-            );
-            result.set_len(count);
-        }
+        // The length check guarantees `count * size_of::<T>() == bytes.len()`,
+        // and `with_capacity(count)` allocates at least that many bytes, so
+        // the copy and `set_len` stay within the allocated capacity.
+        core::ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, bytes.len());
+        result.set_len(count);
         Ok(result)
     }
     #[cfg(not(target_endian = "little"))]
     {
         let _ = bytes;
-        let _ = item_size;
         unreachable!()
     }
 }
@@ -121,7 +130,8 @@ impl SszDecode for u8 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 1)
+            // SAFETY: primitive integers are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -148,7 +158,8 @@ impl SszDecode for u16 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 2)
+            // SAFETY: primitive integers are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -175,7 +186,8 @@ impl SszDecode for u32 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 4)
+            // SAFETY: primitive integers are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -202,7 +214,8 @@ impl SszDecode for u64 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 8)
+            // SAFETY: primitive integers are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
@@ -229,7 +242,8 @@ impl SszDecode for u128 {
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         #[cfg(target_endian = "little")]
         {
-            decode_fixed_vec_le(bytes, 16)
+            // SAFETY: primitive integers are valid for any bit pattern.
+            unsafe { decode_fixed_vec_le(bytes) }
         }
         #[cfg(not(target_endian = "little"))]
         {
