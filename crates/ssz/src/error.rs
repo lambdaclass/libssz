@@ -24,6 +24,8 @@ pub enum DecodeError {
     MissingDelimiterBit,
     /// A container has zero variable-length fields but leftover bytes.
     AdditionalBytes { expected: usize, got: usize },
+    /// `ssz_decode_fixed_vec` was called on a variable-size type.
+    NotFixedSize,
 }
 
 #[cfg(feature = "std")]
