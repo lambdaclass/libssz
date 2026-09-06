@@ -547,3 +547,25 @@ fn container_encoder_new() {
     enc2.finalize();
     assert_eq!(buf1, buf2);
 }
+
+// ── DoS regression: bounded pre-allocation in variable-length list decode ──
+
+// A variable-length list reads `num_items` from the first 4-byte offset
+// (attacker-controlled) and reserves `Vec::with_capacity(num_items + 1)`. The
+// decoder must reject an out-of-bounds first offset before that allocation,
+// otherwise a few input bytes can force a multi-gigabyte allocation (OOM).
+// This covers the *uncapped* `Vec<T>` path (also used by `ProgressiveList`),
+// which has no max-length to fall back on.
+#[test]
+fn variable_list_rejects_oversized_first_offset_before_alloc() {
+    // first_offset = 0xFFFF_FFFC (~4.29e9, a multiple of 4) in an 8-byte buffer.
+    let bytes = [0xFC, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00];
+    let result = Vec::<Vec<u8>>::from_ssz_bytes(&bytes);
+    assert_eq!(
+        result,
+        Err(DecodeError::OffsetOutOfBounds {
+            offset: 0xFFFF_FFFC,
+            length: 8,
+        })
+    );
+}

@@ -130,3 +130,25 @@ impl<T: HashTreeRoot + SszEncode> HashTreeRoot for ProgressiveList<T> {
         mix_in_length(hasher, &root, length)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `ProgressiveList` has no max length, so it relies entirely on the core
+    // decoder rejecting an out-of-bounds first offset before reserving capacity.
+    // Without that guard, a few bytes could force a multi-gigabyte allocation.
+    #[test]
+    fn decode_rejects_oversized_first_offset_before_alloc() {
+        // first_offset = 0xFFFF_FFFC (a multiple of 4) in an 8-byte buffer.
+        let bytes = [0xFC, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00];
+        let result = ProgressiveList::<Vec<u8>>::from_ssz_bytes(&bytes);
+        assert_eq!(
+            result,
+            Err(DecodeError::OffsetOutOfBounds {
+                offset: 0xFFFF_FFFC,
+                length: 8,
+            })
+        );
+    }
+}
