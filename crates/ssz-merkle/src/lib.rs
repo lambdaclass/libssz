@@ -121,11 +121,11 @@ pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usiz
 
     for zero_hash in ZERO_HASHES.iter().take(real_depth) {
         next.clear();
-        let mut pairs = layer.chunks_exact(2);
-        for pair in &mut pairs {
+        let (pairs, remainder) = layer.as_chunks::<2>();
+        for pair in pairs {
             next.push(hash_nodes(hasher, &pair[0], &pair[1]));
         }
-        if let [odd] = pairs.remainder() {
+        if let [odd] = remainder {
             next.push(hash_nodes(hasher, odd, zero_hash));
         }
         core::mem::swap(&mut layer, &mut next);
