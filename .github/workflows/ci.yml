@@ -13,7 +13,7 @@ jobs:
     name: GHA Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: reviewdog/action-actionlint@v1
         with:
           fail_level: error
@@ -22,7 +22,7 @@ jobs:
     name: License Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
@@ -32,7 +32,7 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: rustup component add rustfmt
       - run: cargo fmt --all -- --check
 
@@ -41,8 +41,8 @@ jobs:
     needs: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -58,8 +58,8 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -81,8 +81,8 @@ jobs:
           - features: alloc-only
             args: "--no-default-features --features alloc"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -97,8 +97,8 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -115,9 +115,9 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: rustup target add thumbv7m-none-eabi riscv64imac-unknown-none-elf
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -133,8 +133,8 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -151,8 +151,8 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -164,7 +164,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - run: cargo llvm-cov --workspace --exclude spec-tests --lcov --output-path lcov.info --fail-under-lines 70
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v7
         with:
           files: lcov.info
           fail_ci_if_error: false
@@ -176,8 +176,8 @@ jobs:
     needs: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -185,7 +185,7 @@ jobs:
             target
           key: spec-tests-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: spec-tests-build-
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: target/spec-tests
           key: consensus-spec-vectors-v1.7.0-alpha.13
