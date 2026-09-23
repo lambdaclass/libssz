@@ -264,6 +264,30 @@ impl<const N: usize> SszEncode for [u8; N] {
     }
 }
 
+// ── &T ──
+
+impl<T: SszEncode + ?Sized> SszEncode for &T {
+    #[inline(always)]
+    fn is_fixed_size() -> bool {
+        T::is_fixed_size()
+    }
+
+    #[inline(always)]
+    fn fixed_size() -> usize {
+        T::fixed_size()
+    }
+
+    #[inline(always)]
+    fn encoded_len(&self) -> usize {
+        (**self).encoded_len()
+    }
+
+    #[inline(always)]
+    fn ssz_append(&self, buf: &mut Vec<u8>) {
+        (**self).ssz_append(buf);
+    }
+}
+
 // ── Vec<T> ──
 
 impl<T: SszEncode> SszEncode for Vec<T> {
