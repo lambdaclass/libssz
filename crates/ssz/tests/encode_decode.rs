@@ -301,6 +301,25 @@ fn byte_array_96_round_trip() {
 }
 
 #[test]
+fn zero_sized_byte_array_vec() {
+    // `[u8; 0]` carries no length information, so an empty payload decodes to
+    // an empty Vec and anything else is rejected. Used to divide by zero.
+    assert!(<[u8; 0] as SszDecode>::ssz_decode_fixed_vec(&[])
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        <[u8; 0] as SszDecode>::ssz_decode_fixed_vec(&[1, 2, 3]).unwrap_err(),
+        DecodeError::InvalidByteLength {
+            expected: 0,
+            got: 3
+        }
+    );
+    // Same answers through the public list path.
+    assert!(Vec::<[u8; 0]>::from_ssz_bytes(&[]).unwrap().is_empty());
+    assert!(Vec::<[u8; 0]>::from_ssz_bytes(&[1, 2, 3]).is_err());
+}
+
+#[test]
 fn byte_array_wrong_length() {
     let err = <[u8; 48]>::from_ssz_bytes(&[0u8; 32]).unwrap_err();
     assert_eq!(

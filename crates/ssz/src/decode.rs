@@ -254,6 +254,20 @@ fn decode_byte_array<const N: usize>(bytes: &[u8]) -> Result<[u8; N], DecodeErro
 
 #[cfg(feature = "alloc")]
 fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, DecodeError> {
+    // `[u8; 0]` is a legal `N`, but a zero-sized item carries no length
+    // information: an empty input decodes to an empty `Vec` (matching the list
+    // decoders) and anything else is invalid. Handled up front so the
+    // `bytes.len() / N` below cannot divide by zero.
+    if N == 0 {
+        return if bytes.is_empty() {
+            Ok(Vec::new())
+        } else {
+            Err(DecodeError::InvalidByteLength {
+                expected: 0,
+                got: bytes.len(),
+            })
+        };
+    }
     if !bytes.len().is_multiple_of(N) {
         return Err(DecodeError::InvalidByteLength {
             expected: N,
@@ -262,6 +276,9 @@ fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, D
     }
     let count = bytes.len() / N;
     let mut result = Vec::<[u8; N]>::with_capacity(count);
+    // SAFETY: The length check guarantees `count * N == bytes.len()`, and
+    // `with_capacity(count)` allocates at least `count * N` bytes, so the
+    // copy and `set_len` stay in bounds.
     unsafe {
         core::ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, bytes.len());
         result.set_len(count);
