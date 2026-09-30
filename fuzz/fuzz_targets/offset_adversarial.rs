@@ -34,6 +34,11 @@ struct FixedThenVar {
     data: Vec<u8>,
 }
 
+#[derive(Debug, PartialEq, SszEncode, SszDecode)]
+struct VarItemsField {
+    items: Vec<Vec<u8>>,
+}
+
 fuzz_target!(|data: &[u8]| {
     // Attempt decode of each struct — must never panic regardless of input.
     // If decode succeeds, roundtrip must hold.
@@ -60,5 +65,19 @@ fuzz_target!(|data: &[u8]| {
         let encoded = v.to_ssz();
         let decoded = FixedThenVar::from_ssz_bytes(&encoded).unwrap();
         assert_eq!(decoded, v, "FixedThenVar roundtrip");
+    }
+
+    // Lists of variable-length items have their own offset table, exercising
+    // decode_variable_length_items_with_max rather than ContainerDecoder.
+    if let Ok(v) = Vec::<Vec<u8>>::from_ssz_bytes(data) {
+        let encoded = v.to_ssz();
+        let decoded = Vec::<Vec<u8>>::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(decoded, v, "Vec<Vec<u8>> roundtrip");
+    }
+
+    if let Ok(v) = VarItemsField::from_ssz_bytes(data) {
+        let encoded = v.to_ssz();
+        let decoded = VarItemsField::from_ssz_bytes(&encoded).unwrap();
+        assert_eq!(decoded, v, "VarItemsField roundtrip");
     }
 });

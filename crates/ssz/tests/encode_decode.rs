@@ -150,6 +150,31 @@ fn vec_of_vecs_empty() {
     assert_eq!(Vec::<Vec<u8>>::from_ssz_bytes(&encoded).unwrap(), val);
 }
 
+// A zero first offset would imply 0 elements while the offset/scope boundary
+// describes 1 element spanning the whole input; it must be rejected up front.
+// See https://github.com/leanEthereum/leanSpec/issues/1175
+#[test]
+fn vec_of_vecs_zero_first_offset() {
+    let bytes = [0x00, 0x00, 0x00, 0x00, 0xAA, 0xBB, 0xCC, 0xDD];
+    assert_eq!(
+        Vec::<Vec<u8>>::from_ssz_bytes(&bytes),
+        Err(DecodeError::InvalidFirstOffset {
+            expected: 4,
+            got: 0
+        })
+    );
+
+    // Same with no trailing data: only an offset table pointing at itself.
+    let bytes = [0x00, 0x00, 0x00, 0x00];
+    assert_eq!(
+        Vec::<Vec<u8>>::from_ssz_bytes(&bytes),
+        Err(DecodeError::InvalidFirstOffset {
+            expected: 4,
+            got: 0
+        })
+    );
+}
+
 // ── ContainerEncoder / ContainerDecoder ──
 
 /// Simulates a container: { a: u32, b: Vec<u8>, c: u16 }
