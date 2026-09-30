@@ -674,12 +674,7 @@ fn derive_decode_struct(
                     }
                     Ok(result)
                 } else {
-                    // Variable-size: fall back to default
-                    let item_size = <Self as libssz::SszDecode>::fixed_size();
-                    bytes
-                        .chunks_exact(item_size)
-                        .map(Self::from_ssz_bytes)
-                        .collect()
+                    Err(libssz::DecodeError::NotFixedSize)
                 }
             }
         }

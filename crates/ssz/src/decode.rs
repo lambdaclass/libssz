@@ -22,6 +22,9 @@ pub trait SszDecode: Sized {
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         let item_size = Self::fixed_size();
+        if item_size == 0 {
+            return Err(DecodeError::NotFixedSize);
+        }
         bytes
             .chunks_exact(item_size)
             .map(Self::from_ssz_bytes)
