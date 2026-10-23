@@ -26,10 +26,10 @@ no-std-check: ## Verify no_std compilation on thumbv7m-none-eabi
 coverage: ## Generate code coverage report (requires cargo-llvm-cov)
 	cargo llvm-cov --workspace --exclude spec-tests --lcov --output-path lcov.info --fail-under-lines 70
 
-download-spec-tests: ## Download consensus spec test vectors (~1.25GB)
+download-spec-tests: ## Download consensus-specs and ssz-specs test vectors (~1.25GB)
 	./spec-tests/download-vectors.sh
 
-spec-tests: download-spec-tests ## Run consensus spec tests (downloads vectors if needed)
+spec-tests: download-spec-tests ## Run consensus-specs and ssz-specs tests (downloads vectors if needed)
 	cargo test -p spec-tests
 
 audit: ## Audit dependencies for known vulnerabilities (requires cargo-audit)

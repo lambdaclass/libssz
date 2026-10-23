@@ -12,3 +12,4 @@ pub mod heze;
 pub mod minimal;
 pub mod phase0;
 pub mod progressive_containers;
+pub mod ssz_specs;
