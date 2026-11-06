@@ -16,29 +16,35 @@ pub type Node = [u8; 32];
 
 include!(concat!(env!("OUT_DIR"), "/zero_hashes.rs"));
 
-/// Trait for pluggable SHA-256 implementations.
+/// Trait for pluggable Keccak-256 implementations.
 ///
-/// Instance method (`&self`) enables passing `&impl Sha256Hasher` through the
+/// Instance method (`&self`) enables passing `&impl MerkleHasher` through the
 /// call chain. The hasher struct is typically zero-sized so `&self` compiles away.
-pub trait Sha256Hasher {
+///
+/// Implementations must compute Keccak-256: [`ZERO_HASHES`] is precomputed with
+/// it, and [`merkleize`] substitutes those entries for all-zero subtrees.
+pub trait MerkleHasher {
     fn hash(&self, data: &[u8]) -> [u8; 32];
 }
 
-/// Default SHA-256 hasher using the `sha2` crate.
-#[cfg(feature = "sha2-backend")]
-pub struct Sha2Hasher;
+/// Default Keccak-256 hasher using the `sha3` crate.
+///
+/// This is the original Keccak-256 used by Ethereum's execution layer (`0x01`
+/// padding), not NIST SHA3-256.
+#[cfg(feature = "keccak-backend")]
+pub struct KeccakHasher;
 
-#[cfg(feature = "sha2-backend")]
-impl Sha256Hasher for Sha2Hasher {
+#[cfg(feature = "keccak-backend")]
+impl MerkleHasher for KeccakHasher {
     fn hash(&self, data: &[u8]) -> [u8; 32] {
-        use sha2::{Digest, Sha256};
-        Sha256::digest(data).into()
+        use sha3::{Digest, Keccak256};
+        Keccak256::digest(data).into()
     }
 }
 
-/// Hash two nodes together: SHA256(a || b).
+/// Hash two nodes together: Keccak256(a || b).
 #[inline]
-pub fn hash_nodes(hasher: &impl Sha256Hasher, a: &Node, b: &Node) -> Node {
+pub fn hash_nodes(hasher: &impl MerkleHasher, a: &Node, b: &Node) -> Node {
     let mut buf = [0u8; 64];
     buf[..32].copy_from_slice(a);
     buf[32..].copy_from_slice(b);
@@ -81,7 +87,7 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 /// Cost is `O(chunks.len())` plus one hash per virtual level above the real subtree.
 /// Two buffers are allocated and reused (≈ `chunks.len()` and `chunks.len().div_ceil(2)` nodes).
 #[cfg(feature = "alloc")]
-pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usize>) -> Node {
+pub fn merkleize(hasher: &impl MerkleHasher, chunks: &[Node], limit: Option<usize>) -> Node {
     let count = match limit {
         Some(l) => {
             assert!(
@@ -149,13 +155,13 @@ pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usiz
 ///
 /// Reference: EIP-7916 / consensus-specs simple-serialize.md
 #[cfg(feature = "alloc")]
-pub fn merkleize_progressive(hasher: &impl Sha256Hasher, chunks: &[Node]) -> Node {
+pub fn merkleize_progressive(hasher: &impl MerkleHasher, chunks: &[Node]) -> Node {
     merkleize_progressive_inner(hasher, chunks, 1)
 }
 
 #[cfg(feature = "alloc")]
 fn merkleize_progressive_inner(
-    hasher: &impl Sha256Hasher,
+    hasher: &impl MerkleHasher,
     chunks: &[Node],
     num_leaves: usize,
 ) -> Node {
@@ -175,7 +181,7 @@ fn merkleize_progressive_inner(
 /// Mix in an active_fields bitvector: hash_nodes(root, pack_bits(active_fields)).
 #[cfg(feature = "alloc")]
 pub fn mix_in_active_fields(
-    hasher: &impl Sha256Hasher,
+    hasher: &impl MerkleHasher,
     root: &Node,
     active_fields: &[bool],
 ) -> Node {
@@ -193,7 +199,7 @@ pub fn mix_in_active_fields(
 
 /// Mix in a length value: hash_nodes(root, length_as_le_bytes_node).
 #[inline]
-pub fn mix_in_length(hasher: &impl Sha256Hasher, root: &Node, length: usize) -> Node {
+pub fn mix_in_length(hasher: &impl MerkleHasher, root: &Node, length: usize) -> Node {
     let mut length_node = [0u8; 32];
     length_node[..8].copy_from_slice(&(length as u64).to_le_bytes());
     hash_nodes(hasher, root, &length_node)
@@ -201,7 +207,7 @@ pub fn mix_in_length(hasher: &impl Sha256Hasher, root: &Node, length: usize) -> 
 
 /// Mix in a selector value: hash_nodes(root, selector_as_le_bytes_node).
 #[inline]
-pub fn mix_in_selector(hasher: &impl Sha256Hasher, root: &Node, selector: u8) -> Node {
+pub fn mix_in_selector(hasher: &impl MerkleHasher, root: &Node, selector: u8) -> Node {
     let mut selector_node = [0u8; 32];
     selector_node[0] = selector;
     hash_nodes(hasher, root, &selector_node)
@@ -209,7 +215,7 @@ pub fn mix_in_selector(hasher: &impl Sha256Hasher, root: &Node, selector: u8) ->
 
 /// Trait for types that can compute their SSZ hash tree root.
 pub trait HashTreeRoot {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node;
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node;
 
     /// Returns `true` for SSZ basic types (bool, uN, byte arrays).
     /// Composite types (containers, vectors, lists) return `false`.
@@ -226,7 +232,7 @@ pub trait HashTreeRoot {
 
 impl HashTreeRoot for bool {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         node[0] = *self as u8;
         node
@@ -241,7 +247,7 @@ impl HashTreeRoot for bool {
 
 impl HashTreeRoot for u8 {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         let bytes = self.to_le_bytes();
         node[..bytes.len()].copy_from_slice(&bytes);
@@ -255,7 +261,7 @@ impl HashTreeRoot for u8 {
 
 impl HashTreeRoot for u16 {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         let bytes = self.to_le_bytes();
         node[..bytes.len()].copy_from_slice(&bytes);
@@ -269,7 +275,7 @@ impl HashTreeRoot for u16 {
 
 impl HashTreeRoot for u32 {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         let bytes = self.to_le_bytes();
         node[..bytes.len()].copy_from_slice(&bytes);
@@ -283,7 +289,7 @@ impl HashTreeRoot for u32 {
 
 impl HashTreeRoot for u64 {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         let bytes = self.to_le_bytes();
         node[..bytes.len()].copy_from_slice(&bytes);
@@ -297,7 +303,7 @@ impl HashTreeRoot for u64 {
 
 impl HashTreeRoot for u128 {
     #[inline(always)]
-    fn hash_tree_root(&self, _hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, _hasher: &impl MerkleHasher) -> Node {
         let mut node = [0u8; 32];
         let bytes = self.to_le_bytes();
         node[..bytes.len()].copy_from_slice(&bytes);
@@ -313,7 +319,7 @@ impl HashTreeRoot for u128 {
 
 #[cfg(feature = "alloc")]
 impl<const N: usize> HashTreeRoot for [u8; N] {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         if N <= 32 {
             let mut node = [0u8; 32];
             node[..N].copy_from_slice(self);
@@ -332,7 +338,7 @@ impl<const N: usize> HashTreeRoot for [u8; N] {
 
 #[cfg(feature = "alloc")]
 impl<T: HashTreeRoot + SszEncode> HashTreeRoot for Vec<T> {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         let chunks: Vec<Node> = if T::is_basic_type() {
             let mut serialized = Vec::new();
             for item in self {
@@ -359,31 +365,42 @@ mod tests {
     use alloc::vec;
     use alloc::vec::Vec;
 
-    #[cfg(feature = "sha2-backend")]
-    use crate::Sha2Hasher;
+    #[cfg(feature = "keccak-backend")]
+    use crate::KeccakHasher;
 
     // ── hash_nodes tests ──
 
-    #[cfg(feature = "sha2-backend")]
+    /// Pins the legacy Keccak-256 padding (not NIST SHA3-256) via the
+    /// well-known empty-input digest.
+    #[cfg(feature = "keccak-backend")]
+    #[test]
+    fn keccak_hasher_is_legacy_keccak256() {
+        assert_eq!(
+            KeccakHasher.hash(&[]),
+            node_from_hex("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470")
+        );
+    }
+
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_nodes_of_two_zero_nodes() {
         let zero = [0u8; 32];
-        let result = hash_nodes(&Sha2Hasher, &zero, &zero);
-        use sha2::{Digest, Sha256};
-        let mut sha = Sha256::new();
-        sha.update([0u8; 64]);
-        let expected: [u8; 32] = sha.finalize().into();
+        let result = hash_nodes(&KeccakHasher, &zero, &zero);
+        use sha3::{Digest, Keccak256};
+        let mut keccak = Keccak256::new();
+        keccak.update([0u8; 64]);
+        let expected: [u8; 32] = keccak.finalize().into();
         assert_eq!(result, expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_nodes_is_not_commutative() {
         let a = [1u8; 32];
         let b = [2u8; 32];
         assert_ne!(
-            hash_nodes(&Sha2Hasher, &a, &b),
-            hash_nodes(&Sha2Hasher, &b, &a)
+            hash_nodes(&KeccakHasher, &a, &b),
+            hash_nodes(&KeccakHasher, &b, &a)
         );
     }
 
@@ -394,17 +411,17 @@ mod tests {
         assert_eq!(ZERO_HASHES[0], [0u8; 32]);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn zero_hash_level_1_is_hash_of_two_zeros() {
-        let expected = hash_nodes(&Sha2Hasher, &[0u8; 32], &[0u8; 32]);
+        let expected = hash_nodes(&KeccakHasher, &[0u8; 32], &[0u8; 32]);
         assert_eq!(ZERO_HASHES[1], expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn zero_hash_level_2_is_hash_of_two_level_1() {
-        let expected = hash_nodes(&Sha2Hasher, &ZERO_HASHES[1], &ZERO_HASHES[1]);
+        let expected = hash_nodes(&KeccakHasher, &ZERO_HASHES[1], &ZERO_HASHES[1]);
         assert_eq!(ZERO_HASHES[2], expected);
     }
 
@@ -494,73 +511,73 @@ mod tests {
 
     // ── merkleize tests ──
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_empty_returns_zero_hash() {
-        let result = merkleize(&Sha2Hasher, &[], None);
+        let result = merkleize(&KeccakHasher, &[], None);
         assert_eq!(result, ZERO_HASHES[0]);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_one_chunk_is_identity() {
         let chunk = [0x42u8; 32];
-        let result = merkleize(&Sha2Hasher, &[chunk], None);
+        let result = merkleize(&KeccakHasher, &[chunk], None);
         assert_eq!(result, chunk);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_two_chunks() {
         let a = [1u8; 32];
         let b = [2u8; 32];
-        let result = merkleize(&Sha2Hasher, &[a, b], None);
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &a, &b));
+        let result = merkleize(&KeccakHasher, &[a, b], None);
+        assert_eq!(result, hash_nodes(&KeccakHasher, &a, &b));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_three_chunks_pads_to_four() {
         let a = [1u8; 32];
         let b = [2u8; 32];
         let c = [3u8; 32];
-        let result = merkleize(&Sha2Hasher, &[a, b, c], None);
+        let result = merkleize(&KeccakHasher, &[a, b, c], None);
         // Tree: hash(hash(a,b), hash(c, zero))
-        let left = hash_nodes(&Sha2Hasher, &a, &b);
-        let right = hash_nodes(&Sha2Hasher, &c, &ZERO_HASHES[0]);
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &left, &right));
+        let left = hash_nodes(&KeccakHasher, &a, &b);
+        let right = hash_nodes(&KeccakHasher, &c, &ZERO_HASHES[0]);
+        assert_eq!(result, hash_nodes(&KeccakHasher, &left, &right));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_with_limit_pads_with_zero_hashes() {
         let a = [1u8; 32];
         // With limit=4, single chunk should be padded to 4 leaves
-        let result = merkleize(&Sha2Hasher, &[a], Some(4));
+        let result = merkleize(&KeccakHasher, &[a], Some(4));
         // Tree: hash(hash(a, zero), hash(zero, zero))
-        let left = hash_nodes(&Sha2Hasher, &a, &ZERO_HASHES[0]);
+        let left = hash_nodes(&KeccakHasher, &a, &ZERO_HASHES[0]);
         let right = ZERO_HASHES[1]; // hash(zero, zero)
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &left, &right));
+        assert_eq!(result, hash_nodes(&KeccakHasher, &left, &right));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_with_limit_equal_to_count() {
         let a = [1u8; 32];
         let b = [2u8; 32];
         // limit=2 with 2 chunks should give same result as no limit
         assert_eq!(
-            merkleize(&Sha2Hasher, &[a, b], Some(2)),
-            merkleize(&Sha2Hasher, &[a, b], None)
+            merkleize(&KeccakHasher, &[a, b], Some(2)),
+            merkleize(&KeccakHasher, &[a, b], None)
         );
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     #[should_panic(expected = "chunk count")]
     fn merkleize_panics_if_count_exceeds_limit() {
         let chunks = [[0u8; 32]; 3];
-        merkleize(&Sha2Hasher, &chunks, Some(2));
+        merkleize(&KeccakHasher, &chunks, Some(2));
     }
 
     // ── merkleize: zero-subtree elision ──
@@ -568,7 +585,7 @@ mod tests {
     /// Naive merkleization: materializes every leaf up to `limit`, including the
     /// all-zero ones. Reference oracle for [`merkleize`], which must produce
     /// identical roots while skipping the zero subtrees.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     fn merkleize_fully_materialized(chunks: &[Node], limit: Option<usize>) -> Node {
         let count = core::cmp::max(limit.unwrap_or(chunks.len()), chunks.len());
         if count == 0 {
@@ -579,7 +596,7 @@ mod tests {
         while layer.len() > 1 {
             layer = layer
                 .chunks(2)
-                .map(|pair| hash_nodes(&Sha2Hasher, &pair[0], &pair[1]))
+                .map(|pair| hash_nodes(&KeccakHasher, &pair[0], &pair[1]))
                 .collect();
         }
         layer[0]
@@ -587,12 +604,12 @@ mod tests {
 
     /// Counts `hash_nodes` invocations while delegating to the real hasher, so
     /// tree shape is unaffected.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     struct CountingHasher {
         calls: core::cell::Cell<usize>,
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     impl CountingHasher {
         fn new() -> Self {
             Self {
@@ -601,11 +618,11 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "sha2-backend")]
-    impl Sha256Hasher for CountingHasher {
+    #[cfg(feature = "keccak-backend")]
+    impl MerkleHasher for CountingHasher {
         fn hash(&self, data: &[u8]) -> [u8; 32] {
             self.calls.set(self.calls.get() + 1);
-            Sha2Hasher.hash(data)
+            KeccakHasher.hash(data)
         }
     }
 
@@ -629,13 +646,13 @@ mod tests {
         total
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_matches_fully_materialized_oracle() {
         for n in 0..=70 {
             let chunks: Vec<Node> = (0..n).map(|i| [i as u8 + 1; 32]).collect();
             assert_eq!(
-                merkleize(&Sha2Hasher, &chunks, None),
+                merkleize(&KeccakHasher, &chunks, None),
                 merkleize_fully_materialized(&chunks, None),
                 "no limit, {n} chunks"
             );
@@ -644,7 +661,7 @@ mod tests {
                     continue;
                 }
                 assert_eq!(
-                    merkleize(&Sha2Hasher, &chunks, Some(limit)),
+                    merkleize(&KeccakHasher, &chunks, Some(limit)),
                     merkleize_fully_materialized(&chunks, Some(limit)),
                     "limit {limit}, {n} chunks"
                 );
@@ -652,7 +669,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_does_not_hash_zero_subtrees() {
         for n in [1usize, 2, 3, 5, 9, 17, 33, 65, 100, 1025] {
@@ -680,7 +697,7 @@ mod tests {
     /// The regression this guards: crossing a power-of-two boundary used to
     /// double the hash count, because the padding leaves were materialized and
     /// hashed as if they held data.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_cost_is_linear_across_power_of_two_boundary() {
         let count_for = |n: usize| {
@@ -699,22 +716,22 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_empty_with_limit_is_the_precomputed_zero_hash() {
         for (depth, zero_hash) in ZERO_HASHES.iter().enumerate().take(8) {
             let limit = 1usize << depth;
-            assert_eq!(merkleize(&Sha2Hasher, &[], Some(limit)), *zero_hash);
+            assert_eq!(merkleize(&KeccakHasher, &[], Some(limit)), *zero_hash);
         }
         // Non-power-of-two limits round up to the enclosing subtree.
-        assert_eq!(merkleize(&Sha2Hasher, &[], Some(3)), ZERO_HASHES[2]);
-        assert_eq!(merkleize(&Sha2Hasher, &[], Some(100)), ZERO_HASHES[7]);
+        assert_eq!(merkleize(&KeccakHasher, &[], Some(3)), ZERO_HASHES[2]);
+        assert_eq!(merkleize(&KeccakHasher, &[], Some(100)), ZERO_HASHES[7]);
     }
 
     // ── merkleize_progressive tests ──
 
     /// Decode a 64-character hex string into a `Node`.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     fn node_from_hex(s: &str) -> Node {
         let bytes = s.as_bytes();
         assert_eq!(bytes.len(), 64, "expected 64 hex characters");
@@ -730,31 +747,31 @@ mod tests {
     }
 
     /// `hash_tree_root` of a `ProgressiveList[uint64]` holding `values`.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     fn progressive_u64_list_root(values: &[u64]) -> Node {
         let mut serialized = Vec::with_capacity(values.len() * 8);
         for value in values {
             serialized.extend_from_slice(&value.to_le_bytes());
         }
-        let root = merkleize_progressive(&Sha2Hasher, &pack(&serialized));
-        mix_in_length(&Sha2Hasher, &root, values.len())
+        let root = merkleize_progressive(&KeccakHasher, &pack(&serialized));
+        mix_in_length(&KeccakHasher, &root, values.len())
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_progressive_empty_is_zero_node() {
-        assert_eq!(merkleize_progressive(&Sha2Hasher, &[]), [0u8; 32]);
+        assert_eq!(merkleize_progressive(&KeccakHasher, &[]), [0u8; 32]);
     }
 
     /// EIP-7916 puts the fixed-size subtree on the left and the recursive
     /// remainder on the right, so a lone chunk hashes as `hash(chunk, zero)`.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn merkleize_progressive_puts_subtree_on_the_left() {
         let chunk = [0x11u8; 32];
         assert_eq!(
-            merkleize_progressive(&Sha2Hasher, &[chunk]),
-            hash_nodes(&Sha2Hasher, &chunk, &[0u8; 32])
+            merkleize_progressive(&KeccakHasher, &[chunk]),
+            hash_nodes(&KeccakHasher, &chunk, &[0u8; 32])
         );
     }
 
@@ -763,8 +780,9 @@ mod tests {
     /// sizes pack into 0, 1, 1, 2 and 6 chunks: `n = 5` spans the first two
     /// subtrees (leaf counts 1 then 4) and `n = 21` reaches the third (16),
     /// so the larger two exercise the recursion rather than the base case.
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
+    #[ignore = "reference roots come from remerkleable, which hashes with SHA-256"]
     fn merkleize_progressive_matches_reference_roots() {
         let cases: [(u64, &str); 5] = [
             (
@@ -800,8 +818,9 @@ mod tests {
 
     /// Roots pinned from the consensus-specs `basic_progressive_list` vectors
     /// (v1.7.0-alpha.13, `tests/general/phase0/ssz_generic`).
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
+    #[ignore = "consensus-spec roots are SHA-256"]
     fn merkleize_progressive_matches_consensus_spec_vectors() {
         let cases: [(usize, u64, &str, &str); 5] = [
             (
@@ -847,169 +866,169 @@ mod tests {
 
     // ── mix_in_length tests ──
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn mix_in_length_known_value() {
         let root = [0u8; 32];
-        let result = mix_in_length(&Sha2Hasher, &root, 5);
+        let result = mix_in_length(&KeccakHasher, &root, 5);
         let mut len_node = [0u8; 32];
         len_node[..8].copy_from_slice(&5u64.to_le_bytes());
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &root, &len_node));
+        assert_eq!(result, hash_nodes(&KeccakHasher, &root, &len_node));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn mix_in_length_zero() {
         let root = [0xAB; 32];
-        let result = mix_in_length(&Sha2Hasher, &root, 0);
+        let result = mix_in_length(&KeccakHasher, &root, 0);
         // length=0 means length_node is all zeros
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &root, &[0u8; 32]));
+        assert_eq!(result, hash_nodes(&KeccakHasher, &root, &[0u8; 32]));
     }
 
     // ── mix_in_selector tests ──
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn mix_in_selector_known_value() {
         let root = [0u8; 32];
-        let result = mix_in_selector(&Sha2Hasher, &root, 3);
+        let result = mix_in_selector(&KeccakHasher, &root, 3);
         let mut sel_node = [0u8; 32];
         sel_node[0] = 3;
-        assert_eq!(result, hash_nodes(&Sha2Hasher, &root, &sel_node));
+        assert_eq!(result, hash_nodes(&KeccakHasher, &root, &sel_node));
     }
 
     // ── HashTreeRoot tests ──
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_bool_false() {
-        let result = false.hash_tree_root(&Sha2Hasher);
+        let result = false.hash_tree_root(&KeccakHasher);
         assert_eq!(result, [0u8; 32]);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_bool_true() {
-        let result = true.hash_tree_root(&Sha2Hasher);
+        let result = true.hash_tree_root(&KeccakHasher);
         let mut expected = [0u8; 32];
         expected[0] = 1;
         assert_eq!(result, expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_u64() {
         let val: u64 = 0x0102030405060708;
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
         let mut expected = [0u8; 32];
         expected[..8].copy_from_slice(&val.to_le_bytes());
         assert_eq!(result, expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_u8() {
         let val: u8 = 42;
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
         let mut expected = [0u8; 32];
         expected[0] = 42;
         assert_eq!(result, expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_u128() {
         let val: u128 = 1;
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
         let mut expected = [0u8; 32];
         expected[..16].copy_from_slice(&val.to_le_bytes());
         assert_eq!(result, expected);
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_32_is_identity() {
         let arr = [0xab_u8; 32];
-        assert_eq!(arr.hash_tree_root(&Sha2Hasher), arr);
+        assert_eq!(arr.hash_tree_root(&KeccakHasher), arr);
         assert!(<[u8; 32]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_20_is_padded() {
         let arr = [0xcd_u8; 20];
-        let root = arr.hash_tree_root(&Sha2Hasher);
+        let root = arr.hash_tree_root(&KeccakHasher);
         assert_eq!(&root[..20], &arr[..]);
         assert_eq!(&root[20..], &[0u8; 12]);
         assert!(<[u8; 20]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_4_is_padded() {
         let arr = [0x01, 0x02, 0x03, 0x04];
-        let root = arr.hash_tree_root(&Sha2Hasher);
+        let root = arr.hash_tree_root(&KeccakHasher);
         assert_eq!(&root[..4], &arr[..]);
         assert_eq!(&root[4..], &[0u8; 28]);
         assert!(<[u8; 4]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_7_is_padded() {
         let arr = [0xff_u8; 7];
-        let root = arr.hash_tree_root(&Sha2Hasher);
+        let root = arr.hash_tree_root(&KeccakHasher);
         assert_eq!(&root[..7], &arr[..]);
         assert_eq!(&root[7..], &[0u8; 25]);
         assert!(<[u8; 7]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_48_is_merkleized() {
         let arr = [0xab_u8; 48];
-        let root = arr.hash_tree_root(&Sha2Hasher);
+        let root = arr.hash_tree_root(&KeccakHasher);
         // 48 bytes = 2 chunks (32 + 16 zero-padded), merkleize
-        let expected = merkleize(&Sha2Hasher, &pack(&arr), None);
+        let expected = merkleize(&KeccakHasher, &pack(&arr), None);
         assert_eq!(root, expected);
         assert!(!<[u8; 48]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_52_is_merkleized() {
         let arr = [0xcd_u8; 52];
-        let root = arr.hash_tree_root(&Sha2Hasher);
-        let expected = merkleize(&Sha2Hasher, &pack(&arr), None);
+        let root = arr.hash_tree_root(&KeccakHasher);
+        let expected = merkleize(&KeccakHasher, &pack(&arr), None);
         assert_eq!(root, expected);
         assert!(!<[u8; 52]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_byte_array_96_is_merkleized() {
         let arr = [0xff_u8; 96];
-        let root = arr.hash_tree_root(&Sha2Hasher);
-        let expected = merkleize(&Sha2Hasher, &pack(&arr), None);
+        let root = arr.hash_tree_root(&KeccakHasher);
+        let expected = merkleize(&KeccakHasher, &pack(&arr), None);
         assert_eq!(root, expected);
         assert!(!<[u8; 96]>::is_basic_type());
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_vec_u64_empty() {
         let val: Vec<u64> = vec![];
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
         // Empty list: merkleize([zero]) then mix_in_length with 0
-        let root = merkleize(&Sha2Hasher, &[ZERO_HASHES[0]], None);
-        assert_eq!(result, mix_in_length(&Sha2Hasher, &root, 0));
+        let root = merkleize(&KeccakHasher, &[ZERO_HASHES[0]], None);
+        assert_eq!(result, mix_in_length(&KeccakHasher, &root, 0));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_vec_u64() {
         let val: Vec<u64> = vec![1, 2, 3, 4];
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
 
         // 4 u64s = 32 bytes = 1 chunk
         let mut serialized = Vec::new();
@@ -1017,15 +1036,15 @@ mod tests {
             serialized.extend_from_slice(&v.to_le_bytes());
         }
         let chunks = pack(&serialized);
-        let root = merkleize(&Sha2Hasher, &chunks, None);
-        assert_eq!(result, mix_in_length(&Sha2Hasher, &root, 4));
+        let root = merkleize(&KeccakHasher, &chunks, None);
+        assert_eq!(result, mix_in_length(&KeccakHasher, &root, 4));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn hash_tree_root_vec_u64_five_elements() {
         let val: Vec<u64> = vec![1, 2, 3, 4, 5];
-        let result = val.hash_tree_root(&Sha2Hasher);
+        let result = val.hash_tree_root(&KeccakHasher);
 
         // 5 u64s = 40 bytes = 2 chunks
         let mut serialized = Vec::new();
@@ -1034,15 +1053,15 @@ mod tests {
         }
         let chunks = pack(&serialized);
         assert_eq!(chunks.len(), 2);
-        let root = merkleize(&Sha2Hasher, &chunks, None);
-        assert_eq!(result, mix_in_length(&Sha2Hasher, &root, 5));
+        let root = merkleize(&KeccakHasher, &chunks, None);
+        assert_eq!(result, mix_in_length(&KeccakHasher, &root, 5));
     }
 
-    #[cfg(feature = "sha2-backend")]
+    #[cfg(feature = "keccak-backend")]
     #[test]
     fn custom_hasher_works() {
         struct MockHasher;
-        impl Sha256Hasher for MockHasher {
+        impl MerkleHasher for MockHasher {
             fn hash(&self, data: &[u8]) -> [u8; 32] {
                 let mut out = [0u8; 32];
                 for (i, &b) in data.iter().enumerate() {
@@ -1052,15 +1071,15 @@ mod tests {
             }
         }
         let val: u64 = 42;
-        let root_sha2 = val.hash_tree_root(&Sha2Hasher);
+        let root_keccak = val.hash_tree_root(&KeccakHasher);
         let root_mock = val.hash_tree_root(&MockHasher);
         // u64 HTR doesn't use hashing (just pads to 32 bytes), so both should be equal
-        assert_eq!(root_sha2, root_mock);
+        assert_eq!(root_keccak, root_mock);
 
         // For a type that DOES hash, they should differ
         let arr = [0xab_u8; 48];
-        let root_sha2 = arr.hash_tree_root(&Sha2Hasher);
+        let root_keccak = arr.hash_tree_root(&KeccakHasher);
         let root_mock = arr.hash_tree_root(&MockHasher);
-        assert_ne!(root_sha2, root_mock);
+        assert_ne!(root_keccak, root_mock);
     }
 }

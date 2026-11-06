@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use crate::error::IndexError;
 use libssz_merkle::{
-    merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, Node, Sha256Hasher,
+    merkleize_progressive, mix_in_length, pack_bits, HashTreeRoot, MerkleHasher, Node,
 };
 
 /// A progressive bitlist: ordered variable-length collection of booleans **without limit**.
@@ -173,7 +173,7 @@ impl SszDecode for ProgressiveBitlist {
 // mix_in_length(merkleize_progressive(pack_bits(bytes, len)), len)
 
 impl HashTreeRoot for ProgressiveBitlist {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         let length = self.len;
         let chunks = pack_bits(self.as_bytes(), length);
         let root = merkleize_progressive(hasher, &chunks);

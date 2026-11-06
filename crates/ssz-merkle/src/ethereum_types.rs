@@ -2,12 +2,12 @@
 
 use ethereum_types as et;
 
-use crate::{HashTreeRoot, Node, Sha256Hasher};
+use crate::{HashTreeRoot, MerkleHasher, Node};
 
 // ── H-types: delegate to inner [u8; N] ──
 
 impl HashTreeRoot for et::H32 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -16,7 +16,7 @@ impl HashTreeRoot for et::H32 {
 }
 
 impl HashTreeRoot for et::H64 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -25,7 +25,7 @@ impl HashTreeRoot for et::H64 {
 }
 
 impl HashTreeRoot for et::H128 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -34,7 +34,7 @@ impl HashTreeRoot for et::H128 {
 }
 
 impl HashTreeRoot for et::H160 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -43,7 +43,7 @@ impl HashTreeRoot for et::H160 {
 }
 
 impl HashTreeRoot for et::H256 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -52,7 +52,7 @@ impl HashTreeRoot for et::H256 {
 }
 
 impl HashTreeRoot for et::H264 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -61,7 +61,7 @@ impl HashTreeRoot for et::H264 {
 }
 
 impl HashTreeRoot for et::H512 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -70,7 +70,7 @@ impl HashTreeRoot for et::H512 {
 }
 
 impl HashTreeRoot for et::H520 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -81,7 +81,7 @@ impl HashTreeRoot for et::H520 {
 // ── U-types: serialize to LE bytes, then hash ──
 
 impl HashTreeRoot for et::U64 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -90,7 +90,7 @@ impl HashTreeRoot for et::U64 {
 }
 
 impl HashTreeRoot for et::U128 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -99,7 +99,7 @@ impl HashTreeRoot for et::U128 {
 }
 
 impl HashTreeRoot for et::U256 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -108,7 +108,7 @@ impl HashTreeRoot for et::U256 {
 }
 
 impl HashTreeRoot for et::U512 {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
@@ -119,7 +119,7 @@ impl HashTreeRoot for et::U512 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{merkleize, pack, Sha2Hasher};
+    use crate::{merkleize, pack, KeccakHasher};
 
     // H-type basic type checks
     #[test]
@@ -158,8 +158,8 @@ mod tests {
         let bytes = [0xab_u8; 32];
         let hval = et::H256::from_slice(&bytes);
         assert_eq!(
-            hval.hash_tree_root(&Sha2Hasher),
-            bytes.hash_tree_root(&Sha2Hasher)
+            hval.hash_tree_root(&KeccakHasher),
+            bytes.hash_tree_root(&KeccakHasher)
         );
     }
 
@@ -168,8 +168,8 @@ mod tests {
         let bytes = [0xcd_u8; 20];
         let hval = et::H160::from_slice(&bytes);
         assert_eq!(
-            hval.hash_tree_root(&Sha2Hasher),
-            bytes.hash_tree_root(&Sha2Hasher)
+            hval.hash_tree_root(&KeccakHasher),
+            bytes.hash_tree_root(&KeccakHasher)
         );
     }
 
@@ -178,8 +178,8 @@ mod tests {
         let bytes = [0xef_u8; 64];
         let hval = et::H512::from_slice(&bytes);
         assert_eq!(
-            hval.hash_tree_root(&Sha2Hasher),
-            bytes.hash_tree_root(&Sha2Hasher)
+            hval.hash_tree_root(&KeccakHasher),
+            bytes.hash_tree_root(&KeccakHasher)
         );
     }
 
@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn u256_htr_is_le_bytes() {
         let val = et::U256::from(42);
-        let root = val.hash_tree_root(&Sha2Hasher);
+        let root = val.hash_tree_root(&KeccakHasher);
         let expected = val.to_little_endian();
         assert_eq!(root, expected);
     }
@@ -211,7 +211,7 @@ mod tests {
     #[test]
     fn u64_htr_is_padded_le() {
         let val = et::U64::from(1);
-        let root = val.hash_tree_root(&Sha2Hasher);
+        let root = val.hash_tree_root(&KeccakHasher);
         let mut expected = [0u8; 32];
         expected[0] = 1;
         assert_eq!(root, expected);
@@ -221,7 +221,7 @@ mod tests {
     fn u512_htr_is_merkleized() {
         let val = et::U512::from(42);
         let bytes = val.to_little_endian();
-        let expected = merkleize(&Sha2Hasher, &pack(&bytes), None);
-        assert_eq!(val.hash_tree_root(&Sha2Hasher), expected);
+        let expected = merkleize(&KeccakHasher, &pack(&bytes), None);
+        assert_eq!(val.hash_tree_root(&KeccakHasher), expected);
     }
 }

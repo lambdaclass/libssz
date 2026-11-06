@@ -1,6 +1,6 @@
 use libssz::SszEncode;
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_merkle::{merkleize, mix_in_length, HashTreeRoot, Node, Sha256Hasher};
+use libssz_merkle::{merkleize, mix_in_length, HashTreeRoot, MerkleHasher, Node};
 use libssz_types::{SszBitlist, SszBitvector, SszList, SszVector};
 
 /// Ethereum consensus Validator (121 bytes, all fixed-size fields).
@@ -336,7 +336,7 @@ pub struct NestedContainer {
 }
 
 impl HashTreeRoot for NestedContainer {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         let header_root = self.header.hash_tree_root(hasher);
         let validator_roots: Vec<Node> = self
             .validators

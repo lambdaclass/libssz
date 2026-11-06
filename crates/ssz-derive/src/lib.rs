@@ -853,7 +853,7 @@ fn derive_htr_transparent(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::MerkleHasher) -> libssz_merkle::Node {
                 libssz_merkle::HashTreeRoot::hash_tree_root(&#field_access, hasher)
             }
         }
@@ -873,7 +873,7 @@ fn derive_htr_struct(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::MerkleHasher) -> libssz_merkle::Node {
                 let field_roots: [libssz_merkle::Node; #num_fields] = [
                     #(#field_roots,)*
                 ];
@@ -961,7 +961,7 @@ fn derive_htr_progressive_container(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::MerkleHasher) -> libssz_merkle::Node {
                 const ACTIVE_FIELDS: libssz_merkle::Node = [#(#active_node_bytes),*];
                 let chunks: [libssz_merkle::Node; #num_chunks] = [
                     #(#chunks,)*
@@ -1011,7 +1011,7 @@ fn derive_htr_union_enum(
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
-            fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
+            fn hash_tree_root(&self, hasher: &impl libssz_merkle::MerkleHasher) -> libssz_merkle::Node {
                 match self {
                     #(#variant_arms)*
                 }

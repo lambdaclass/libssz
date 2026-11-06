@@ -156,7 +156,7 @@ Offsets are validated at multiple levels:
 
 ## Merkleization algorithm
 
-SSZ Merkleization converts any value into a 32-byte Merkle root using SHA-256.
+SSZ Merkleization converts any value into a 32-byte Merkle root. This library hashes with Keccak-256 (the consensus spec uses SHA-256, so roots are not consensus-compatible).
 
 ### Basic types
 
@@ -202,7 +202,7 @@ merkleize(chunks, limit):
 
 ```
 ZERO_HASHES[0] = [0u8; 32]
-ZERO_HASHES[i] = SHA256(ZERO_HASHES[i-1] || ZERO_HASHES[i-1])
+ZERO_HASHES[i] = Keccak256(ZERO_HASHES[i-1] || ZERO_HASHES[i-1])
 ```
 
 Build-time computation avoids both runtime cost and `lazy_static` / `once_cell` dependencies.
@@ -225,7 +225,7 @@ All trait methods on basic types are `#[inline(always)]`. For primitives like `u
 
 ### Precomputed zero hashes
 
-Build-time computation of `ZERO_HASHES` eliminates 64 SHA-256 hash calls from the hot path. The table is a static array with no initialization cost.
+Build-time computation of `ZERO_HASHES` eliminates 64 Keccak-256 hash calls from the hot path. The table is a static array with no initialization cost.
 
 ## no_std strategy
 
@@ -298,4 +298,4 @@ Errors are data, not strings. Each variant carries the numeric values needed to 
 | Derive macros | Separate crate | Separate crate | Integrated |
 | Zero hashes | Build-time precomputed | `lazy_static` | Computed at init |
 | Error types | Flat enum | Flat enum | Flat enum |
-| Hash function | sha2 crate | ring / sha2 | sha2 |
+| Hash function | sha3 crate (Keccak-256) | ring / sha2 | sha2 |
