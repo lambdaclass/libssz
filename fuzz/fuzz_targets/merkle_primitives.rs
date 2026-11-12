@@ -5,10 +5,10 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node, Sha2Hasher};
+use libssz_merkle::{hash_nodes, merkleize, mix_in_length, pack, pack_bits, Node, KeccakHasher};
 
-fn h() -> Sha2Hasher {
-    Sha2Hasher
+fn h() -> KeccakHasher {
+    KeccakHasher
 }
 
 #[derive(Debug, Arbitrary)]

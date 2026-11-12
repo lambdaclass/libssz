@@ -1,5 +1,5 @@
 use libssz::{DecodeError, SszDecode, SszEncode};
-use libssz_merkle::{mix_in_selector, HashTreeRoot, Node, Sha256Hasher};
+use libssz_merkle::{mix_in_selector, HashTreeRoot, MerkleHasher, Node};
 use libssz_types::split_union_bytes;
 
 use super::progressive_containers::{
@@ -56,7 +56,7 @@ impl SszDecode for CompatibleUnionA {
 }
 
 impl HashTreeRoot for CompatibleUnionA {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         match self {
             Self::V1(v) => mix_in_selector(hasher, &v.hash_tree_root(hasher), 1),
         }
@@ -119,7 +119,7 @@ impl SszDecode for CompatibleUnionBC {
 }
 
 impl HashTreeRoot for CompatibleUnionBC {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         match self {
             Self::V2(v) => mix_in_selector(hasher, &v.hash_tree_root(hasher), 2),
             Self::V3(v) => mix_in_selector(hasher, &v.hash_tree_root(hasher), 3),
@@ -203,7 +203,7 @@ impl SszDecode for CompatibleUnionABCA {
 }
 
 impl HashTreeRoot for CompatibleUnionABCA {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         match self {
             Self::V1(v) => mix_in_selector(hasher, &v.hash_tree_root(hasher), 1),
             Self::V2(v) => mix_in_selector(hasher, &v.hash_tree_root(hasher), 2),

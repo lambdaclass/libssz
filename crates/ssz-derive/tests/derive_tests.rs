@@ -1,6 +1,6 @@
 use libssz::{DecodeError, SszDecode, SszEncode};
 use libssz_derive::{HashTreeRoot, SszDecode, SszEncode};
-use libssz_merkle::{HashTreeRoot, Sha2Hasher};
+use libssz_merkle::{HashTreeRoot, KeccakHasher};
 // ── All-fixed struct ──
 
 #[derive(Debug, PartialEq, SszEncode, SszDecode)]
@@ -138,12 +138,12 @@ struct SimpleContainer {
 #[test]
 fn hash_tree_root_struct() {
     let s = SimpleContainer { a: 1, b: 2 };
-    let root = s.hash_tree_root(&Sha2Hasher);
+    let root = s.hash_tree_root(&KeccakHasher);
 
     // Manual: merkleize([hash_tree_root(a), hash_tree_root(b)])
-    let root_a = 1u64.hash_tree_root(&Sha2Hasher);
-    let root_b = 2u64.hash_tree_root(&Sha2Hasher);
-    let expected = libssz_merkle::merkleize(&Sha2Hasher, &[root_a, root_b], None);
+    let root_a = 1u64.hash_tree_root(&KeccakHasher);
+    let root_b = 2u64.hash_tree_root(&KeccakHasher);
+    let expected = libssz_merkle::merkleize(&KeccakHasher, &[root_a, root_b], None);
     assert_eq!(root, expected);
 }
 
@@ -203,10 +203,10 @@ fn union_decode_invalid_selector() {
 #[test]
 fn union_hash_tree_root() {
     let val = TestUnion::A(42);
-    let root = val.hash_tree_root(&Sha2Hasher);
+    let root = val.hash_tree_root(&KeccakHasher);
 
-    let inner_root = 42u32.hash_tree_root(&Sha2Hasher);
-    let expected = libssz_merkle::mix_in_selector(&Sha2Hasher, &inner_root, 0);
+    let inner_root = 42u32.hash_tree_root(&KeccakHasher);
+    let expected = libssz_merkle::mix_in_selector(&KeccakHasher, &inner_root, 0);
     assert_eq!(root, expected);
 }
 
@@ -235,8 +235,8 @@ fn transparent_decode_round_trip() {
 fn transparent_hash_tree_root() {
     let val = Wrapper(42);
     assert_eq!(
-        val.hash_tree_root(&Sha2Hasher),
-        42u64.hash_tree_root(&Sha2Hasher)
+        val.hash_tree_root(&KeccakHasher),
+        42u64.hash_tree_root(&KeccakHasher)
     );
 }
 
@@ -269,16 +269,16 @@ struct ProgressiveThreeFields {
 #[test]
 fn hash_tree_root_progressive_container() {
     let s = ProgressiveThreeFields { a: 1, b: 2, c: 3 };
-    let root = s.hash_tree_root(&Sha2Hasher);
+    let root = s.hash_tree_root(&KeccakHasher);
 
     // Manual: mix_in_active_fields(merkleize_progressive(field_roots), [1, 1, 1])
     let field_roots = [
-        1u64.hash_tree_root(&Sha2Hasher),
-        2u64.hash_tree_root(&Sha2Hasher),
-        3u64.hash_tree_root(&Sha2Hasher),
+        1u64.hash_tree_root(&KeccakHasher),
+        2u64.hash_tree_root(&KeccakHasher),
+        3u64.hash_tree_root(&KeccakHasher),
     ];
-    let progressive = libssz_merkle::merkleize_progressive(&Sha2Hasher, &field_roots);
-    let expected = libssz_merkle::mix_in_active_fields(&Sha2Hasher, &progressive, &[true; 3]);
+    let progressive = libssz_merkle::merkleize_progressive(&KeccakHasher, &field_roots);
+    let expected = libssz_merkle::mix_in_active_fields(&KeccakHasher, &progressive, &[true; 3]);
     assert_eq!(root, expected);
 }
 
@@ -298,8 +298,8 @@ fn progressive_container_root_differs_from_plain_container() {
 
     assert_eq!(progressive.to_ssz(), plain.to_ssz());
     assert_ne!(
-        progressive.hash_tree_root(&Sha2Hasher),
-        plain.hash_tree_root(&Sha2Hasher)
+        progressive.hash_tree_root(&KeccakHasher),
+        plain.hash_tree_root(&KeccakHasher)
     );
 }
 
@@ -321,19 +321,19 @@ fn hash_tree_root_progressive_container_with_inactive_fields() {
 
     let zero = [0u8; 32];
     let chunks = [
-        1u64.hash_tree_root(&Sha2Hasher),
+        1u64.hash_tree_root(&KeccakHasher),
         zero,
-        2u64.hash_tree_root(&Sha2Hasher),
+        2u64.hash_tree_root(&KeccakHasher),
         zero,
-        3u64.hash_tree_root(&Sha2Hasher),
+        3u64.hash_tree_root(&KeccakHasher),
     ];
-    let progressive = libssz_merkle::merkleize_progressive(&Sha2Hasher, &chunks);
+    let progressive = libssz_merkle::merkleize_progressive(&KeccakHasher, &chunks);
     let expected = libssz_merkle::mix_in_active_fields(
-        &Sha2Hasher,
+        &KeccakHasher,
         &progressive,
         &[true, false, true, false, true],
     );
-    assert_eq!(s.hash_tree_root(&Sha2Hasher), expected);
+    assert_eq!(s.hash_tree_root(&KeccakHasher), expected);
 }
 
 /// `active_fields` changes only merkleization: the serialization is the same as
@@ -345,7 +345,7 @@ fn inactive_fields_change_root_but_not_encoding() {
 
     assert_eq!(inactive.to_ssz(), all_active.to_ssz());
     assert_ne!(
-        inactive.hash_tree_root(&Sha2Hasher),
-        all_active.hash_tree_root(&Sha2Hasher)
+        inactive.hash_tree_root(&KeccakHasher),
+        all_active.hash_tree_root(&KeccakHasher)
     );
 }

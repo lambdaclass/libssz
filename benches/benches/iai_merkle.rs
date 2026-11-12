@@ -1,5 +1,5 @@
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
-use libssz_merkle::{hash_nodes, merkleize, pack, Node, Sha2Hasher};
+use libssz_merkle::{hash_nodes, merkleize, pack, KeccakHasher, Node};
 fn make_chunks(n: usize) -> Vec<Node> {
     (0..n)
         .map(|i| {
@@ -14,19 +14,19 @@ fn make_chunks(n: usize) -> Vec<Node> {
 fn iai_hash_nodes() -> Node {
     let a: Node = [0xaa; 32];
     let b: Node = [0xbb; 32];
-    hash_nodes(&Sha2Hasher, &a, &b)
+    hash_nodes(&KeccakHasher, &a, &b)
 }
 
 #[library_benchmark]
 fn iai_merkleize_64() -> Node {
     let chunks = make_chunks(64);
-    merkleize(&Sha2Hasher, &chunks, None)
+    merkleize(&KeccakHasher, &chunks, None)
 }
 
 #[library_benchmark]
 fn iai_merkleize_1024() -> Node {
     let chunks = make_chunks(1024);
-    merkleize(&Sha2Hasher, &chunks, None)
+    merkleize(&KeccakHasher, &chunks, None)
 }
 
 #[library_benchmark]

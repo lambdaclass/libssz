@@ -74,7 +74,7 @@ struct FuzzInput {
 
 /// Hash with our library.
 fn ours<T: libssz_merkle::HashTreeRoot>(val: &T) -> [u8; 32] {
-    val.hash_tree_root(&libssz_merkle::Sha2Hasher)
+    val.hash_tree_root(&libssz_merkle::KeccakHasher)
 }
 
 /// Hash with Lighthouse's tree_hash.

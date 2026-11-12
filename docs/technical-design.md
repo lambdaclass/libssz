@@ -156,7 +156,7 @@ Offsets are validated at multiple levels:
 
 ## Merkleization algorithm
 
-SSZ Merkleization converts any value into a 32-byte Merkle root using SHA-256.
+SSZ Merkleization converts any value into a 32-byte Merkle root. This library hashes with Keccak-256 (the consensus spec uses SHA-256, so roots are not consensus-compatible).
 
 ### Basic types
 
@@ -196,13 +196,15 @@ merkleize(chunks, limit):
 
 **Virtual padding:** rather than allocating `limit` chunks, the implementation uses precomputed `ZERO_HASHES[level]` for any subtree that would be all zeros. This keeps memory usage proportional to the actual number of non-zero chunks.
 
+**Batched levels:** every full pair of a level is handed to `MerkleHasher::hash_pairs` in one call, and `hash_nodes` passes a single pair through the same method. `KeccakHasher` hashes a batch several pairs at a time with SIMD, choosing at runtime: AVX-512 (8 pairs per permutation), AVX2 (4), or ARMv8 SHA3 (2). With AVX-512 a part-filled batch runs in SIMD too; with AVX2 or SHA3 a single leftover pair, like every pair on CPUs without those extensions, uses one scalar Keccak-f[1600] permutation with the padding applied directly, skipping the general-purpose sponge.
+
 ### Zero hash table
 
 `ZERO_HASHES` is a static array of 65 entries (depth 0 through 64), computed at build time by `ssz-merkle/build.rs`:
 
 ```
 ZERO_HASHES[0] = [0u8; 32]
-ZERO_HASHES[i] = SHA256(ZERO_HASHES[i-1] || ZERO_HASHES[i-1])
+ZERO_HASHES[i] = Keccak256(ZERO_HASHES[i-1] || ZERO_HASHES[i-1])
 ```
 
 Build-time computation avoids both runtime cost and `lazy_static` / `once_cell` dependencies.
@@ -225,7 +227,7 @@ All trait methods on basic types are `#[inline(always)]`. For primitives like `u
 
 ### Precomputed zero hashes
 
-Build-time computation of `ZERO_HASHES` eliminates 64 SHA-256 hash calls from the hot path. The table is a static array with no initialization cost.
+Build-time computation of `ZERO_HASHES` eliminates 64 Keccak-256 hash calls from the hot path. The table is a static array with no initialization cost.
 
 ## no_std strategy
 
@@ -298,4 +300,4 @@ Errors are data, not strings. Each variant carries the numeric values needed to 
 | Derive macros | Separate crate | Separate crate | Integrated |
 | Zero hashes | Build-time precomputed | `lazy_static` | Computed at init |
 | Error types | Flat enum | Flat enum | Flat enum |
-| Hash function | sha2 crate | ring / sha2 | sha2 |
+| Hash function | sha3 crate (Keccak-256) | ring / sha2 | sha2 |
