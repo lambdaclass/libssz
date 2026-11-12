@@ -253,9 +253,12 @@ mod x86 {
     }
     pub(super) use cpuid::{has_avx2, has_avx512};
 
-    /// Smallest leftover batch worth an 8-way permutation instead of scalar ones.
-    const X8_MIN_PARTIAL: usize = 2;
-    /// Smallest leftover batch worth a 4-way permutation instead of scalar ones.
+    /// Smallest leftover batch worth an 8-way permutation instead of scalar
+    /// ones. On Zen 5 one 8-way permutation (about 145 ns) already beats one
+    /// scalar permutation (about 190 ns).
+    const X8_MIN_PARTIAL: usize = 1;
+    /// Smallest leftover batch worth a 4-way permutation instead of scalar
+    /// ones. On Zen 5 a 4-way permutation takes about 250 ns.
     const X4_MIN_PARTIAL: usize = 2;
 
     // AVX-512: `vpternlogq` folds three-input logic into one instruction and
@@ -394,23 +397,29 @@ mod x86 {
 
     /// Hash up to 4 pairs with one 4-way permutation.
     ///
+    /// Each state row is assembled in registers from 64-bit message words.
+    /// Transposing through a stack buffer instead (64-bit stores read back as
+    /// one vector) stalls on store forwarding: about 25% slower per full batch
+    /// on Zen 5.
+    ///
     /// # Safety
     ///
     /// The CPU must support AVX2.
     #[target_feature(enable = "avx2")]
     unsafe fn hash_batch_x4(pairs: &[[Node; 2]], out: &mut [Node]) {
         debug_assert!(pairs.len() <= 4 && pairs.len() == out.len());
-        let words = transpose_in::<4>(pairs);
+        // Message word `i` of pair `k`, or zero past the end.
+        let word = |k: usize, i: usize| -> i64 {
+            match pairs.get(k) {
+                Some(pair) => i64::from_le_bytes(pair.as_flattened().as_chunks::<8>().0[i]),
+                None => 0,
+            }
+        };
 
         let mut a = [_mm256_setzero_si256(); 25];
-        a[0] = _mm256_loadu_si256(words[0].as_ptr().cast());
-        a[1] = _mm256_loadu_si256(words[1].as_ptr().cast());
-        a[2] = _mm256_loadu_si256(words[2].as_ptr().cast());
-        a[3] = _mm256_loadu_si256(words[3].as_ptr().cast());
-        a[4] = _mm256_loadu_si256(words[4].as_ptr().cast());
-        a[5] = _mm256_loadu_si256(words[5].as_ptr().cast());
-        a[6] = _mm256_loadu_si256(words[6].as_ptr().cast());
-        a[7] = _mm256_loadu_si256(words[7].as_ptr().cast());
+        for (i, row) in a[..8].iter_mut().enumerate() {
+            *row = _mm256_set_epi64x(word(3, i), word(2, i), word(1, i), word(0, i));
+        }
         a[8] = _mm256_set1_epi64x(PAD_LANE_8 as i64);
         a[16] = _mm256_set1_epi64x(PAD_LANE_16 as i64);
 
