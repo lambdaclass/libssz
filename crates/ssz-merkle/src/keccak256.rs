@@ -16,8 +16,9 @@ use crate::{MerkleHasher, Node};
 /// Merkle pairs are hashed with one Keccak-f\[1600\] permutation each, skipping
 /// the general-purpose sponge. A batch of pairs runs several permutations at
 /// once, choosing at runtime: AVX-512 (8 pairs), AVX2 (4) or the ARMv8 SHA3
-/// extension (2). Leftover pairs and other CPUs use the scalar permutation from
-/// the `keccak` crate.
+/// extension (2). With AVX-512 a part-filled batch runs in SIMD too; with AVX2
+/// or SHA3 a single leftover pair, like every pair on other CPUs, uses the
+/// scalar permutation from the `keccak` crate.
 pub struct KeccakHasher;
 
 impl MerkleHasher for KeccakHasher {
@@ -398,9 +399,9 @@ mod x86 {
     /// Hash up to 4 pairs with one 4-way permutation.
     ///
     /// Each state row is assembled in registers from 64-bit message words.
-    /// Transposing through a stack buffer instead (64-bit stores read back as
-    /// one vector) stalls on store forwarding: about 25% slower per full batch
-    /// on Zen 5.
+    /// On Zen 5 this measured about 20% faster per full batch than
+    /// transposing through a stack buffer. The cause is not established:
+    /// timings of this function shifted with unrelated code layout changes.
     ///
     /// # Safety
     ///

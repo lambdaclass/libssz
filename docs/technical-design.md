@@ -196,7 +196,7 @@ merkleize(chunks, limit):
 
 **Virtual padding:** rather than allocating `limit` chunks, the implementation uses precomputed `ZERO_HASHES[level]` for any subtree that would be all zeros. This keeps memory usage proportional to the actual number of non-zero chunks.
 
-**Batched levels:** every full pair of a level is handed to `MerkleHasher::hash_pairs` in one call, and `hash_nodes` passes a single pair through the same method. `KeccakHasher` hashes a batch several pairs at a time with SIMD, choosing at runtime: AVX-512 (8 pairs per permutation), AVX2 (4), or ARMv8 SHA3 (2). Pairs left over, and CPUs without those extensions, use one scalar Keccak-f[1600] permutation per pair with the padding applied directly, skipping the general-purpose sponge.
+**Batched levels:** every full pair of a level is handed to `MerkleHasher::hash_pairs` in one call, and `hash_nodes` passes a single pair through the same method. `KeccakHasher` hashes a batch several pairs at a time with SIMD, choosing at runtime: AVX-512 (8 pairs per permutation), AVX2 (4), or ARMv8 SHA3 (2). With AVX-512 a part-filled batch runs in SIMD too; with AVX2 or SHA3 a single leftover pair, like every pair on CPUs without those extensions, uses one scalar Keccak-f[1600] permutation with the padding applied directly, skipping the general-purpose sponge.
 
 ### Zero hash table
 
