@@ -196,6 +196,8 @@ merkleize(chunks, limit):
 
 **Virtual padding:** rather than allocating `limit` chunks, the implementation uses precomputed `ZERO_HASHES[level]` for any subtree that would be all zeros. This keeps memory usage proportional to the actual number of non-zero chunks.
 
+**Batched levels:** every full pair of a level is handed to `Sha256Hasher::hash_pairs` in one call, and `hash_nodes` passes a single pair through the same method. A hasher can therefore hash many 64-byte messages at once (multi-buffer SIMD) or skip general-purpose padding. The default `Sha2Hasher` calls the `sha2` compression function directly on the message and a constant padding block (`sha2` picks SHA-NI / ARMv8 SHA2 at runtime). The optional `hashtree` feature hands each batch to the [hashtree](https://github.com/OffchainLabs/hashtree) assembly library instead, at the cost of a C toolchain at build time.
+
 ### Zero hash table
 
 `ZERO_HASHES` is a static array of 65 entries (depth 0 through 64), computed at build time by `ssz-merkle/build.rs`:
@@ -298,4 +300,4 @@ Errors are data, not strings. Each variant carries the numeric values needed to 
 | Derive macros | Separate crate | Separate crate | Integrated |
 | Zero hashes | Build-time precomputed | `lazy_static` | Computed at init |
 | Error types | Flat enum | Flat enum | Flat enum |
-| Hash function | sha2 crate | ring / sha2 | sha2 |
+| Hash function | sha2 crate (optional hashtree) | ring / sha2 | sha2 |

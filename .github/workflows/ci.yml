@@ -80,6 +80,8 @@ jobs:
             args: ""
           - features: alloc-only
             args: "--no-default-features --features alloc"
+          - features: hashtree
+            args: "--features libssz-merkle/hashtree"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/cache@v6
