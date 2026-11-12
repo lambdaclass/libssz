@@ -13,12 +13,17 @@ categories = ["encoding", "cryptography::cryptocurrencies"]
 default = ["std"]
 std = ["alloc", "libssz/std", "keccak-backend"]
 alloc = ["libssz/alloc"]
-keccak-backend = ["dep:sha3"]
+keccak-backend = ["dep:sha3", "dep:keccak", "dep:cpufeatures"]
 ethereum_types = ["dep:ethereum-types", "libssz/ethereum_types"]
 
 [dependencies]
 libssz = { version = "0.3.0", path = "../ssz", default-features = false }
 sha3 = { version = "0.10", default-features = false, optional = true }
+# Raw Keccak-f[1600] for the scalar pair path; `asm` uses ARMv8 SHA3 instructions
+# through inline assembly (no C toolchain).
+keccak = { version = "0.1.6", features = ["asm"], optional = true }
+# Runtime CPU feature detection that also works without `std`.
+cpufeatures = { version = "0.2", optional = true }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
 
 [build-dependencies]
