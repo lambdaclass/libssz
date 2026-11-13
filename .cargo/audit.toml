@@ -1,0 +1,11 @@
+[advisories]
+ignore = [
+    # crypto-bigint 0.5.5: timing variability in constant-time operations.
+    # It appears in Cargo.lock only through alloy-primitives' optional `k256`
+    # feature (alloy-primitives <- ethereum_ssz/tree_hash/ssz_types, dev-deps of
+    # the ssz-bench crate). That feature is never enabled, so crypto-bigint is
+    # never compiled; it is locked only because alloy-primitives names it in a
+    # weak `k256?/std` feature. The fix (>=0.7.6) needs k256 0.14, which no
+    # alloy-primitives release uses yet. Remove once that chain moves to it.
+    "RUSTSEC-2026-0387",
+]
