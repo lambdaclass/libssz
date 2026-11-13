@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::ops::Deref;
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 use libssz::{DecodeError, SszDecode, SszEncode};
 use libssz_merkle::{merkleize_progressive, mix_in_length, pack, HashTreeRoot, Node, Sha256Hasher};
 
@@ -42,6 +42,34 @@ impl<T> Deref for ProgressiveList<T> {
     type Target = [T];
     fn deref(&self) -> &[T] {
         &self.0
+    }
+}
+
+/// Mutable access to the elements, but not to the length.
+///
+/// A `&mut [T]` cannot grow or shrink, so handing one out cannot break the
+/// invariant that a `ProgressiveList` holds its elements in `Vec` order;
+/// growing still has to go through [`ProgressiveList::push`]. This is what
+/// lets a consumer mutate an element in place (`list[i] = x`, `iter_mut`,
+/// `get_mut`, `sort`) instead of having to take the inner `Vec` apart and
+/// rebuild it, which would be O(n) per mutation.
+impl<T> DerefMut for ProgressiveList<T> {
+    fn deref_mut(&mut self) -> &mut [T] {
+        &mut self.0
+    }
+}
+
+impl<T, I: core::slice::SliceIndex<[T]>> Index<I> for ProgressiveList<T> {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl<T, I: core::slice::SliceIndex<[T]>> IndexMut<I> for ProgressiveList<T> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 
