@@ -208,7 +208,7 @@ fn derive_encode_transparent(
                 libssz::SszEncode::encoded_len(&#field_access)
             }
 
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
+            fn ssz_append(&self, buf: &mut libssz::__private::Vec<u8>) {
                 libssz::SszEncode::ssz_append(&#field_access, buf);
             }
         }
@@ -331,7 +331,7 @@ fn derive_encode_struct(
                 0 #(+ #encoded_len_terms)*
             }
 
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
+            fn ssz_append(&self, buf: &mut libssz::__private::Vec<u8>) {
                 if <Self as libssz::SszEncode>::is_fixed_size() {
                     #(#direct_append_stmts)*
                 } else {
@@ -343,7 +343,7 @@ fn derive_encode_struct(
                 }
             }
 
-            fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>)
+            fn ssz_append_fixed_slice(items: &[Self], buf: &mut libssz::__private::Vec<u8>)
             where
                 Self: Sized,
             {
@@ -430,7 +430,7 @@ fn derive_encode_union_enum(
                 }
             }
 
-            fn ssz_append(&self, buf: &mut Vec<u8>) {
+            fn ssz_append(&self, buf: &mut libssz::__private::Vec<u8>) {
                 match self {
                     #(#variant_arms)*
                 }
@@ -652,7 +652,7 @@ fn derive_decode_struct(
                 }
             }
 
-            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, libssz::DecodeError> {
+            fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<libssz::__private::Vec<Self>, libssz::DecodeError> {
                 if <Self as libssz::SszDecode>::is_fixed_size() {
                     let item_size = <Self as libssz::SszDecode>::fixed_size();
                     if item_size > 0 && bytes.len() % item_size != 0 {
@@ -662,7 +662,7 @@ fn derive_decode_struct(
                         });
                     }
                     let count = if item_size > 0 { bytes.len() / item_size } else { 0 };
-                    let mut result = Vec::with_capacity(count);
+                    let mut result = libssz::__private::Vec::with_capacity(count);
                     // Inline per-item decode: skip struct-level length check
                     // since chunks_exact guarantees correct chunk size.
                     for chunk in bytes.chunks_exact(item_size) {
