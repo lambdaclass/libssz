@@ -25,3 +25,7 @@ pub use progressive_bitlist::ProgressiveBitlist;
 pub use progressive_list::ProgressiveList;
 pub use union::{join_union_bytes, split_union_bytes, UnionSelector};
 pub use vector::SszVector;
+
+// Example containers for the formal proofs (not part of the API).
+#[cfg(feature = "verif-example")]
+pub mod verif_example;

@@ -115,6 +115,12 @@ impl<T: SszEncode> SszEncode for ProgressiveList<T> {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         self.0.ssz_append(buf);
     }
+
+    // `Vec<T>` builds the new `Vec<u8>`; for fixed-size items it delegates to the item
+    // type.
+    fn to_ssz(&self) -> Vec<u8> {
+        self.0.to_ssz()
+    }
 }
 
 // ── SszDecode: delegate to Vec<T> (no limit to check) ──
@@ -142,16 +148,11 @@ impl<T: HashTreeRoot + SszEncode> HashTreeRoot for ProgressiveList<T> {
         let length = self.len();
 
         let chunks: Vec<Node> = if T::is_basic_type() {
-            let mut serialized = Vec::new();
-            for item in &self.0 {
-                item.ssz_append(&mut serialized);
-            }
-            pack(&serialized)
+            pack(&crate::hash_tree_root::basic_items_bytes(&self.0))
         } else {
-            self.0
-                .iter()
-                .map(|item| item.hash_tree_root(hasher))
-                .collect()
+            let mut roots = alloc::vec![[0u8; 32]; self.0.len()];
+            libssz_merkle::hash_tree_roots(&self.0, hasher, &mut roots);
+            roots
         };
 
         let root = merkleize_progressive(hasher, &chunks);

@@ -2,12 +2,29 @@
 use alloc::vec::Vec;
 
 use libssz::SszEncode;
-use libssz_merkle::{merkleize, mix_in_length, pack, pack_bits, HashTreeRoot, Node, Sha256Hasher};
+use libssz_merkle::{
+    merkleize_in_place, mix_in_length, pack, pack_bits, HashTreeRoot, Node, Sha256Hasher,
+};
 
 use crate::bitlist::SszBitlist;
 use crate::bitvector::SszBitvector;
 use crate::list::SszList;
 use crate::vector::SszVector;
+
+/// The serializations of `items` one after another: the bytes a collection of basic items
+/// packs.
+pub(crate) fn basic_items_bytes<T: SszEncode>(items: &[T]) -> Vec<u8> {
+    if T::is_fixed_size() {
+        // The item type builds the buffer: the integers do it in bulk.
+        T::ssz_fixed_slice_to_vec(items)
+    } else {
+        let mut serialized = Vec::new();
+        for item in items {
+            item.ssz_append(&mut serialized);
+        }
+        serialized
+    }
+}
 
 // ── SszVector<T, N> ──
 // Vector is a fixed-length composite. HTR = merkleize(field_roots) with no mix_in_length.
@@ -16,20 +33,15 @@ impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszVector<T, 
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         if T::is_basic_type() {
             // Basic type vector: pack serialized bytes, merkleize with limit = ceil(N * size / 32)
-            let mut serialized = Vec::new();
-            for item in self.iter() {
-                item.ssz_append(&mut serialized);
-            }
-            let chunks = pack(&serialized);
+            let mut chunks = pack(&basic_items_bytes(self));
             let max_chunks = (N * T::fixed_size()).div_ceil(32);
-            merkleize(hasher, &chunks, Some(max_chunks))
+            merkleize_in_place(hasher, &mut chunks, Some(max_chunks))
         } else {
-            // Composite type vector: collect roots, merkleize with limit = N
-            let roots: Vec<Node> = self
-                .iter()
-                .map(|item| item.hash_tree_root(hasher))
-                .collect();
-            merkleize(hasher, &roots, Some(N))
+            // Composite type vector: the item roots (containers hash theirs together), then
+            // merkleize with limit = N
+            let mut roots: Vec<Node> = alloc::vec![[0u8; 32]; self.len()];
+            libssz_merkle::hash_tree_roots(self, hasher, &mut roots);
+            merkleize_in_place(hasher, &mut roots, Some(N))
         }
     }
 }
@@ -42,21 +54,15 @@ impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszList<T, N>
         let length = self.len();
         if T::is_basic_type() {
             // Basic type list: pack serialized bytes
-            let mut serialized = Vec::new();
-            for item in self.iter() {
-                item.ssz_append(&mut serialized);
-            }
-            let chunks = pack(&serialized);
+            let mut chunks = pack(&basic_items_bytes(self));
             let max_chunks = (N * T::fixed_size()).div_ceil(32);
-            let root = merkleize(hasher, &chunks, Some(max_chunks));
+            let root = merkleize_in_place(hasher, &mut chunks, Some(max_chunks));
             mix_in_length(hasher, &root, length)
         } else {
-            // Composite type list: collect roots
-            let roots: Vec<Node> = self
-                .iter()
-                .map(|item| item.hash_tree_root(hasher))
-                .collect();
-            let root = merkleize(hasher, &roots, Some(N));
+            // Composite type list: the item roots (containers hash theirs together)
+            let mut roots: Vec<Node> = alloc::vec![[0u8; 32]; self.len()];
+            libssz_merkle::hash_tree_roots(self, hasher, &mut roots);
+            let root = merkleize_in_place(hasher, &mut roots, Some(N));
             mix_in_length(hasher, &root, length)
         }
     }
@@ -67,9 +73,9 @@ impl<T: HashTreeRoot + SszEncode, const N: usize> HashTreeRoot for SszList<T, N>
 
 impl<const N: usize> HashTreeRoot for SszBitvector<N> {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let chunks = pack_bits(self.as_bytes(), N);
+        let mut chunks = pack_bits(self.as_bytes(), N);
         let max_chunks = N.div_ceil(256); // 256 bits per chunk
-        merkleize(hasher, &chunks, Some(max_chunks))
+        merkleize_in_place(hasher, &mut chunks, Some(max_chunks))
     }
 }
 
@@ -79,9 +85,9 @@ impl<const N: usize> HashTreeRoot for SszBitvector<N> {
 impl<const N: usize> HashTreeRoot for SszBitlist<N> {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         let length = self.len();
-        let chunks = pack_bits(self.as_bytes(), length);
+        let mut chunks = pack_bits(self.as_bytes(), length);
         let max_chunks = N.div_ceil(256);
-        let root = merkleize(hasher, &chunks, Some(max_chunks));
+        let root = merkleize_in_place(hasher, &mut chunks, Some(max_chunks));
         mix_in_length(hasher, &root, length)
     }
 }
@@ -89,7 +95,7 @@ impl<const N: usize> HashTreeRoot for SszBitlist<N> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use libssz_merkle::Sha2Hasher;
+    use libssz_merkle::{merkleize, Sha2Hasher};
 
     // ── SszVector ──
 

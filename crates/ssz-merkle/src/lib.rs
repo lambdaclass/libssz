@@ -9,6 +9,20 @@ use alloc::{vec, vec::Vec};
 #[cfg(feature = "ethereum_types")]
 mod ethereum_types;
 
+#[cfg(all(feature = "std", target_arch = "x86_64"))]
+mod shani;
+
+#[cfg(all(feature = "std", target_arch = "aarch64", target_endian = "little"))]
+mod neon;
+
+// So that the `ssz-derive` derives, which write `libssz_merkle::…`, work inside this
+// crate (`verif_example`).
+#[cfg(feature = "verif-example")]
+extern crate self as libssz_merkle;
+
+#[cfg(feature = "verif-example")]
+pub mod verif_example;
+
 use libssz::SszEncode;
 
 /// A 32-byte Merkle tree node.
@@ -20,11 +34,77 @@ include!(concat!(env!("OUT_DIR"), "/zero_hashes.rs"));
 ///
 /// Instance method (`&self`) enables passing `&impl Sha256Hasher` through the
 /// call chain. The hasher struct is typically zero-sized so `&self` compiles away.
+///
+/// Only [`hash`](Sha256Hasher::hash) is required. The other two methods say the same thing
+/// for the inputs a Merkle tree has, so that a hasher with a faster way to hash two nodes,
+/// or many pairs of them, can provide it.
 pub trait Sha256Hasher {
     fn hash(&self, data: &[u8]) -> [u8; 32];
+
+    /// `hash(a ‖ b)`.
+    #[inline]
+    fn hash_pair(&self, a: &Node, b: &Node) -> Node {
+        let mut buf = [0u8; 64];
+        buf[..32].copy_from_slice(a);
+        buf[32..].copy_from_slice(b);
+        self.hash(&buf)
+    }
+
+    /// One level of a Merkle tree: writes to `out[k]` the hash of `nodes[2 * k]` and the
+    /// node after it. A last node without one is hashed with `zero_hash`. That is
+    /// `nodes.len().div_ceil(2)` nodes; the rest of `out` is left as it was.
+    ///
+    /// # Panics
+    ///
+    /// If `out` is shorter than that.
+    #[inline]
+    fn hash_layer(&self, nodes: &[Node], out: &mut [Node], zero_hash: &Node) {
+        layer(self, nodes, out, zero_hash)
+    }
+
+    /// [`hash_layer`](Sha256Hasher::hash_layer) with the level written over the start of
+    /// `nodes` itself: `nodes[k]` becomes the hash of what `nodes[2 * k]` and the node
+    /// after it held. The nodes from `nodes.len().div_ceil(2)` on are left as they were.
+    #[inline]
+    fn hash_layer_in_place(&self, nodes: &mut [Node], zero_hash: &Node) {
+        layer_in_place(self, nodes, zero_hash)
+    }
+}
+
+/// [`Sha256Hasher::hash_layer`] one pair at a time.
+fn layer<H: Sha256Hasher + ?Sized>(hasher: &H, nodes: &[Node], out: &mut [Node], zero_hash: &Node) {
+    let pairs = nodes.len() / 2;
+    let mut k = 0;
+    while k < pairs {
+        out[k] = hasher.hash_pair(&nodes[2 * k], &nodes[2 * k + 1]);
+        k += 1;
+    }
+    if nodes.len() % 2 == 1 {
+        out[pairs] = hasher.hash_pair(&nodes[2 * pairs], zero_hash);
+    }
+}
+
+/// [`Sha256Hasher::hash_layer_in_place`] one pair at a time. Every node is read before the
+/// write that replaces it, since `k <= 2 * k`.
+fn layer_in_place<H: Sha256Hasher + ?Sized>(hasher: &H, nodes: &mut [Node], zero_hash: &Node) {
+    let pairs = nodes.len() / 2;
+    let mut k = 0;
+    while k < pairs {
+        let parent = hasher.hash_pair(&nodes[2 * k], &nodes[2 * k + 1]);
+        nodes[k] = parent;
+        k += 1;
+    }
+    if nodes.len() % 2 == 1 {
+        let parent = hasher.hash_pair(&nodes[2 * pairs], zero_hash);
+        nodes[pairs] = parent;
+    }
 }
 
 /// Default SHA-256 hasher using the `sha2` crate.
+///
+/// With the `std` feature, pairs of nodes are hashed by this crate's own kernel when the CPU
+/// has the SHA-256 instructions, up to four pairs at a time: the SHA extensions on x86-64,
+/// and `FEAT_SHA256` on little-endian AArch64. The result is the same SHA-256.
 #[cfg(feature = "sha2-backend")]
 pub struct Sha2Hasher;
 
@@ -34,33 +114,90 @@ impl Sha256Hasher for Sha2Hasher {
         use sha2::{Digest, Sha256};
         Sha256::digest(data).into()
     }
+
+    #[inline]
+    fn hash_pair(&self, a: &Node, b: &Node) -> Node {
+        #[cfg(all(feature = "std", target_arch = "x86_64"))]
+        if shani::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { shani::hash_pair(a, b) };
+        }
+        #[cfg(all(feature = "std", target_arch = "aarch64", target_endian = "little"))]
+        if neon::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { neon::hash_pair(a, b) };
+        }
+        let mut buf = [0u8; 64];
+        buf[..32].copy_from_slice(a);
+        buf[32..].copy_from_slice(b);
+        self.hash(&buf)
+    }
+
+    #[inline]
+    fn hash_layer(&self, nodes: &[Node], out: &mut [Node], zero_hash: &Node) {
+        #[cfg(all(feature = "std", target_arch = "x86_64"))]
+        if shani::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { shani::hash_layer(nodes, out, false, zero_hash) };
+        }
+        #[cfg(all(feature = "std", target_arch = "aarch64", target_endian = "little"))]
+        if neon::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { neon::hash_layer(nodes, out, false, zero_hash) };
+        }
+        layer(self, nodes, out, zero_hash)
+    }
+
+    #[inline]
+    fn hash_layer_in_place(&self, nodes: &mut [Node], zero_hash: &Node) {
+        #[cfg(all(feature = "std", target_arch = "x86_64"))]
+        if shani::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { shani::hash_layer(&[], nodes, true, zero_hash) };
+        }
+        #[cfg(all(feature = "std", target_arch = "aarch64", target_endian = "little"))]
+        if neon::available() {
+            // SAFETY: `available` has just confirmed every CPU feature the kernel enables.
+            return unsafe { neon::hash_layer(&[], nodes, true, zero_hash) };
+        }
+        layer_in_place(self, nodes, zero_hash)
+    }
 }
 
 /// Hash two nodes together: SHA256(a || b).
 #[inline]
 pub fn hash_nodes(hasher: &impl Sha256Hasher, a: &Node, b: &Node) -> Node {
-    let mut buf = [0u8; 64];
-    buf[..32].copy_from_slice(a);
-    buf[32..].copy_from_slice(b);
-    hasher.hash(&buf)
+    hasher.hash_pair(a, b)
 }
 
 /// Pack serialized bytes into 32-byte chunks, zero-padding the last chunk if needed.
 #[cfg(feature = "alloc")]
 pub fn pack(values: &[u8]) -> Vec<Node> {
-    if values.is_empty() {
-        return Vec::new();
-    }
-    let num_chunks = values.len().div_ceil(32);
-    let mut chunks = Vec::with_capacity(num_chunks);
-    for i in 0..num_chunks {
-        let start = i * 32;
-        let end = core::cmp::min(start + 32, values.len());
-        let mut chunk = [0u8; 32];
-        chunk[..end - start].copy_from_slice(&values[start..end]);
-        chunks.push(chunk);
+    // The whole chunks are one copy; only a last partial chunk is built apart.
+    let (whole, rest) = values.as_chunks::<32>();
+    let mut chunks = Vec::with_capacity(values.len().div_ceil(32));
+    chunks.extend_from_slice(whole);
+    if !rest.is_empty() {
+        let mut last = [0u8; 32];
+        last[..rest.len()].copy_from_slice(rest);
+        chunks.push(last);
     }
     chunks
+}
+
+/// The serializations of `items` one after another: the bytes a list of basic items packs.
+#[cfg(feature = "alloc")]
+fn basic_items_bytes<T: SszEncode>(items: &[T]) -> Vec<u8> {
+    if T::is_fixed_size() {
+        // The item type builds the buffer: the integers do it in bulk.
+        T::ssz_fixed_slice_to_vec(items)
+    } else {
+        let mut serialized = Vec::new();
+        for item in items {
+            item.ssz_append(&mut serialized);
+        }
+        serialized
+    }
 }
 
 /// Pack a bitfield into 32-byte chunks.
@@ -79,65 +216,146 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 /// all zeros, so its root is read from [`ZERO_HASHES`] instead of being hashed.
 ///
 /// Cost is `O(chunks.len())` plus one hash per virtual level above the real subtree.
-/// Two buffers are allocated and reused (≈ `chunks.len()` and `chunks.len().div_ceil(2)` nodes).
+/// The chunks are left as they are: up to 32 of them are hashed into a buffer on the
+/// stack, and more than that are copied first. [`merkleize_in_place`] does neither.
 #[cfg(feature = "alloc")]
 pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usize>) -> Node {
-    let count = match limit {
-        Some(l) => {
-            assert!(
-                chunks.len() <= l,
-                "bug: chunk count {} exceeds limit {} — bounded type invariant violated",
-                chunks.len(),
-                l
-            );
-            l
-        }
-        None => chunks.len(),
-    };
-
-    if count == 0 {
-        return ZERO_HASHES[0];
-    }
-
-    let depth = count.next_power_of_two().trailing_zeros() as usize;
+    let depth = tree_depth(chunks.len(), limit);
 
     // With no real chunks the whole tree is zeros, so the root is precomputed.
     if chunks.is_empty() {
         return ZERO_HASHES[depth];
     }
 
-    // Depth of the smallest subtree covering all real chunks. Every level above
-    // it pairs the running root with an all-zero sibling.
-    let real_depth = chunks.len().next_power_of_two().trailing_zeros() as usize;
+    let root = if chunks.len() == 1 {
+        chunks[0]
+    } else if chunks.len() <= 8 {
+        real_root_on_stack::<4>(hasher, chunks)
+    } else if chunks.len() <= 32 {
+        real_root_on_stack::<16>(hasher, chunks)
+    } else {
+        real_root(hasher, &mut chunks.to_vec(), 0)
+    };
 
-    // Fold the real chunks one level per iteration, swapping between two buffers
-    // that are allocated once and reused, so no level allocates.
-    //
-    // Only full pairs of real nodes are hashed. A level with an odd node count
-    // ends on the frontier, where the missing right sibling roots an all-zero
-    // subtree, so `ZERO_HASHES[level]` stands in for it rather than being hashed.
-    let mut layer: Vec<Node> = chunks.to_vec();
-    let mut next: Vec<Node> = Vec::with_capacity(layer.len().div_ceil(2));
+    virtual_root(hasher, root, chunks.len(), depth)
+}
 
-    for zero_hash in ZERO_HASHES.iter().take(real_depth) {
-        next.clear();
-        let (pairs, remainder) = layer.as_chunks::<2>();
-        for pair in pairs {
-            next.push(hash_nodes(hasher, &pair[0], &pair[1]));
-        }
-        if let [odd] = remainder {
-            next.push(hash_nodes(hasher, odd, zero_hash));
-        }
-        core::mem::swap(&mut layer, &mut next);
+/// [`merkleize`] with the tree hashed over `chunks` itself, which takes no other memory.
+/// What `chunks` holds afterwards is not specified.
+pub fn merkleize_in_place(
+    hasher: &impl Sha256Hasher,
+    chunks: &mut [Node],
+    limit: Option<usize>,
+) -> Node {
+    let depth = tree_depth(chunks.len(), limit);
+
+    // With no real chunks the whole tree is zeros, so the root is precomputed.
+    if chunks.is_empty() {
+        return ZERO_HASHES[depth];
     }
 
-    // `layer[0]` now roots the real-data subtree. Merge in the virtual levels.
-    let mut root = layer[0];
-    for zero_hash in ZERO_HASHES.iter().take(depth).skip(real_depth) {
-        root = hash_nodes(hasher, &root, zero_hash);
-    }
+    let count = chunks.len();
+    let root = real_root(hasher, chunks, 0);
+    virtual_root(hasher, root, count, depth)
+}
 
+/// The depth of the tree that `limit` asks for, or of the tree of `len` chunks without one.
+///
+/// # Panics
+///
+/// If there are more chunks than the limit.
+fn tree_depth(len: usize, limit: Option<usize>) -> usize {
+    let count = match limit {
+        Some(l) => {
+            assert!(
+                len <= l,
+                "bug: chunk count {} exceeds limit {} — bounded type invariant violated",
+                len,
+                l
+            );
+            l
+        }
+        None => len,
+    };
+
+    ceil_log2(count)
+}
+
+/// The depth of the smallest perfect tree with room for `count` leaves:
+/// `count.next_power_of_two().trailing_zeros()`, which is 0 for no leaves or one.
+///
+/// It is written with `leading_zeros` and on a `u64`, because the Lean library of Aeneas
+/// models `leading_zeros` but neither `next_power_of_two` nor `trailing_zeros`. Past
+/// `2^63` this gives 64, which is what the other form gives in a release build, where
+/// `next_power_of_two` wraps to 0; a debug build panics there instead.
+#[inline]
+fn ceil_log2(count: usize) -> usize {
+    if count <= 1 {
+        0
+    } else {
+        (64 - ((count - 1) as u64).leading_zeros()) as usize
+    }
+}
+
+/// The root of the tree of depth `depth`, given the `root` of the smallest subtree that
+/// covers its `len` real chunks. Every level above that subtree pairs the running root
+/// with an all-zero sibling.
+fn virtual_root(hasher: &impl Sha256Hasher, mut root: Node, len: usize, depth: usize) -> Node {
+    // A `while` and not `iter().take(depth).skip(…)`: the Lean library of Aeneas has no
+    // model of `skip`. `depth` is at most 64, so every index is inside `ZERO_HASHES`.
+    let mut level = ceil_log2(len);
+    while level < depth {
+        root = hash_nodes(hasher, &root, &ZERO_HASHES[level]);
+        level += 1;
+    }
     root
+}
+
+/// [`real_root`] of two or more `chunks`, at most `2 * M`, which are left as they are: the
+/// level above them goes to `M` nodes of the stack.
+#[cfg(feature = "alloc")]
+#[inline]
+fn real_root_on_stack<const M: usize>(hasher: &impl Sha256Hasher, chunks: &[Node]) -> Node {
+    let mut above = [[0u8; 32]; M];
+    hasher.hash_layer(chunks, &mut above, &ZERO_HASHES[0]);
+    real_root(hasher, &mut above[..chunks.len().div_ceil(2)], 1)
+}
+
+/// Root of the smallest subtree that covers `nodes`, of which there is at least one. They
+/// are `level` levels above the chunks.
+///
+/// The tree is hashed over `nodes` itself, each level over the start of the one below.
+/// A level with an odd node count ends on the frontier, where the missing right sibling
+/// roots an all-zero subtree, so the entry of [`ZERO_HASHES`] for that level stands in for
+/// it rather than being hashed.
+fn real_root(hasher: &impl Sha256Hasher, nodes: &mut [Node], mut level: usize) -> Node {
+    let mut len = nodes.len();
+    while len > 1 {
+        hasher.hash_layer_in_place(&mut nodes[..len], &ZERO_HASHES[level]);
+        len = len.div_ceil(2);
+        level += 1;
+    }
+    nodes[0]
+}
+
+/// The roots of groups of `width` nodes, all hashed together: `nodes` holds the groups one
+/// after the other, and the root of group `j` ends up in `nodes[j]`. What the rest of
+/// `nodes` holds afterwards is not specified.
+///
+/// `width` must be a power of two and `nodes.len()` a multiple of it. Each group is then a
+/// perfect tree, and one [`Sha256Hasher::hash_layer_in_place`] over all of them hashes a
+/// level of every group: with an even number of nodes per group, no pair crosses two
+/// groups. A level of one small tree has one or two pairs; a level of many of them keeps
+/// every stream of the hasher busy.
+#[doc(hidden)]
+pub fn merkleize_groups(hasher: &impl Sha256Hasher, nodes: &mut [Node], width: usize) {
+    let mut len = nodes.len();
+    let mut w = width;
+    while w > 1 {
+        hasher.hash_layer_in_place(&mut nodes[..len], &ZERO_HASHES[0]);
+        len /= 2;
+        w /= 2;
+    }
 }
 
 /// Progressive merkleization: a chain of progressively larger binary subtrees.
@@ -219,6 +437,67 @@ pub trait HashTreeRoot {
         Self: Sized,
     {
         false
+    }
+
+    /// How many nodes [`hash_tree_root_row`](HashTreeRoot::hash_tree_root_row) writes: a
+    /// power of two, from 1 to 256. The default is 1.
+    #[doc(hidden)]
+    fn hash_tree_root_width() -> usize
+    where
+        Self: Sized,
+    {
+        1
+    }
+
+    /// The bottom row of a tree whose root is the hash tree root of `self`: writes
+    /// [`hash_tree_root_width`](HashTreeRoot::hash_tree_root_width) nodes to the start of
+    /// `row`, and leaves the rest as it is. The default writes the root itself, a tree of
+    /// one node. `#[derive(HashTreeRoot)]` writes the field roots of a container, padded
+    /// with zero chunks: [`hash_tree_roots`] then hashes the trees of many items together.
+    ///
+    /// # Panics
+    ///
+    /// If `row` is shorter than the width.
+    #[doc(hidden)]
+    fn hash_tree_root_row(&self, hasher: &impl Sha256Hasher, row: &mut [Node]) {
+        row[0] = self.hash_tree_root(hasher);
+    }
+}
+
+/// Writes the hash tree root of `items[i]` to `out[i]`, for every `i`; the rest of `out` is
+/// left as it is. Lists and vectors of composite items get their item roots from here.
+///
+/// The rows of [`HashTreeRoot::hash_tree_root_row`] of as many items as fit in 256 nodes go
+/// one after the other, and [`merkleize_groups`] hashes their trees together, a level at a
+/// time. A level of one container has one or two pairs; a level of many of them keeps every
+/// stream of the hasher busy. The roots are the same as one by one.
+///
+/// # Panics
+///
+/// If `out` is shorter than `items`, or if the width is not from 1 to 256.
+#[doc(hidden)]
+pub fn hash_tree_roots<T: HashTreeRoot>(items: &[T], hasher: &impl Sha256Hasher, out: &mut [Node]) {
+    let width = T::hash_tree_root_width();
+    assert!(width != 0, "hash_tree_root_width is 0");
+    assert!(width <= 256, "hash_tree_root_width is over 256");
+    let per_block = 256 / width;
+    // `while` with indices, without iterators, for Aeneas.
+    let mut leaves = [[0u8; 32]; 256];
+    let mut i = 0;
+    while i < items.len() {
+        let m = if items.len() - i < per_block {
+            items.len() - i
+        } else {
+            per_block
+        };
+        let mut j = 0;
+        while j < m {
+            items[i + j].hash_tree_root_row(hasher, &mut leaves[j * width..(j + 1) * width]);
+            j += 1;
+        }
+        merkleize_groups(hasher, &mut leaves[..m * width], width);
+        out[i..i + m].copy_from_slice(&leaves[..m]);
+        i += m;
     }
 }
 
@@ -318,8 +597,17 @@ impl<const N: usize> HashTreeRoot for [u8; N] {
             let mut node = [0u8; 32];
             node[..N].copy_from_slice(self);
             node
+        } else if N <= 256 {
+            // What `pack` returns, in eight chunks of the stack.
+            let mut chunks = [[0u8; 32]; 8];
+            let (whole, rest) = self.as_chunks::<32>();
+            chunks[..whole.len()].copy_from_slice(whole);
+            if !rest.is_empty() {
+                chunks[whole.len()][..rest.len()].copy_from_slice(rest);
+            }
+            merkleize_in_place(hasher, &mut chunks[..N.div_ceil(32)], None)
         } else {
-            merkleize(hasher, &pack(self), None)
+            merkleize_in_place(hasher, &mut pack(self), None)
         }
     }
 
@@ -333,21 +621,17 @@ impl<const N: usize> HashTreeRoot for [u8; N] {
 #[cfg(feature = "alloc")]
 impl<T: HashTreeRoot + SszEncode> HashTreeRoot for Vec<T> {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
-        let chunks: Vec<Node> = if T::is_basic_type() {
-            let mut serialized = Vec::new();
-            for item in self {
-                item.ssz_append(&mut serialized);
-            }
-            pack(&serialized)
+        let mut chunks: Vec<Node> = if T::is_basic_type() {
+            pack(&basic_items_bytes(self))
         } else {
-            self.iter()
-                .map(|item| item.hash_tree_root(hasher))
-                .collect()
+            let mut roots = vec![[0u8; 32]; self.len()];
+            hash_tree_roots(self, hasher, &mut roots);
+            roots
         };
         let root = if chunks.is_empty() {
             merkleize(hasher, &[ZERO_HASHES[0]], None)
         } else {
-            merkleize(hasher, &chunks, None)
+            merkleize_in_place(hasher, &mut chunks, None)
         };
         mix_in_length(hasher, &root, self.len())
     }
@@ -361,6 +645,27 @@ mod tests {
 
     #[cfg(feature = "sha2-backend")]
     use crate::Sha2Hasher;
+
+    // ── ceil_log2 ──
+
+    #[test]
+    fn ceil_log2_is_next_power_of_two_trailing_zeros() {
+        let reference = |n: usize| n.next_power_of_two().trailing_zeros() as usize;
+        for n in 0..5000 {
+            assert_eq!(ceil_log2(n), reference(n), "n = {n}");
+        }
+        for k in 1..64 {
+            for n in [(1usize << k) - 1, 1 << k, (1 << k) + 1] {
+                if n <= 1 << 63 {
+                    assert_eq!(ceil_log2(n), reference(n), "n = {n}");
+                }
+            }
+        }
+        // Past 2^63, `next_power_of_two` overflows: a release build wraps it to 0, whose
+        // `trailing_zeros` is 64.
+        assert_eq!(ceil_log2((1 << 63) + 1), 64);
+        assert_eq!(ceil_log2(usize::MAX), 64);
+    }
 
     // ── hash_nodes tests ──
 
@@ -709,6 +1014,319 @@ mod tests {
         // Non-power-of-two limits round up to the enclosing subtree.
         assert_eq!(merkleize(&Sha2Hasher, &[], Some(3)), ZERO_HASHES[2]);
         assert_eq!(merkleize(&Sha2Hasher, &[], Some(100)), ZERO_HASHES[7]);
+    }
+
+    /// The level above the chunks goes to four nodes of the stack up to 8 chunks and to
+    /// sixteen up to 32; more chunks than that are copied to the heap.
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_matches_oracle_around_buffer_sizes() {
+        for n in [
+            7usize, 8, 9, 15, 16, 17, 31, 32, 33, 34, 63, 64, 65, 127, 128, 129, 255, 256, 257,
+            1000, 1023, 1024, 1025,
+        ] {
+            let chunks: Vec<Node> = (0..n)
+                .map(|i| {
+                    let mut chunk = [(i % 251) as u8 + 1; 32];
+                    chunk[0] = (i >> 8) as u8;
+                    chunk
+                })
+                .collect();
+            for limit in [None, Some(n), Some(n + 1), Some(2 * n + 1), Some(4096)] {
+                assert_eq!(
+                    merkleize(&Sha2Hasher, &chunks, limit),
+                    merkleize_fully_materialized(&chunks, limit),
+                    "{n} chunks, limit {limit:?}"
+                );
+            }
+        }
+    }
+
+    /// Hashing over the chunks themselves gives the root of [`merkleize`], with as many
+    /// hashes.
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn merkleize_groups_is_merkleize_of_each_group() {
+        let all: Vec<Node> = (0..1024u32)
+            .map(|i| {
+                let mut n = [0u8; 32];
+                n[..4].copy_from_slice(&i.wrapping_mul(2_654_435_761).to_le_bytes());
+                n[31] = (i % 7) as u8;
+                n
+            })
+            .collect();
+        for width in [1usize, 2, 4, 8, 16, 32] {
+            for groups in [0usize, 1, 2, 3, 5, 8, 9, 31] {
+                let mut nodes = all[..width * groups].to_vec();
+                merkleize_groups(&Sha2Hasher, &mut nodes, width);
+                for j in 0..groups {
+                    let want = merkleize(&Sha2Hasher, &all[j * width..(j + 1) * width], None);
+                    assert_eq!(nodes[j], want, "width {width}, group {j} of {groups}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn hash_tree_roots_of_width_one_is_one_by_one() {
+        for n in [0usize, 1, 2, 255, 256, 257, 600] {
+            let items: Vec<u64> = (0..n as u64).collect();
+            let mut out = vec![[0xaa; 32]; n + 2];
+            hash_tree_roots(&items, &Sha2Hasher, &mut out);
+            for (i, x) in items.iter().enumerate() {
+                assert_eq!(out[i], x.hash_tree_root(&Sha2Hasher));
+            }
+            assert_eq!(out[n..], [[0xaa; 32]; 2]);
+        }
+    }
+
+    #[test]
+    fn merkleize_in_place_is_merkleize() {
+        for n in (0usize..=70).chain([127, 128, 129, 255, 256, 257, 1000, 1023, 1024, 1025]) {
+            let chunks: Vec<Node> = (0..n)
+                .map(|i| {
+                    let mut chunk = [(i % 251) as u8 + 1; 32];
+                    chunk[0] = (i >> 8) as u8;
+                    chunk
+                })
+                .collect();
+            for limit in [None, Some(n), Some(n + 1), Some(2 * n + 1), Some(4096)] {
+                let want = merkleize_fully_materialized(&chunks, limit);
+                assert_eq!(
+                    merkleize_in_place(&Sha2Hasher, &mut chunks.clone(), limit),
+                    want,
+                    "{n} chunks, limit {limit:?}"
+                );
+                let counting = CountingHasher::new();
+                assert_eq!(
+                    merkleize_in_place(&counting, &mut chunks.clone(), limit),
+                    want,
+                    "{n} chunks, limit {limit:?}, one pair at a time"
+                );
+                assert_eq!(
+                    counting.calls.get(),
+                    zero_aware_hash_count(n, limit),
+                    "{n} chunks, limit {limit:?}"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    #[should_panic(expected = "exceeds limit")]
+    fn merkleize_in_place_panics_if_count_exceeds_limit() {
+        let mut chunks = [[0u8; 32]; 3];
+        merkleize_in_place(&Sha2Hasher, &mut chunks, Some(2));
+    }
+
+    /// A level, as the trait's two methods must write it whoever provides them.
+    #[cfg(feature = "sha2-backend")]
+    fn level_reference(nodes: &[Node], zero_hash: &Node) -> Vec<Node> {
+        nodes
+            .chunks(2)
+            .map(|pair| {
+                let mut both = [0u8; 64];
+                both[..32].copy_from_slice(&pair[0]);
+                both[32..].copy_from_slice(pair.get(1).unwrap_or(zero_hash));
+                Sha2Hasher.hash(&both)
+            })
+            .collect()
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn hash_layer_writes_the_level_and_nothing_else() {
+        let zero_hash = [0x5a; 32];
+        let all: Vec<Node> = (0..67usize)
+            .map(|i| {
+                let mut node = [i as u8 ^ 0xc3; 32];
+                node[i % 32] = i as u8;
+                node
+            })
+            .collect();
+        for len in 0..=all.len() {
+            let nodes = &all[..len];
+            let want = level_reference(nodes, &zero_hash);
+            assert_eq!(want.len(), len.div_ceil(2));
+            for spare in [0, 1, 3] {
+                let mut plain = vec![[0xaa; 32]; want.len() + spare];
+                CountingHasher::new().hash_layer(nodes, &mut plain, &zero_hash);
+                let mut fast = plain.clone();
+                fast[..want.len()].fill([0xaa; 32]);
+                Sha2Hasher.hash_layer(nodes, &mut fast, &zero_hash);
+                for out in [&plain, &fast] {
+                    assert_eq!(out[..want.len()], want[..], "{len} nodes");
+                    assert!(out[want.len()..].iter().all(|node| *node == [0xaa; 32]));
+                }
+            }
+
+            let mut plain = nodes.to_vec();
+            CountingHasher::new().hash_layer_in_place(&mut plain, &zero_hash);
+            let mut fast = nodes.to_vec();
+            Sha2Hasher.hash_layer_in_place(&mut fast, &zero_hash);
+            for out in [&plain, &fast] {
+                assert_eq!(out[..want.len()], want[..], "{len} nodes, in place");
+                assert_eq!(
+                    out[want.len()..],
+                    nodes[want.len()..],
+                    "{len} nodes, in place"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    #[should_panic]
+    fn hash_layer_panics_on_a_short_output() {
+        let nodes = [[1u8; 32]; 7];
+        let mut out = [[0u8; 32]; 3];
+        Sha2Hasher.hash_layer(&nodes, &mut out, &[0u8; 32]);
+    }
+
+    /// `pack` as the specification words it: split into chunks, pad the last with zeros.
+    fn pack_reference(values: &[u8]) -> Vec<Node> {
+        values
+            .chunks(32)
+            .map(|part| {
+                let mut chunk = [0u8; 32];
+                chunk[..part.len()].copy_from_slice(part);
+                chunk
+            })
+            .collect()
+    }
+
+    #[test]
+    fn pack_matches_reference() {
+        let bytes: Vec<u8> = (0..2100usize).map(|i| (i * 7 + 3) as u8).collect();
+        for len in (0..=200).chain([1023, 1024, 1025, 2047, 2048, 2049, 2100]) {
+            assert_eq!(
+                pack(&bytes[..len]),
+                pack_reference(&bytes[..len]),
+                "{len} bytes"
+            );
+        }
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn byte_array_roots_match_pack() {
+        fn check<const N: usize>() {
+            let mut bytes = [0u8; N];
+            for (i, byte) in bytes.iter_mut().enumerate() {
+                *byte = (i * 13 + 5) as u8;
+            }
+            let expected = if N <= 32 {
+                let mut node = [0u8; 32];
+                node[..N].copy_from_slice(&bytes);
+                node
+            } else {
+                merkleize_fully_materialized(&pack_reference(&bytes), None)
+            };
+            assert_eq!(bytes.hash_tree_root(&Sha2Hasher), expected, "{N} bytes");
+        }
+        check::<0>();
+        check::<1>();
+        check::<31>();
+        check::<32>();
+        check::<33>();
+        check::<48>();
+        check::<63>();
+        check::<64>();
+        check::<65>();
+        check::<96>();
+        check::<128>();
+        check::<224>();
+        check::<225>();
+        check::<255>();
+        check::<256>();
+        check::<257>();
+        check::<300>();
+        check::<1024>();
+    }
+
+    /// The root of a list of basic items: the chunks of their serializations, one after
+    /// another, and the length mixed in.
+    #[cfg(feature = "sha2-backend")]
+    fn basic_list_root<T: SszEncode>(items: &[T]) -> Node {
+        let mut serialized = Vec::new();
+        for item in items {
+            serialized.extend_from_slice(&item.to_ssz());
+        }
+        let mut chunks = pack_reference(&serialized);
+        if chunks.is_empty() {
+            chunks.push([0u8; 32]);
+        }
+        let root = merkleize_fully_materialized(&chunks, None);
+        mix_in_length(&Sha2Hasher, &root, items.len())
+    }
+
+    #[cfg(feature = "sha2-backend")]
+    #[test]
+    fn vec_of_basic_items_packs_their_serializations() {
+        for len in (0..=70usize).chain([255, 256, 257, 1000]) {
+            let seed = |i: usize| (i as u64 + 1).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+            let bools: Vec<bool> = (0..len).map(|i| seed(i) >> 60 & 1 == 1).collect();
+            assert_eq!(bools.hash_tree_root(&Sha2Hasher), basic_list_root(&bools));
+            let u8s: Vec<u8> = (0..len).map(|i| (seed(i) >> 56) as u8).collect();
+            assert_eq!(u8s.hash_tree_root(&Sha2Hasher), basic_list_root(&u8s));
+            let u16s: Vec<u16> = (0..len).map(|i| (seed(i) >> 48) as u16).collect();
+            assert_eq!(u16s.hash_tree_root(&Sha2Hasher), basic_list_root(&u16s));
+            let u32s: Vec<u32> = (0..len).map(|i| (seed(i) >> 32) as u32).collect();
+            assert_eq!(u32s.hash_tree_root(&Sha2Hasher), basic_list_root(&u32s));
+            let u64s: Vec<u64> = (0..len).map(seed).collect();
+            assert_eq!(u64s.hash_tree_root(&Sha2Hasher), basic_list_root(&u64s));
+            let u128s: Vec<u128> = (0..len)
+                .map(|i| (seed(i) as u128) << 64 | seed(i + 7) as u128)
+                .collect();
+            assert_eq!(u128s.hash_tree_root(&Sha2Hasher), basic_list_root(&u128s));
+            let arrays: Vec<[u8; 20]> = (0..len).map(|i| [(seed(i) >> 56) as u8; 20]).collect();
+            assert_eq!(arrays.hash_tree_root(&Sha2Hasher), basic_list_root(&arrays));
+        }
+    }
+
+    /// A hasher that only provides `hash` sees the same sequence of inputs as a tree hashed
+    /// level by level, left to right, a level's unpaired node last.
+    #[test]
+    fn merkleize_hashes_level_by_level_in_order() {
+        struct Recorder(core::cell::RefCell<Vec<Vec<u8>>>);
+        impl Sha256Hasher for Recorder {
+            fn hash(&self, data: &[u8]) -> [u8; 32] {
+                self.0.borrow_mut().push(data.to_vec());
+                let mut node = [0u8; 32];
+                for (i, byte) in data.iter().enumerate() {
+                    node[i % 32] = node[i % 32].wrapping_mul(31).wrapping_add(*byte ^ i as u8);
+                }
+                node
+            }
+        }
+        for n in [2usize, 3, 4, 5, 8, 9, 13, 32, 33, 37, 100] {
+            let chunks: Vec<Node> = (0..n).map(|i| [i as u8 + 1; 32]).collect();
+            let recorder = Recorder(core::cell::RefCell::new(Vec::new()));
+            let root = merkleize(&recorder, &chunks, Some(4 * n));
+            let seen = recorder.0.take();
+
+            let reference = Recorder(core::cell::RefCell::new(Vec::new()));
+            let mut layer = chunks.clone();
+            let mut level = 0;
+            while layer.len() > 1 {
+                let mut next = Vec::new();
+                for pair in layer.chunks(2) {
+                    let right = pair.get(1).unwrap_or(&ZERO_HASHES[level]);
+                    next.push(reference.hash(&[pair[0], *right].concat()));
+                }
+                layer = next;
+                level += 1;
+            }
+            let mut expected = layer[0];
+            let depth = (4 * n).next_power_of_two().trailing_zeros() as usize;
+            for zero_hash in &ZERO_HASHES[level..depth] {
+                expected = reference.hash(&[expected, *zero_hash].concat());
+            }
+            assert_eq!(root, expected, "{n} chunks");
+            assert_eq!(seen, reference.0.take(), "{n} chunks");
+        }
     }
 
     // ── merkleize_progressive tests ──
