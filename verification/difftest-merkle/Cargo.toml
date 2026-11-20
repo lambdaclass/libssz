@@ -1,0 +1,14 @@
+[package]
+name = "libssz-difftest-merkle"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Differential tests of the ssz-merkle SHA-256 kernels: CPU vs Lean models of the intrinsics, and Rust vs Aeneas model vs EthLib vs sha2"
+
+# Standalone project: not part of any workspace.
+[workspace]
+
+[dependencies]
+merkle = { package = "libssz-merkle", path = "../../crates/ssz-merkle" }
+# An independent SHA-256 implementation, as a fourth opinion.
+sha2 = "0.10"

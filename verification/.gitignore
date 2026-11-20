@@ -1,0 +1,4 @@
+/lean/.lake/
+/*.llbc
+/difftest/target/
+/difftest-merkle/target/
