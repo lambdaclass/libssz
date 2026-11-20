@@ -1,0 +1,17 @@
+[package]
+name = "libssz-difftest"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Differential tests: libssz before the rewrite vs libssz now vs its Lean model (Aeneas) vs EthLib"
+
+# Standalone project: not part of any workspace.
+[workspace]
+
+[dependencies]
+# libssz before the verification rewrite (upstream f6c22eb).
+orig = { package = "libssz", git = "https://github.com/lambdaclass/libssz", rev = "f6c22eb9c578a269682ea04911e5b71fdd99ea83" }
+# libssz in this repository. Named `verif` so the test file reads `orig` vs `verif`.
+verif = { package = "libssz", path = "../../crates/ssz", features = ["verif-example"] }
+# The `ssz-derive` macro before the rewrite, to compare `Example` with what it really generates.
+orig_derive = { package = "libssz-derive", git = "https://github.com/lambdaclass/libssz", rev = "f6c22eb9c578a269682ea04911e5b71fdd99ea83" }
