@@ -347,15 +347,21 @@ fn derive_encode_struct(
             where
                 Self: Sized,
             {
+                // Indexed `while` instead of `for item in items` (no iterators).
                 if <Self as libssz::SszEncode>::is_fixed_size() {
                     buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
-                    for item in items {
+                    let mut __i = 0;
+                    while __i < items.len() {
+                        let item = &items[__i];
                         #(#bulk_append_stmts)*
+                        __i += 1;
                     }
                 } else {
                     buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
-                    for item in items {
-                        item.ssz_append(buf);
+                    let mut __i = 0;
+                    while __i < items.len() {
+                        items[__i].ssz_append(buf);
+                        __i += 1;
                     }
                 }
             }
@@ -572,13 +578,11 @@ fn derive_decode_struct(
         .iter()
         .zip(field_types.iter())
         .map(|(fname, ty)| {
+            // A single call to `decode_fixed_part` with `?`: the same `if`, but inside
+            // the method. With the `if` and its `?`s inlined, Aeneas duplicates what follows
+            // in each branch and the translated code grows as 2^fields.
             quote! {
-                let #fname = if <#ty as libssz::SszDecode>::is_fixed_size() {
-                    Some(decoder.decode_fixed::<#ty>()?)
-                } else {
-                    decoder.read_variable_offset()?;
-                    None
-                };
+                let #fname = decoder.decode_fixed_part::<#ty>()?;
             }
         });
 
@@ -587,12 +591,9 @@ fn derive_decode_struct(
         .iter()
         .zip(field_types.iter())
         .map(|(fname, ty)| {
+            // Same here: `decode_variable_part` does the `if` inside.
             quote! {
-                let #fname = if <#ty as libssz::SszDecode>::is_fixed_size() {
-                    #fname.unwrap()
-                } else {
-                    decoder.decode_variable::<#ty>()?
-                };
+                let #fname = decoder.decode_variable_part::<#ty>(#fname)?;
             }
         });
 
@@ -665,21 +666,35 @@ fn derive_decode_struct(
                     let mut result = Vec::with_capacity(count);
                     // Inline per-item decode: skip struct-level length check
                     // since chunks_exact guarantees correct chunk size.
-                    for chunk in bytes.chunks_exact(item_size) {
-                        let __remaining = chunk;
+                    // Indexed `while` instead of `chunks_exact` (no iterators). The
+                    // `assert!` is the panic of `chunks_exact(0)`.
+                    assert!(item_size != 0, "chunk size must be non-zero");
+                    let mut __i = 0;
+                    while __i < count {
+                        let __remaining = &bytes[__i * item_size..(__i + 1) * item_size];
                         #(#fixed_decode_stmts)*
                         result.push(#name {
                             #(#field_names,)*
                         });
+                        __i += 1;
                     }
                     Ok(result)
                 } else {
                     // Variable-size: fall back to default
+                    // (`while` instead of `chunks_exact().map().collect()`; it stops at the
+                    // first error, like `collect` into a `Result`).
                     let item_size = <Self as libssz::SszDecode>::fixed_size();
-                    bytes
-                        .chunks_exact(item_size)
-                        .map(Self::from_ssz_bytes)
-                        .collect()
+                    assert!(item_size != 0, "chunk size must be non-zero");
+                    let count = bytes.len() / item_size;
+                    let mut result = Vec::with_capacity(count);
+                    let mut __i = 0;
+                    while __i < count {
+                        result.push(<Self as libssz::SszDecode>::from_ssz_bytes(
+                            &bytes[__i * item_size..(__i + 1) * item_size],
+                        )?);
+                        __i += 1;
+                    }
+                    Ok(result)
                 }
             }
         }

@@ -22,10 +22,16 @@ pub trait SszDecode: Sized {
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         let item_size = Self::fixed_size();
-        bytes
-            .chunks_exact(item_size)
-            .map(Self::from_ssz_bytes)
-            .collect()
+        assert!(item_size != 0, "chunk size must be non-zero");
+        let count = bytes.len() / item_size;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let start = i * item_size;
+            result.push(Self::from_ssz_bytes(&bytes[start..start + item_size])?);
+            i += 1;
+        }
+        Ok(result)
     }
 }
 
@@ -54,14 +60,23 @@ impl SszDecode for bool {
             b => Err(DecodeError::InvalidBooleanByte(b)),
         }
     }
+
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        let count = bytes.len();
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            result.push(Self::from_ssz_bytes(&bytes[i..i + 1])?);
+            i += 1;
+        }
+        Ok(result)
+    }
 }
 
 // ── Unsigned integers ──
 
-fn decode_uint<const N: usize, T>(
-    bytes: &[u8],
-    from_le_bytes: impl FnOnce([u8; N]) -> T,
-) -> Result<T, DecodeError> {
+fn decode_uint<const N: usize>(bytes: &[u8]) -> Result<[u8; N], DecodeError> {
     if bytes.len() != N {
         return Err(DecodeError::InvalidFixedLength {
             expected: N,
@@ -70,37 +85,7 @@ fn decode_uint<const N: usize, T>(
     }
     let mut arr = [0u8; N];
     arr.copy_from_slice(bytes);
-    Ok(from_le_bytes(arr))
-}
-
-#[cfg(feature = "alloc")]
-fn decode_fixed_vec_le<T>(bytes: &[u8], item_size: usize) -> Result<Vec<T>, DecodeError> {
-    #[cfg(target_endian = "little")]
-    {
-        if !bytes.len().is_multiple_of(item_size) {
-            return Err(DecodeError::InvalidByteLength {
-                expected: item_size,
-                got: bytes.len(),
-            });
-        }
-        let count = bytes.len() / item_size;
-        let mut result = Vec::<T>::with_capacity(count);
-        unsafe {
-            core::ptr::copy_nonoverlapping(
-                bytes.as_ptr(),
-                result.as_mut_ptr() as *mut u8,
-                bytes.len(),
-            );
-            result.set_len(count);
-        }
-        Ok(result)
-    }
-    #[cfg(not(target_endian = "little"))]
-    {
-        let _ = bytes;
-        let _ = item_size;
-        unreachable!()
-    }
+    Ok(arr)
 }
 
 impl SszDecode for u8 {
@@ -114,19 +99,28 @@ impl SszDecode for u8 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<1, Self>(bytes, Self::from_le_bytes)
+        let arr = decode_uint::<1>(bytes)?;
+        Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 1)
+        if !bytes.len().is_multiple_of(1) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 1,
+                got: bytes.len(),
+            });
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(1).map(Self::from_ssz_bytes).collect()
+        let count = bytes.len();
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let mut arr = [0u8; 1];
+            arr.copy_from_slice(&bytes[i..i + 1]);
+            result.push(Self::from_le_bytes(arr));
+            i += 1;
         }
+        Ok(result)
     }
 }
 
@@ -141,19 +135,28 @@ impl SszDecode for u16 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<2, Self>(bytes, Self::from_le_bytes)
+        let arr = decode_uint::<2>(bytes)?;
+        Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 2)
+        if !bytes.len().is_multiple_of(2) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 2,
+                got: bytes.len(),
+            });
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(2).map(Self::from_ssz_bytes).collect()
+        let count = bytes.len() / 2;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let mut arr = [0u8; 2];
+            arr.copy_from_slice(&bytes[i * 2..i * 2 + 2]);
+            result.push(Self::from_le_bytes(arr));
+            i += 1;
         }
+        Ok(result)
     }
 }
 
@@ -168,19 +171,28 @@ impl SszDecode for u32 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<4, Self>(bytes, Self::from_le_bytes)
+        let arr = decode_uint::<4>(bytes)?;
+        Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 4)
+        if !bytes.len().is_multiple_of(4) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 4,
+                got: bytes.len(),
+            });
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(4).map(Self::from_ssz_bytes).collect()
+        let count = bytes.len() / 4;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let mut arr = [0u8; 4];
+            arr.copy_from_slice(&bytes[i * 4..i * 4 + 4]);
+            result.push(Self::from_le_bytes(arr));
+            i += 1;
         }
+        Ok(result)
     }
 }
 
@@ -195,19 +207,28 @@ impl SszDecode for u64 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<8, Self>(bytes, Self::from_le_bytes)
+        let arr = decode_uint::<8>(bytes)?;
+        Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 8)
+        if !bytes.len().is_multiple_of(8) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 8,
+                got: bytes.len(),
+            });
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(8).map(Self::from_ssz_bytes).collect()
+        let count = bytes.len() / 8;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let mut arr = [0u8; 8];
+            arr.copy_from_slice(&bytes[i * 8..i * 8 + 8]);
+            result.push(Self::from_le_bytes(arr));
+            i += 1;
         }
+        Ok(result)
     }
 }
 
@@ -222,19 +243,28 @@ impl SszDecode for u128 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        decode_uint::<16, Self>(bytes, Self::from_le_bytes)
+        let arr = decode_uint::<16>(bytes)?;
+        Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        #[cfg(target_endian = "little")]
-        {
-            decode_fixed_vec_le(bytes, 16)
+        if !bytes.len().is_multiple_of(16) {
+            return Err(DecodeError::InvalidByteLength {
+                expected: 16,
+                got: bytes.len(),
+            });
         }
-        #[cfg(not(target_endian = "little"))]
-        {
-            bytes.chunks_exact(16).map(Self::from_ssz_bytes).collect()
+        let count = bytes.len() / 16;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let mut arr = [0u8; 16];
+            arr.copy_from_slice(&bytes[i * 16..i * 16 + 16]);
+            result.push(Self::from_le_bytes(arr));
+            i += 1;
         }
+        Ok(result)
     }
 }
 
@@ -262,9 +292,12 @@ fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, D
     }
     let count = bytes.len() / N;
     let mut result = Vec::<[u8; N]>::with_capacity(count);
-    unsafe {
-        core::ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, bytes.len());
-        result.set_len(count);
+    let mut i = 0;
+    while i < count {
+        let mut arr = [0u8; N];
+        arr.copy_from_slice(&bytes[i * N..i * N + N]);
+        result.push(arr);
+        i += 1;
     }
     Ok(result)
 }
@@ -304,6 +337,23 @@ impl<T: SszDecode> SszDecode for Vec<T> {
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
         decode_list_with_max(bytes, usize::MAX)
+    }
+
+    // Same as the trait default (`fixed_size()` is 0, so it panics like
+    // `chunks_exact(0)`), written out here for the same reason as in `SszEncode`.
+    #[cfg(feature = "alloc")]
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        let item_size = Self::fixed_size();
+        assert!(item_size != 0, "chunk size must be non-zero");
+        let count = bytes.len() / item_size;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let start = i * item_size;
+            result.push(Self::from_ssz_bytes(&bytes[start..start + item_size])?);
+            i += 1;
+        }
+        Ok(result)
     }
 }
 
@@ -391,10 +441,20 @@ fn decode_variable_length_items_with_max<T: SszDecode>(
     }
 
     // Read all offsets, with bytes.len() as a sentinel for the last item's end.
-    let mut offsets = Vec::with_capacity(num_items + 1);
-    for i in 0..num_items {
+    let offsets = read_item_offsets(bytes, num_items)?;
+
+    // Decode each item from its slice.
+    decode_items(bytes, &offsets, num_items)
+}
+
+/// The `num_items` offsets of a list of variable-size items, validated (increasing and
+/// within `bytes`), followed by `bytes.len()`.
+fn read_item_offsets(bytes: &[u8], num_items: usize) -> Result<Vec<usize>, DecodeError> {
+    let mut offsets: Vec<usize> = Vec::with_capacity(num_items + 1);
+    let mut i = 0;
+    while i < num_items {
         let offset = read_offset(bytes, i * BYTES_PER_LENGTH_OFFSET)?;
-        if offsets.last().is_some_and(|&last| offset < last) {
+        if i > 0 && offset < offsets[i - 1] {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > bytes.len() {
@@ -404,14 +464,25 @@ fn decode_variable_length_items_with_max<T: SszDecode>(
             });
         }
         offsets.push(offset);
+        i += 1;
     }
     offsets.push(bytes.len());
+    Ok(offsets)
+}
 
-    // Decode each item from its slice.
-    offsets
-        .windows(2)
-        .map(|pair| T::from_ssz_bytes(&bytes[pair[0]..pair[1]]))
-        .collect()
+/// Decodes item `j` from `bytes[offsets[j]..offsets[j + 1]]`, for `j < num_items`.
+fn decode_items<T: SszDecode>(
+    bytes: &[u8],
+    offsets: &[usize],
+    num_items: usize,
+) -> Result<Vec<T>, DecodeError> {
+    let mut result = Vec::with_capacity(num_items);
+    let mut j = 0;
+    while j < num_items {
+        result.push(T::from_ssz_bytes(&bytes[offsets[j]..offsets[j + 1]])?);
+        j += 1;
+    }
+    Ok(result)
 }
 
 /// Read a 4-byte little-endian offset at the given byte position.
@@ -485,12 +556,7 @@ impl<'a> ContainerDecoder<'a> {
                     got: offset,
                 });
             }
-        } else if offset
-            < *self
-                .offsets
-                .last()
-                .expect("bug: offsets verified non-empty")
-        {
+        } else if offset < self.offsets[self.offsets.len() - 1] {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > self.bytes.len() {
@@ -535,5 +601,32 @@ impl<'a> ContainerDecoder<'a> {
             });
         }
         Ok(())
+    }
+
+    /// Fixed-part step for one field, as `ssz-derive` used to write it inline: a fixed-size
+    /// field is decoded, a variable-size one records its offset. The macro calls this method
+    /// so that each field is a single call with `?` (see `ssz-derive`).
+    #[doc(hidden)]
+    pub fn decode_fixed_part<T: SszDecode>(&mut self) -> Result<Option<T>, DecodeError> {
+        if T::is_fixed_size() {
+            Ok(Some(self.decode_fixed::<T>()?))
+        } else {
+            self.read_variable_offset()?;
+            Ok(None)
+        }
+    }
+
+    /// Variable-part step for one field: the already decoded value if it is fixed-size, or
+    /// its body if it is variable-size.
+    #[doc(hidden)]
+    pub fn decode_variable_part<T: SszDecode>(
+        &mut self,
+        fixed: Option<T>,
+    ) -> Result<T, DecodeError> {
+        if T::is_fixed_size() {
+            Ok(fixed.unwrap())
+        } else {
+            self.decode_variable::<T>()
+        }
     }
 }
