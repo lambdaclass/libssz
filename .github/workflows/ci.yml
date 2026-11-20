@@ -152,14 +152,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Only the dependency sources are cached, not `target`: cargo-llvm-cov reports on
+      # every instrumented test binary it finds there, so binaries left over from other
+      # branches would be counted as uncovered code.
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: coverage-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: coverage-
+          key: coverage-deps-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: coverage-deps-
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
