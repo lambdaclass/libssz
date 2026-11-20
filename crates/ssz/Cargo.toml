@@ -14,7 +14,11 @@ default = ["std"]
 std = ["alloc"]
 alloc = []
 ethereum_types = ["dep:ethereum-types"]
+# Example containers for the formal proofs (Lean, via Charon + Aeneas), using the
+# `ssz-derive` derives. Not part of the API.
+verif-example = ["alloc", "dep:libssz-derive"]
 
 [dependencies]
 smallvec = { version = "1.13", default-features = false }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
+libssz-derive = { version = "0.3.0", path = "../ssz-derive", optional = true }

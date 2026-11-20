@@ -10,6 +10,13 @@ mod error;
 #[cfg(feature = "ethereum_types")]
 mod ethereum_types;
 
+// The code `ssz-derive` generates refers to this library as `libssz::`.
+#[cfg(feature = "verif-example")]
+extern crate self as libssz;
+
+#[cfg(feature = "verif-example")]
+pub mod verif_example;
+
 pub use decode::{decode_list_with_max, ContainerDecoder, SszDecode};
 pub use encode::{ContainerEncoder, SszEncode};
 pub use error::DecodeError;

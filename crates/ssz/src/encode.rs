@@ -37,18 +37,12 @@ pub trait SszEncode {
         Self: Sized,
     {
         buf.reserve(Self::fixed_size() * items.len());
-        for item in items {
-            item.ssz_append(buf);
+        let mut i = 0;
+        while i < items.len() {
+            items[i].ssz_append(buf);
+            i += 1;
         }
     }
-}
-
-#[cfg(feature = "alloc")]
-fn append_fixed_slice_as_bytes<T>(items: &[T], buf: &mut Vec<u8>) {
-    let byte_slice = unsafe {
-        core::slice::from_raw_parts(items.as_ptr().cast::<u8>(), core::mem::size_of_val(items))
-    };
-    buf.extend_from_slice(byte_slice);
 }
 
 // ── bool ──
@@ -69,6 +63,15 @@ impl SszEncode for bool {
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.push(*self as u8);
+    }
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        buf.reserve(items.len());
+        let mut i = 0;
+        while i < items.len() {
+            items[i].ssz_append(buf);
+            i += 1;
+        }
     }
 }
 
@@ -93,16 +96,11 @@ impl SszEncode for u8 {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        #[cfg(target_endian = "little")]
-        {
-            append_fixed_slice_as_bytes(items, buf);
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            buf.reserve(1 * items.len());
-            for item in items {
-                item.ssz_append(buf);
-            }
+        buf.reserve(items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i].to_le_bytes());
+            i += 1;
         }
     }
 }
@@ -126,16 +124,11 @@ impl SszEncode for u16 {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        #[cfg(target_endian = "little")]
-        {
-            append_fixed_slice_as_bytes(items, buf);
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            buf.reserve(2 * items.len());
-            for item in items {
-                item.ssz_append(buf);
-            }
+        buf.reserve(2 * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i].to_le_bytes());
+            i += 1;
         }
     }
 }
@@ -159,16 +152,11 @@ impl SszEncode for u32 {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        #[cfg(target_endian = "little")]
-        {
-            append_fixed_slice_as_bytes(items, buf);
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            buf.reserve(4 * items.len());
-            for item in items {
-                item.ssz_append(buf);
-            }
+        buf.reserve(4 * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i].to_le_bytes());
+            i += 1;
         }
     }
 }
@@ -192,16 +180,11 @@ impl SszEncode for u64 {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        #[cfg(target_endian = "little")]
-        {
-            append_fixed_slice_as_bytes(items, buf);
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            buf.reserve(8 * items.len());
-            for item in items {
-                item.ssz_append(buf);
-            }
+        buf.reserve(8 * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i].to_le_bytes());
+            i += 1;
         }
     }
 }
@@ -225,16 +208,11 @@ impl SszEncode for u128 {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        #[cfg(target_endian = "little")]
-        {
-            append_fixed_slice_as_bytes(items, buf);
-        }
-        #[cfg(not(target_endian = "little"))]
-        {
-            buf.reserve(16 * items.len());
-            for item in items {
-                item.ssz_append(buf);
-            }
+        buf.reserve(16 * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i].to_le_bytes());
+            i += 1;
         }
     }
 }
@@ -260,7 +238,12 @@ impl<const N: usize> SszEncode for [u8; N] {
     }
     #[cfg(feature = "alloc")]
     fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
-        append_fixed_slice_as_bytes(items, buf);
+        buf.reserve(N * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            buf.extend_from_slice(&items[i]);
+            i += 1;
+        }
     }
 }
 
@@ -282,7 +265,12 @@ impl<T: SszEncode> SszEncode for Vec<T> {
             T::fixed_size() * self.len()
         } else {
             let offsets = self.len() * BYTES_PER_LENGTH_OFFSET;
-            let data: usize = self.iter().map(|item| item.encoded_len()).sum();
+            let mut data: usize = 0;
+            let mut i = 0;
+            while i < self.len() {
+                data += self[i].encoded_len();
+                i += 1;
+            }
             offsets + data
         }
     }
@@ -291,7 +279,19 @@ impl<T: SszEncode> SszEncode for Vec<T> {
         if T::is_fixed_size() {
             T::ssz_append_fixed_slice(self, buf);
         } else {
-            encode_variable_length_items(self.iter(), buf);
+            encode_variable_length_items(self, buf);
+        }
+    }
+
+    // Same as the trait default, but written out here: the default would call
+    // `ssz_append` through the very `Vec<T>` instance being defined.
+    #[cfg(feature = "alloc")]
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        buf.reserve(Self::fixed_size() * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            items[i].ssz_append(buf);
+            i += 1;
         }
     }
 }
@@ -302,21 +302,44 @@ impl<T: SszEncode> SszEncode for Vec<T> {
 ///
 /// Pre-allocates the offset region, then appends variable data directly to `buf`
 /// while patching offsets in-place — no intermediate buffer needed.
-fn encode_variable_length_items<'a, T: SszEncode + 'a>(
-    items: impl Iterator<Item = &'a T> + Clone,
-    buf: &mut Vec<u8>,
-) {
-    let count = items.clone().count();
+fn encode_variable_length_items<T: SszEncode>(items: &[T], buf: &mut Vec<u8>) {
+    let count = items.len();
     let fixed_part_len = count * BYTES_PER_LENGTH_OFFSET;
 
     let start = buf.len();
     buf.resize(start + fixed_part_len, 0);
 
-    for (i, item) in items.enumerate() {
+    let mut i = 0;
+    while i < count {
         let offset = buf.len() - start;
         let pos = start + i * BYTES_PER_LENGTH_OFFSET;
         buf[pos..pos + BYTES_PER_LENGTH_OFFSET].copy_from_slice(&(offset as u32).to_le_bytes());
-        item.ssz_append(buf);
+        items[i].ssz_append(buf);
+        i += 1;
+    }
+}
+
+/// `buf.copy_within(src..src + count, dest)`, written with indices: the Aeneas library
+/// does not model `copy_within`. Same panics and same `memmove` semantics (the regions
+/// may overlap).
+fn copy_within(buf: &mut [u8], src: usize, count: usize, dest: usize) {
+    assert!(
+        src <= buf.len() && count <= buf.len() - src,
+        "src is out of bounds"
+    );
+    assert!(dest <= buf.len() - count, "dest is out of bounds");
+    if dest <= src {
+        let mut k = 0;
+        while k < count {
+            buf[dest + k] = buf[src + k];
+            k += 1;
+        }
+    } else {
+        let mut k = count;
+        while k > 0 {
+            k -= 1;
+            buf[dest + k] = buf[src + k];
+        }
     }
 }
 
@@ -369,8 +392,9 @@ impl<'a> ContainerEncoder<'a> {
         let end = self.buf.len();
         value.ssz_append(self.buf);
         let written = self.buf.len() - end;
-        self.buf.copy_within(end..end + written, pos);
-        self.buf.truncate(end);
+        copy_within(self.buf, end, written, pos);
+        // `resize` to a smaller length truncates: it is `truncate(end)`.
+        self.buf.resize(end, 0);
         self.fixed_cursor += written;
     }
 
