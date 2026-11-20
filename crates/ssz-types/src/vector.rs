@@ -126,6 +126,50 @@ impl<T: SszEncode, const N: usize> SszEncode for SszVector<T, N> {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         self.0.ssz_append(buf);
     }
+
+    // `Vec<T>` builds the new `Vec<u8>`; for fixed-size items it delegates to the item
+    // type.
+    fn to_ssz(&self) -> Vec<u8> {
+        self.0.to_ssz()
+    }
+
+    // The trait's default method, written out here unchanged. Aeneas does not translate an
+    // implementation that uses the default: the default's loop takes the whole implementation
+    // as an argument, and `impl_def` (Aeneas' macro for trait implementations) cannot unroll
+    // it.
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        buf.reserve(Self::fixed_size() * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            items[i].ssz_append(buf);
+            i += 1;
+        }
+    }
+
+    fn ssz_has_write_fixed() -> bool {
+        T::ssz_has_write_fixed()
+    }
+
+    // Each item into its own segment of `out`, without an intermediate buffer.
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        let size = T::fixed_size();
+        if T::ssz_has_write_fixed() && size != 0 {
+            // Indexed `while` instead of `chunks_exact_mut(size).zip(..)`: Aeneas has no
+            // model of those iterators. `out` is `size * N` long (the trait requires it), so
+            // the segments are the same.
+            let mut i = 0;
+            while i < self.0.len() {
+                let start = i * size;
+                self.0[i].ssz_write_fixed(&mut out[start..start + size]);
+                i += 1;
+            }
+        } else {
+            // The trait default.
+            let mut tmp = Vec::with_capacity(out.len());
+            self.ssz_append(&mut tmp);
+            out.copy_from_slice(&tmp);
+        }
+    }
 }
 
 // ── SSZ Decoding ──

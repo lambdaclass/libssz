@@ -547,3 +547,85 @@ fn container_encoder_new() {
     enc2.finalize();
     assert_eq!(buf1, buf2);
 }
+
+// ── Integer lists around the encoder's batch size ──
+
+/// Compares the encoding of the whole list (`to_ssz` and `ssz_append`) with that of its
+/// items one by one, and decodes it back.
+fn check_uint_list<T>(items: Vec<T>, width: usize)
+where
+    T: SszEncode + SszDecode + PartialEq + core::fmt::Debug,
+{
+    let mut expected = Vec::new();
+    for item in &items {
+        item.ssz_append(&mut expected);
+    }
+    assert_eq!(expected.len(), width * items.len());
+    assert_eq!(items.to_ssz(), expected);
+
+    // Into a buffer with existing contents and no spare capacity.
+    let mut buf = vec![0xAA, 0xBB, 0xCC];
+    items.ssz_append(&mut buf);
+    assert_eq!(&buf[..3], &[0xAA, 0xBB, 0xCC]);
+    assert_eq!(&buf[3..], &expected[..]);
+
+    // Into a buffer with spare capacity.
+    let mut roomy = Vec::with_capacity(expected.len() + 64);
+    roomy.push(0x11);
+    items.ssz_append(&mut roomy);
+    assert_eq!(roomy[0], 0x11);
+    assert_eq!(&roomy[1..], &expected[..]);
+
+    assert_eq!(Vec::<T>::from_ssz_bytes(&expected).unwrap(), items);
+}
+
+#[test]
+fn uint_lists_around_block_size() {
+    // The encoder switches from the short function to the batched one at 8192 bytes: 4096
+    // `u16`, 2048 `u32`, 1024 `u64`, 512 `u128`. The lengths on each side of each threshold,
+    // and of its multiples, are tested.
+    let lens = [
+        0usize, 1, 2, 3, 511, 512, 513, 1023, 1024, 1025, 1535, 1536, 2047, 2048, 2049, 4095, 4096,
+        4097, 8191, 8192, 8193, 10_000,
+    ];
+    for n in lens {
+        let u16s: Vec<u16> = (0..n)
+            .map(|i| (i as u16).wrapping_mul(40_503).wrapping_add(7))
+            .collect();
+        check_uint_list(u16s, 2);
+        let u32s: Vec<u32> = (0..n)
+            .map(|i| (i as u32).wrapping_mul(2_654_435_761).wrapping_add(7))
+            .collect();
+        check_uint_list(u32s, 4);
+        let u64s: Vec<u64> = (0..n)
+            .map(|i| {
+                (i as u64)
+                    .wrapping_mul(0x9E37_79B9_7F4A_7C15)
+                    .wrapping_add(7)
+            })
+            .collect();
+        check_uint_list(u64s, 8);
+        let u128s: Vec<u128> = (0..n)
+            .map(|i| {
+                (i as u128)
+                    .wrapping_mul(0x9E37_79B9_7F4A_7C15_F39C_C060_5CED_C835)
+                    .wrapping_add(7)
+            })
+            .collect();
+        check_uint_list(u128s, 16);
+    }
+}
+
+#[test]
+fn uint_list_decode_rejects_partial_item() {
+    // Length that is not a multiple of the item width: same error for any length.
+    for n in [1usize, 7, 9, 8001] {
+        assert_eq!(
+            Vec::<u64>::from_ssz_bytes(&vec![0u8; n]),
+            Err(DecodeError::InvalidByteLength {
+                expected: 8,
+                got: n
+            })
+        );
+    }
+}

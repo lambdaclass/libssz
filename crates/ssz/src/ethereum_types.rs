@@ -27,6 +27,15 @@ impl SszEncode for et::H32 {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
     }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
+    }
 }
 
 impl SszDecode for et::H32 {
@@ -65,6 +74,15 @@ impl SszEncode for et::H64 {
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
+    }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
     }
 }
 
@@ -105,6 +123,15 @@ impl SszEncode for et::H128 {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
     }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
+    }
 }
 
 impl SszDecode for et::H128 {
@@ -143,6 +170,15 @@ impl SszEncode for et::H160 {
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
+    }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
     }
 }
 
@@ -183,6 +219,15 @@ impl SszEncode for et::H256 {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
     }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
+    }
 }
 
 impl SszDecode for et::H256 {
@@ -221,6 +266,15 @@ impl SszEncode for et::H264 {
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
+    }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
     }
 }
 
@@ -261,6 +315,15 @@ impl SszEncode for et::H512 {
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
     }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
+    }
 }
 
 impl SszDecode for et::H512 {
@@ -299,6 +362,15 @@ impl SszEncode for et::H520 {
     #[inline(always)]
     fn ssz_append(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_bytes());
+    }
+    #[inline(always)]
+    fn ssz_has_write_fixed() -> bool {
+        true
+    }
+    #[cfg(feature = "alloc")]
+    #[inline(always)]
+    fn ssz_write_fixed(&self, out: &mut [u8]) {
+        out.copy_from_slice(self.as_bytes());
     }
 }
 

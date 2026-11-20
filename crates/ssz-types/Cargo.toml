@@ -13,8 +13,12 @@ categories = ["encoding", "cryptography::cryptocurrencies"]
 default = ["std"]
 std = ["alloc", "libssz/std", "libssz-merkle/std"]
 alloc = ["libssz/alloc", "libssz-merkle/alloc"]
+# Example containers for the formal proofs (Lean, via Charon + Aeneas), using the
+# `ssz-derive` derives. Not part of the API.
+verif-example = ["alloc", "dep:libssz-derive", "libssz-merkle/verif-example"]
 
 [dependencies]
 libssz = { version = "0.3.0", path = "../ssz", default-features = false }
 libssz-merkle = { version = "0.3.0", path = "../ssz-merkle", default-features = false }
 smallvec = { version = "1.13", default-features = false }
+libssz-derive = { version = "0.3.0", path = "../ssz-derive", optional = true }

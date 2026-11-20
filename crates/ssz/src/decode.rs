@@ -1,4 +1,6 @@
 #[cfg(feature = "alloc")]
+use alloc::boxed::Box;
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
 use crate::error::DecodeError;
@@ -76,16 +78,21 @@ impl SszDecode for bool {
 
 // ── Unsigned integers ──
 
-fn decode_uint<const N: usize>(bytes: &[u8]) -> Result<[u8; N], DecodeError> {
+/// Copies `bytes` into `arr` if it has exactly `N` bytes.
+///
+/// The caller provides the array instead of getting it back inside the `Result`: in a
+/// `Result<[u8; N], DecodeError>` the array is misaligned (it comes after the discriminant
+/// byte) and, for `N = 16`, the compiler ended up assembling the `u128` piece by piece.
+#[inline(always)]
+fn decode_uint<const N: usize>(bytes: &[u8], arr: &mut [u8; N]) -> Result<(), DecodeError> {
     if bytes.len() != N {
         return Err(DecodeError::InvalidFixedLength {
             expected: N,
             got: bytes.len(),
         });
     }
-    let mut arr = [0u8; N];
     arr.copy_from_slice(bytes);
-    Ok(arr)
+    Ok(())
 }
 
 impl SszDecode for u8 {
@@ -99,28 +106,15 @@ impl SszDecode for u8 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let arr = decode_uint::<1>(bytes)?;
+        let mut arr = [0u8; 1];
+        decode_uint::<1>(bytes, &mut arr)?;
         Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
-        if !bytes.len().is_multiple_of(1) {
-            return Err(DecodeError::InvalidByteLength {
-                expected: 1,
-                got: bytes.len(),
-            });
-        }
-        let count = bytes.len();
-        let mut result = Vec::with_capacity(count);
-        let mut i = 0;
-        while i < count {
-            let mut arr = [0u8; 1];
-            arr.copy_from_slice(&bytes[i..i + 1]);
-            result.push(Self::from_le_bytes(arr));
-            i += 1;
-        }
-        Ok(result)
+        // One byte per item: the list is the input itself (a `memcpy`).
+        Ok(bytes.to_vec())
     }
 }
 
@@ -135,11 +129,13 @@ impl SszDecode for u16 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let arr = decode_uint::<2>(bytes)?;
+        let mut arr = [0u8; 2];
+        decode_uint::<2>(bytes, &mut arr)?;
         Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
+    #[inline]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         if !bytes.len().is_multiple_of(2) {
             return Err(DecodeError::InvalidByteLength {
@@ -147,16 +143,9 @@ impl SszDecode for u16 {
                 got: bytes.len(),
             });
         }
-        let count = bytes.len() / 2;
-        let mut result = Vec::with_capacity(count);
-        let mut i = 0;
-        while i < count {
-            let mut arr = [0u8; 2];
-            arr.copy_from_slice(&bytes[i * 2..i * 2 + 2]);
-            result.push(Self::from_le_bytes(arr));
-            i += 1;
-        }
-        Ok(result)
+        // `&[u8]` viewed as `&[[u8; 2]]`, one chunk per item; the copy happens separately.
+        let (chunks, _) = bytes.as_chunks::<2>();
+        Ok(u16s_from_le_chunks(chunks).into_vec())
     }
 }
 
@@ -171,11 +160,13 @@ impl SszDecode for u32 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let arr = decode_uint::<4>(bytes)?;
+        let mut arr = [0u8; 4];
+        decode_uint::<4>(bytes, &mut arr)?;
         Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
+    #[inline]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         if !bytes.len().is_multiple_of(4) {
             return Err(DecodeError::InvalidByteLength {
@@ -183,16 +174,9 @@ impl SszDecode for u32 {
                 got: bytes.len(),
             });
         }
-        let count = bytes.len() / 4;
-        let mut result = Vec::with_capacity(count);
-        let mut i = 0;
-        while i < count {
-            let mut arr = [0u8; 4];
-            arr.copy_from_slice(&bytes[i * 4..i * 4 + 4]);
-            result.push(Self::from_le_bytes(arr));
-            i += 1;
-        }
-        Ok(result)
+        // `&[u8]` viewed as `&[[u8; 4]]`, one chunk per item; the copy happens separately.
+        let (chunks, _) = bytes.as_chunks::<4>();
+        Ok(u32s_from_le_chunks(chunks).into_vec())
     }
 }
 
@@ -207,11 +191,13 @@ impl SszDecode for u64 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let arr = decode_uint::<8>(bytes)?;
+        let mut arr = [0u8; 8];
+        decode_uint::<8>(bytes, &mut arr)?;
         Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
+    #[inline]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         if !bytes.len().is_multiple_of(8) {
             return Err(DecodeError::InvalidByteLength {
@@ -219,16 +205,9 @@ impl SszDecode for u64 {
                 got: bytes.len(),
             });
         }
-        let count = bytes.len() / 8;
-        let mut result = Vec::with_capacity(count);
-        let mut i = 0;
-        while i < count {
-            let mut arr = [0u8; 8];
-            arr.copy_from_slice(&bytes[i * 8..i * 8 + 8]);
-            result.push(Self::from_le_bytes(arr));
-            i += 1;
-        }
-        Ok(result)
+        // `&[u8]` viewed as `&[[u8; 8]]`, one chunk per item; the copy happens separately.
+        let (chunks, _) = bytes.as_chunks::<8>();
+        Ok(u64s_from_le_chunks(chunks).into_vec())
     }
 }
 
@@ -243,11 +222,13 @@ impl SszDecode for u128 {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let arr = decode_uint::<16>(bytes)?;
+        let mut arr = [0u8; 16];
+        decode_uint::<16>(bytes, &mut arr)?;
         Ok(Self::from_le_bytes(arr))
     }
 
     #[cfg(feature = "alloc")]
+    #[inline]
     fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
         if !bytes.len().is_multiple_of(16) {
             return Err(DecodeError::InvalidByteLength {
@@ -255,17 +236,66 @@ impl SszDecode for u128 {
                 got: bytes.len(),
             });
         }
-        let count = bytes.len() / 16;
-        let mut result = Vec::with_capacity(count);
-        let mut i = 0;
-        while i < count {
-            let mut arr = [0u8; 16];
-            arr.copy_from_slice(&bytes[i * 16..i * 16 + 16]);
-            result.push(Self::from_le_bytes(arr));
-            i += 1;
-        }
-        Ok(result)
+        // `&[u8]` viewed as `&[[u8; 16]]`, one chunk per item; the copy happens separately.
+        let (chunks, _) = bytes.as_chunks::<16>();
+        Ok(u128s_from_le_chunks(chunks).into_vec())
     }
+}
+
+// ── From little-endian chunks to integers (for `ssz_decode_fixed_vec`) ──
+//
+// The iterator knows its exact length, so `collect` allocates once and writes without
+// zeroing first; on little-endian the compiler turns the loop into a `memcpy`... as long
+// as it knows that `chunks` and the new `Vec` do not overlap, and it only knows that for
+// sure when `chunks` is a parameter of the function containing the loop. Hence
+// `inline(never)`: inlined into an arbitrary caller they become a loop of 32 bytes at a
+// time (with a thousand `u64`s, ~75% slower). Two more details, both measured:
+//
+//  - the empty list is handled separately. Otherwise the loop's destination is "the empty
+//    `Vec`'s pointer or the freshly allocated memory", and with that doubt there is no
+//    `memcpy` either;
+//  - they return `Box<[T]>`, not `Vec<T>`. A `Box<[T]>` is a pointer and a length, and is
+//    returned in two registers; a `Vec<T>` is three words, is returned through memory, and
+//    re-reading them cost the caller up to ~8 ns per call. `into_vec` is free.
+
+#[cfg(feature = "alloc")]
+#[inline(never)]
+fn u16s_from_le_chunks(chunks: &[[u8; 2]]) -> Box<[u16]> {
+    if chunks.is_empty() {
+        return Vec::new().into_boxed_slice();
+    }
+    let items: Vec<u16> = chunks.iter().map(|c| u16::from_le_bytes(*c)).collect();
+    items.into_boxed_slice()
+}
+
+#[cfg(feature = "alloc")]
+#[inline(never)]
+fn u32s_from_le_chunks(chunks: &[[u8; 4]]) -> Box<[u32]> {
+    if chunks.is_empty() {
+        return Vec::new().into_boxed_slice();
+    }
+    let items: Vec<u32> = chunks.iter().map(|c| u32::from_le_bytes(*c)).collect();
+    items.into_boxed_slice()
+}
+
+#[cfg(feature = "alloc")]
+#[inline(never)]
+fn u64s_from_le_chunks(chunks: &[[u8; 8]]) -> Box<[u64]> {
+    if chunks.is_empty() {
+        return Vec::new().into_boxed_slice();
+    }
+    let items: Vec<u64> = chunks.iter().map(|c| u64::from_le_bytes(*c)).collect();
+    items.into_boxed_slice()
+}
+
+#[cfg(feature = "alloc")]
+#[inline(never)]
+fn u128s_from_le_chunks(chunks: &[[u8; 16]]) -> Box<[u128]> {
+    if chunks.is_empty() {
+        return Vec::new().into_boxed_slice();
+    }
+    let items: Vec<u128> = chunks.iter().map(|c| u128::from_le_bytes(*c)).collect();
+    items.into_boxed_slice()
 }
 
 // ── Fixed-size byte arrays ──
@@ -290,16 +320,9 @@ fn decode_byte_array_vec<const N: usize>(bytes: &[u8]) -> Result<Vec<[u8; N]>, D
             got: bytes.len(),
         });
     }
-    let count = bytes.len() / N;
-    let mut result = Vec::<[u8; N]>::with_capacity(count);
-    let mut i = 0;
-    while i < count {
-        let mut arr = [0u8; N];
-        arr.copy_from_slice(&bytes[i * N..i * N + N]);
-        result.push(arr);
-        i += 1;
-    }
-    Ok(result)
+    // `&[u8]` viewed as `&[[u8; N]]` and copied in one go (a `memcpy`), without `unsafe`.
+    let (chunks, _) = bytes.as_chunks::<N>();
+    Ok(chunks.to_vec())
 }
 
 impl<const N: usize> SszDecode for [u8; N] {
@@ -505,9 +528,18 @@ pub struct ContainerDecoder<'a> {
     bytes: &'a [u8],
     fixed_part_len: usize,
     cursor: usize,
-    offsets: Vec<usize>,
+    // The offsets of the variable fields read so far, in order: the first
+    // `INLINE_OFFSETS` in `inline_offsets` and the rest in `spilled_offsets`. This way a
+    // container with up to `INLINE_OFFSETS` variable fields is decoded without allocating
+    // memory for the offsets.
+    inline_offsets: [usize; INLINE_OFFSETS],
+    spilled_offsets: Vec<usize>,
+    num_offsets: usize,
     variable_index: usize,
 }
+
+/// How many offsets a `ContainerDecoder` stores without allocating.
+const INLINE_OFFSETS: usize = 8;
 
 impl<'a> ContainerDecoder<'a> {
     /// Create a new decoder. `fixed_part_len` is the expected total size of the
@@ -524,7 +556,9 @@ impl<'a> ContainerDecoder<'a> {
             bytes,
             fixed_part_len,
             cursor: 0,
-            offsets: Vec::new(),
+            inline_offsets: [0; INLINE_OFFSETS],
+            spilled_offsets: Vec::new(),
+            num_offsets: 0,
             variable_index: 0,
         })
     }
@@ -548,15 +582,16 @@ impl<'a> ContainerDecoder<'a> {
     /// Call this for each variable field in order during the fixed-part pass.
     pub fn read_variable_offset(&mut self) -> Result<(), DecodeError> {
         let offset = read_offset(self.bytes, self.cursor)?;
+        let n = self.num_offsets;
         // First offset must point to the start of the variable part
-        if self.offsets.is_empty() {
+        if n == 0 {
             if offset != self.fixed_part_len {
                 return Err(DecodeError::InvalidFirstOffset {
                     expected: self.fixed_part_len,
                     got: offset,
                 });
             }
-        } else if offset < self.offsets[self.offsets.len() - 1] {
+        } else if offset < self.offset_at(n - 1) {
             return Err(DecodeError::OffsetsAreNotMonotonicallyIncreasing);
         }
         if offset > self.bytes.len() {
@@ -565,25 +600,41 @@ impl<'a> ContainerDecoder<'a> {
                 length: self.bytes.len(),
             });
         }
-        self.offsets.push(offset);
+        if n < INLINE_OFFSETS {
+            self.inline_offsets[n] = offset;
+        } else {
+            self.spilled_offsets.push(offset);
+        }
+        self.num_offsets = n + 1;
         self.cursor += BYTES_PER_LENGTH_OFFSET;
         Ok(())
+    }
+
+    /// The `i`-th of the offsets read so far (`i < self.num_offsets`).
+    #[inline]
+    fn offset_at(&self, i: usize) -> usize {
+        if i < INLINE_OFFSETS {
+            self.inline_offsets[i]
+        } else {
+            self.spilled_offsets[i - INLINE_OFFSETS]
+        }
     }
 
     /// Decode the next variable-length field. Must be called after all
     /// fixed-part reads (decode_fixed / read_variable_offset) are done.
     pub fn decode_variable<T: SszDecode>(&mut self) -> Result<T, DecodeError> {
         let idx = self.variable_index;
-        if idx >= self.offsets.len() {
+        let n = self.num_offsets;
+        if idx >= n {
             return Err(DecodeError::InvalidByteLength {
                 expected: idx + 1,
-                got: self.offsets.len(),
+                got: n,
             });
         }
 
-        let start = self.offsets[idx];
-        let end = if idx + 1 < self.offsets.len() {
-            self.offsets[idx + 1]
+        let start = self.offset_at(idx);
+        let end = if idx + 1 < n {
+            self.offset_at(idx + 1)
         } else {
             self.bytes.len()
         };

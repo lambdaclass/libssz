@@ -15,11 +15,15 @@ std = ["alloc", "libssz/std", "sha2-backend"]
 alloc = ["libssz/alloc"]
 sha2-backend = ["dep:sha2"]
 ethereum_types = ["dep:ethereum-types", "libssz/ethereum_types"]
+# Example containers for the formal proofs (Lean, via Charon + Aeneas), using the
+# `ssz-derive` derives. Not part of the API.
+verif-example = ["alloc", "dep:libssz-derive"]
 
 [dependencies]
 libssz = { version = "0.3.0", path = "../ssz", default-features = false }
 sha2 = { version = "0.10", default-features = false, optional = true }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
+libssz-derive = { version = "0.3.0", path = "../ssz-derive", optional = true }
 
 [build-dependencies]
 sha2 = "0.10"

@@ -211,6 +211,14 @@ fn derive_encode_transparent(
             fn ssz_append(&self, buf: &mut Vec<u8>) {
                 libssz::SszEncode::ssz_append(&#field_access, buf);
             }
+
+            fn ssz_has_write_fixed() -> bool {
+                <#inner_ty as libssz::SszEncode>::ssz_has_write_fixed()
+            }
+
+            fn ssz_write_fixed(&self, out: &mut [u8]) {
+                libssz::SszEncode::ssz_write_fixed(&#field_access, out);
+            }
         }
     }
 }
@@ -302,16 +310,43 @@ fn derive_encode_struct(
         })
         .collect();
 
-    // Bulk encode for all-fixed structs: inline field appends into the loop body
-    let bulk_append_stmts: Vec<_> = field_names
+    // ssz_has_write_fixed: every field must be able to write itself into a `&mut [u8]`.
+    let has_write_fixed_checks = field_types.iter().map(|ty| {
+        quote! { <#ty as libssz::SszEncode>::ssz_has_write_fixed() }
+    });
+
+    // ssz_write_fixed: each field into its own segment of `out`. `split_at_mut` splits off
+    // the segment of every field but the last, which keeps the rest (and the
+    // `copy_from_slice` at the bottom requires the length to be exact).
+    let field_count = field_names.len();
+    let write_fixed_stmts: Vec<_> = field_names
         .iter()
         .zip(field_types.iter())
-        .map(|(fname, ty)| {
-            quote! {
-                <#ty as libssz::SszEncode>::ssz_append(&item.#fname, buf);
+        .enumerate()
+        .map(|(i, (fname, ty))| {
+            if i + 1 == field_count {
+                quote! {
+                    <#ty as libssz::SszEncode>::ssz_write_fixed(&self.#fname, __rest);
+                }
+            } else {
+                quote! {
+                    let (__head, __rest) =
+                        __rest.split_at_mut(<#ty as libssz::SszEncode>::fixed_size());
+                    <#ty as libssz::SszEncode>::ssz_write_fixed(&self.#fname, __head);
+                }
             }
         })
         .collect();
+    let write_fixed_body = if field_count == 0 {
+        quote! {
+            let _ = out;
+        }
+    } else {
+        quote! {
+            let __rest = out;
+            #(#write_fixed_stmts)*
+        }
+    };
 
     quote! {
         impl #impl_generics libssz::SszEncode for #name #ty_generics #where_clause {
@@ -332,7 +367,19 @@ fn derive_encode_struct(
             }
 
             fn ssz_append(&self, buf: &mut Vec<u8>) {
-                if <Self as libssz::SszEncode>::is_fixed_size() {
+                if <Self as libssz::SszEncode>::ssz_has_write_fixed() {
+                    // Fixed size and every field with a direct write: grow the buffer
+                    // once and write each field in place.
+                    //
+                    // The fill is fully overwritten, so its value does not matter. It is
+                    // not zero on purpose: on a freshly allocated buffer the compiler fuses
+                    // `malloc` + zero fill into a `calloc`, which in glibc costs more than
+                    // twice as much as `malloc` for these sizes.
+                    let __start = buf.len();
+                    let __end = __start + <Self as libssz::SszEncode>::fixed_size();
+                    buf.resize(__end, 0xff);
+                    libssz::SszEncode::ssz_write_fixed(self, &mut buf[__start..__end]);
+                } else if <Self as libssz::SszEncode>::is_fixed_size() {
                     #(#direct_append_stmts)*
                 } else {
                     let fixed_part_len: usize = 0 #(+ #encode_fixed_part_len_terms)*;
@@ -348,21 +395,52 @@ fn derive_encode_struct(
                 Self: Sized,
             {
                 // Indexed `while` instead of `for item in items` (no iterators).
-                if <Self as libssz::SszEncode>::is_fixed_size() {
-                    buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
+                let __size = <Self as libssz::SszEncode>::fixed_size();
+                buf.reserve(__size * items.len());
+                if <Self as libssz::SszEncode>::ssz_has_write_fixed() {
+                    // Direct write, in batches: one `resize` for the items that fit in
+                    // 1 KB, and each one written in place. Measured against one `resize`
+                    // per item: half the time on lists that fit in the cache, and a bit
+                    // less on 121 MB lists. With a single `resize`, or with batches of
+                    // 4 KB or more, lists that do not fit in the cache came out slower
+                    // than with one `resize` per item; most likely because of the fill's
+                    // `memset`, which in glibc switches strategy from 2 KB on.
+                    let __per = if __size == 0 || __size >= 1024 { 1 } else { 1024 / __size };
                     let mut __i = 0;
                     while __i < items.len() {
-                        let item = &items[__i];
-                        #(#bulk_append_stmts)*
-                        __i += 1;
+                        let __m = if items.len() - __i < __per { items.len() - __i } else { __per };
+                        let __start = buf.len();
+                        buf.resize(__start + __size * __m, 0xff);
+                        let mut __j = 0;
+                        while __j < __m {
+                            let __at = __start + __j * __size;
+                            libssz::SszEncode::ssz_write_fixed(&items[__i + __j], &mut buf[__at..__at + __size]);
+                            __j += 1;
+                        }
+                        __i += __m;
                     }
                 } else {
-                    buf.reserve(<Self as libssz::SszEncode>::fixed_size() * items.len());
+                    // Each item goes through `ssz_append`.
                     let mut __i = 0;
                     while __i < items.len() {
                         items[__i].ssz_append(buf);
                         __i += 1;
                     }
+                }
+            }
+
+            fn ssz_has_write_fixed() -> bool {
+                true #(&& #has_write_fixed_checks)*
+            }
+
+            fn ssz_write_fixed(&self, out: &mut [u8]) {
+                if <Self as libssz::SszEncode>::ssz_has_write_fixed() {
+                    #write_fixed_body
+                } else {
+                    // The trait default: through a temporary buffer.
+                    let mut __tmp = Vec::with_capacity(out.len());
+                    libssz::SszEncode::ssz_append(self, &mut __tmp);
+                    out.copy_from_slice(&__tmp);
                 }
             }
         }
@@ -885,15 +963,58 @@ fn derive_htr_struct(
     let fields = named_fields(data, "HashTreeRoot");
     let field_roots = field_root_exprs(fields);
     let num_fields = fields.len();
+    let row = htr_row_struct(fields);
 
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
             fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
-                let field_roots: [libssz_merkle::Node; #num_fields] = [
+                let mut field_roots: [libssz_merkle::Node; #num_fields] = [
                     #(#field_roots,)*
                 ];
-                libssz_merkle::merkleize(hasher, &field_roots, None)
+                libssz_merkle::merkleize_in_place(hasher, &mut field_roots, None)
             }
+
+            #row
+        }
+    }
+}
+
+/// `hash_tree_root_width` and `hash_tree_root_row` of a container, so that
+/// [`libssz_merkle::hash_tree_roots`] hashes the trees of many items together. A
+/// container's tree is the tree of its field roots, padded with zero chunks to a power of
+/// two: the width. The row is those field roots and those zero chunks.
+///
+/// Padding with zero chunks and hashing them is the definition of the root; the
+/// one-by-one `hash_tree_root` reaches the same result without hashing pairs of zero
+/// subtrees.
+///
+/// Containers of more than 32 fields keep the defaults: a row of one node, the root.
+fn htr_row_struct(
+    fields: &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+) -> proc_macro2::TokenStream {
+    let num_fields = fields.len();
+    let width = num_fields.next_power_of_two();
+    if num_fields == 0 || width > 32 {
+        return quote! {};
+    }
+    let roots = field_root_exprs(fields);
+    let writes = roots
+        .iter()
+        .enumerate()
+        .map(|(i, root)| quote! { row[#i] = #root; });
+    let zeros = (num_fields..width).map(|i| quote! { row[#i] = [0u8; 32]; });
+    quote! {
+        fn hash_tree_root_width() -> usize {
+            #width
+        }
+
+        fn hash_tree_root_row(
+            &self,
+            hasher: &impl libssz_merkle::Sha256Hasher,
+            row: &mut [libssz_merkle::Node],
+        ) {
+            #(#writes)*
+            #(#zeros)*
         }
     }
 }

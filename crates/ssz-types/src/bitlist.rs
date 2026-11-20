@@ -171,6 +171,19 @@ impl<const N: usize> SszEncode for SszBitlist<N> {
         let delim_bit_index = self.len % 8;
         buf[start + delim_byte_index] |= 1 << delim_bit_index;
     }
+
+    // The trait's default method, written out here unchanged. Aeneas does not translate an
+    // implementation that uses the default: the default's loop takes the whole implementation
+    // as an argument, and `impl_def` (Aeneas' macro for trait implementations) cannot unroll
+    // it.
+    fn ssz_append_fixed_slice(items: &[Self], buf: &mut Vec<u8>) {
+        buf.reserve(<Self as SszEncode>::fixed_size() * items.len());
+        let mut i = 0;
+        while i < items.len() {
+            items[i].ssz_append(buf);
+            i += 1;
+        }
+    }
 }
 
 // ── SSZ Decoding ──
@@ -227,6 +240,21 @@ impl<const N: usize> SszDecode for SszBitlist<N> {
             bytes: sv,
             len: bit_len,
         })
+    }
+
+    // The trait's default method, written out here unchanged (see `ssz_append_fixed_slice`).
+    fn ssz_decode_fixed_vec(bytes: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        let item_size = <Self as SszDecode>::fixed_size();
+        assert!(item_size != 0, "chunk size must be non-zero");
+        let count = bytes.len() / item_size;
+        let mut result = Vec::with_capacity(count);
+        let mut i = 0;
+        while i < count {
+            let start = i * item_size;
+            result.push(Self::from_ssz_bytes(&bytes[start..start + item_size])?);
+            i += 1;
+        }
+        Ok(result)
     }
 }
 
