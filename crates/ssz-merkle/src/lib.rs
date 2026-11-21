@@ -16,33 +16,43 @@ pub type Node = [u8; 32];
 
 include!(concat!(env!("OUT_DIR"), "/zero_hashes.rs"));
 
+#[cfg(feature = "sha2-backend")]
+mod sha256;
+#[cfg(feature = "sha2-backend")]
+pub use sha256::Sha2Hasher;
+
 /// Trait for pluggable SHA-256 implementations.
 ///
 /// Instance method (`&self`) enables passing `&impl Sha256Hasher` through the
 /// call chain. The hasher struct is typically zero-sized so `&self` compiles away.
 pub trait Sha256Hasher {
+    /// SHA-256 of arbitrary bytes.
     fn hash(&self, data: &[u8]) -> [u8; 32];
-}
 
-/// Default SHA-256 hasher using the `sha2` crate.
-#[cfg(feature = "sha2-backend")]
-pub struct Sha2Hasher;
-
-#[cfg(feature = "sha2-backend")]
-impl Sha256Hasher for Sha2Hasher {
-    fn hash(&self, data: &[u8]) -> [u8; 32] {
-        use sha2::{Digest, Sha256};
-        Sha256::digest(data).into()
+    /// Hash each pair, `SHA256(pair[0] || pair[1])`, into the matching slot of `out`.
+    ///
+    /// This is the hot path of Merkleization: [`merkleize`] hashes a whole tree
+    /// level per call and [`hash_nodes`] passes a single pair, so an
+    /// implementation can batch pairs or specialize for 64-byte messages. The
+    /// default hashes one pair at a time through [`hash`](Self::hash).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `pairs.len() != out.len()`.
+    fn hash_pairs(&self, pairs: &[[Node; 2]], out: &mut [Node]) {
+        assert_eq!(pairs.len(), out.len(), "one output node per pair");
+        for (pair, out) in pairs.iter().zip(out) {
+            *out = self.hash(pair.as_flattened());
+        }
     }
 }
 
 /// Hash two nodes together: SHA256(a || b).
 #[inline]
 pub fn hash_nodes(hasher: &impl Sha256Hasher, a: &Node, b: &Node) -> Node {
-    let mut buf = [0u8; 64];
-    buf[..32].copy_from_slice(a);
-    buf[32..].copy_from_slice(b);
-    hasher.hash(&buf)
+    let mut out = [[0u8; 32]];
+    hasher.hash_pairs(&[[*a, *b]], &mut out);
+    out[0]
 }
 
 /// Pack serialized bytes into 32-byte chunks, zero-padding the last chunk if needed.
@@ -79,7 +89,9 @@ pub fn pack_bits(bits: &[u8], num_bits: usize) -> Vec<Node> {
 /// all zeros, so its root is read from [`ZERO_HASHES`] instead of being hashed.
 ///
 /// Cost is `O(chunks.len())` plus one hash per virtual level above the real subtree.
-/// Two buffers are allocated and reused (≈ `chunks.len()` and `chunks.len().div_ceil(2)` nodes).
+/// Each tree level is hashed in one [`Sha256Hasher::hash_pairs`] batch. Two buffers are
+/// allocated and reused (≈ `chunks.len() / 2` and `chunks.len() / 4` nodes); the leaves are
+/// never copied.
 #[cfg(feature = "alloc")]
 pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usize>) -> Node {
     let count = match limit {
@@ -110,34 +122,44 @@ pub fn merkleize(hasher: &impl Sha256Hasher, chunks: &[Node], limit: Option<usiz
     // it pairs the running root with an all-zero sibling.
     let real_depth = chunks.len().next_power_of_two().trailing_zeros() as usize;
 
-    // Fold the real chunks one level per iteration, swapping between two buffers
-    // that are allocated once and reused, so no level allocates.
-    //
-    // Only full pairs of real nodes are hashed. A level with an odd node count
-    // ends on the frontier, where the missing right sibling roots an all-zero
-    // subtree, so `ZERO_HASHES[level]` stands in for it rather than being hashed.
-    let mut layer: Vec<Node> = chunks.to_vec();
-    let mut next: Vec<Node> = Vec::with_capacity(layer.len().div_ceil(2));
-
-    for zero_hash in ZERO_HASHES.iter().take(real_depth) {
-        next.clear();
-        let (pairs, remainder) = layer.as_chunks::<2>();
-        for pair in pairs {
-            next.push(hash_nodes(hasher, &pair[0], &pair[1]));
+    // Fold the real chunks one level at a time. Level 0 reads `chunks` in place;
+    // later levels swap between two buffers allocated once, so no level allocates.
+    let mut root = if real_depth == 0 {
+        chunks[0]
+    } else {
+        let mut layer: Vec<Node> = Vec::with_capacity(chunks.len().div_ceil(2));
+        hash_level(hasher, chunks, &ZERO_HASHES[0], &mut layer);
+        let mut next: Vec<Node> = Vec::with_capacity(layer.len().div_ceil(2));
+        for zero_hash in &ZERO_HASHES[1..real_depth] {
+            hash_level(hasher, &layer, zero_hash, &mut next);
+            core::mem::swap(&mut layer, &mut next);
         }
-        if let [odd] = remainder {
-            next.push(hash_nodes(hasher, odd, zero_hash));
-        }
-        core::mem::swap(&mut layer, &mut next);
-    }
+        layer[0]
+    };
 
-    // `layer[0]` now roots the real-data subtree. Merge in the virtual levels.
-    let mut root = layer[0];
-    for zero_hash in ZERO_HASHES.iter().take(depth).skip(real_depth) {
+    // `root` now roots the real-data subtree. Merge in the virtual levels.
+    for zero_hash in &ZERO_HASHES[real_depth..depth] {
         root = hash_nodes(hasher, &root, zero_hash);
     }
 
     root
+}
+
+/// Hash one tree level of `layer` into `next`.
+///
+/// Full pairs of real nodes are hashed in a single [`Sha256Hasher::hash_pairs`]
+/// batch. A level with an odd node count ends on the frontier, where the missing
+/// right sibling roots an all-zero subtree, so `zero_hash` (the precomputed root
+/// of that subtree) stands in for it rather than being hashed.
+#[cfg(feature = "alloc")]
+fn hash_level(hasher: &impl Sha256Hasher, layer: &[Node], zero_hash: &Node, next: &mut Vec<Node>) {
+    let (pairs, remainder) = layer.as_chunks::<2>();
+    next.clear();
+    next.resize(pairs.len(), [0u8; 32]);
+    hasher.hash_pairs(pairs, next);
+    if let [odd] = remainder {
+        next.push(hash_nodes(hasher, odd, zero_hash));
+    }
 }
 
 /// Progressive merkleization: a chain of progressively larger binary subtrees.

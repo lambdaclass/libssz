@@ -14,12 +14,16 @@ default = ["std"]
 std = ["alloc", "libssz/std", "sha2-backend"]
 alloc = ["libssz/alloc"]
 sha2-backend = ["dep:sha2"]
+# Hash Merkle pairs with the `hashtree` library: multi-buffer SHA-256 assembly
+# specialized for 64-byte inputs. Needs a C toolchain and `make` at build time.
+hashtree = ["std", "sha2-backend", "dep:hashtree-rs"]
 ethereum_types = ["dep:ethereum-types", "libssz/ethereum_types"]
 
 [dependencies]
 libssz = { version = "0.3.0", path = "../ssz", default-features = false }
-sha2 = { version = "0.10", default-features = false, optional = true }
+sha2 = { version = "0.11", default-features = false, optional = true }
+hashtree-rs = { version = "0.2.6", optional = true }
 ethereum-types = { version = "0.15", default-features = false, optional = true }
 
 [build-dependencies]
-sha2 = "0.10"
+sha2 = "0.11"
