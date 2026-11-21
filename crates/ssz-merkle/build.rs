@@ -1,4 +1,4 @@
-use sha2::{Digest, Sha256};
+use sha3::{Digest, Keccak256};
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -13,7 +13,7 @@ fn main() {
     // zero_hashes[0] is already all zeros
 
     for i in 1..=MAX_DEPTH {
-        let mut hasher = Sha256::new();
+        let mut hasher = Keccak256::new();
         hasher.update(zero_hashes[i - 1]);
         hasher.update(zero_hashes[i - 1]);
         let result = hasher.finalize();

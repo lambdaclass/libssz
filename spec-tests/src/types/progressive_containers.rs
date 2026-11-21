@@ -1,5 +1,5 @@
 use libssz_derive::{HashTreeRoot as HashTreeRootDerive, SszDecode, SszEncode};
-use libssz_merkle::{HashTreeRoot, Node, Sha256Hasher};
+use libssz_merkle::{HashTreeRoot, MerkleHasher, Node};
 use libssz_types::{ProgressiveBitlist, ProgressiveList, SszBitlist, SszBitvector, SszList};
 
 use super::containers::{SmallTestStruct, VarTestStruct};
@@ -68,7 +68,7 @@ pub struct ProgressiveTestStruct {
 }
 
 impl HashTreeRoot for ProgressiveTestStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         // Regular container merkleization (not progressive)
         let field_roots: [Node; 4] = [
             self.a.hash_tree_root(hasher),
@@ -102,7 +102,7 @@ pub struct ProgressiveBitsStruct {
 }
 
 impl HashTreeRoot for ProgressiveBitsStruct {
-    fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
+    fn hash_tree_root(&self, hasher: &impl MerkleHasher) -> Node {
         let field_roots: [Node; 12] = [
             self.a.hash_tree_root(hasher),
             self.b.hash_tree_root(hasher),
