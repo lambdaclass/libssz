@@ -269,14 +269,14 @@ struct Foo {
 ```sh
 make test                  # unit + integration tests
 make test-alloc            # no_std + alloc only
-make download-spec-tests   # download consensus spec vectors (~1.25GB, cached)
-make spec-tests            # run 63,385 spec test cases (downloads if needed)
+make download-spec-tests   # download spec vectors (~1.25GB, cached)
+make spec-tests            # run 63,502 spec test cases (downloads if needed)
 make fuzz-quick            # 10s smoke fuzz per target (19 targets)
 make bench                 # criterion benchmarks
 make ci                    # full CI pipeline locally
 ```
 
-### Consensus Spec Tests
+### Spec Tests
 
 The library is validated against the official [Ethereum consensus spec test vectors](https://github.com/ethereum/consensus-specs) (v1.7.0-alpha.13). This covers:
 
@@ -284,7 +284,16 @@ The library is validated against the official [Ethereum consensus spec test vect
 - **ssz_static mainnet**: all Ethereum consensus types (BeaconState, BeaconBlock, Attestation, etc.) across 9 forks (phase0, altair, bellatrix, capella, deneb, electra, fulu, gloas, heze) at mainnet parameters
 - **ssz_static minimal**: same types at minimal preset parameters
 
-Each test case verifies decode, re-encode roundtrip, and hash tree root correctness.
+It is also validated against the [ssz-specs test vectors](https://github.com/ethereum/ssz-specs) (v0.1.0), the SSZ-only suite maintained alongside the standalone spec. This covers:
+
+- **basic types**: uints, booleans, byte vectors, byte lists, bitvectors, bitlists, vectors, and lists
+- **merkleization boundaries**: bitfield lengths straddling the 256-bit chunk boundary
+- **progressive types** (EIP-7916): progressive lists and bitlists across spine levels
+- **progressive containers** (EIP-7495): active-field layouts from one to 256 positions
+- **compatible unions** (EIP-8016): explicit selectors, unions of unions, and containers reaching a union
+- **decode failures**: cases tagged with the reason the input must be rejected
+
+Each test case verifies decode, re-encode roundtrip, and hash tree root correctness. Decode-failure cases verify the input is rejected.
 
 ### Fuzzing
 
