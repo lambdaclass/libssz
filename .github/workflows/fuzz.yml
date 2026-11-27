@@ -44,14 +44,25 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
 
+      # fuzz/Cargo.lock is gitignored, so resolve it first or the key never
+      # changes. Key on the nightly's commit hash: the version number stays
+      # the same across weeks of nightlies, whose builds cannot be reused.
+      - id: lock
+        working-directory: fuzz
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -vV | sed -n 's/^commit-hash: //p')" >> "$GITHUB_OUTPUT"
+
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             fuzz/target
-          key: fuzz-deps-${{ hashFiles('fuzz/Cargo.lock') }}
-          restore-keys: fuzz-deps-
+          key: fuzz-deps-${{ steps.lock.outputs.rustc }}-${{ hashFiles('fuzz/Cargo.lock') }}
+          restore-keys: |
+            fuzz-deps-${{ steps.lock.outputs.rustc }}-
+            fuzz-deps-
 
       - run: cargo install cargo-fuzz --locked
 
@@ -99,14 +110,25 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
 
+      # fuzz/Cargo.lock is gitignored, so resolve it first or the key never
+      # changes. Key on the nightly's commit hash: the version number stays
+      # the same across weeks of nightlies, whose builds cannot be reused.
+      - id: lock
+        working-directory: fuzz
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -vV | sed -n 's/^commit-hash: //p')" >> "$GITHUB_OUTPUT"
+
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             fuzz/target
-          key: fuzz-deps-${{ hashFiles('fuzz/Cargo.lock') }}
-          restore-keys: fuzz-deps-
+          key: fuzz-deps-${{ steps.lock.outputs.rustc }}-${{ hashFiles('fuzz/Cargo.lock') }}
+          restore-keys: |
+            fuzz-deps-${{ steps.lock.outputs.rustc }}-
+            fuzz-deps-
 
       - run: cargo install cargo-fuzz --locked
 
