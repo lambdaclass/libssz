@@ -272,6 +272,8 @@ make test-alloc            # no_std + alloc only
 make download-spec-tests   # download consensus spec vectors (~1.25GB, cached)
 make spec-tests            # run 63,385 spec test cases (downloads if needed)
 make fuzz-quick            # 10s smoke fuzz per target (19 targets)
+make property-tests-long   # long property-based run in release (ephyra)
+make property-tests-coverage # decoder code the property inputs never reach
 make bench                 # criterion benchmarks
 make ci                    # full CI pipeline locally
 ```
@@ -289,6 +291,17 @@ Each test case verifies decode, re-encode roundtrip, and hash tree root correctn
 ### Fuzzing
 
 Differential fuzz-tested against Lighthouse and ssz_rs across 19 fuzz targets, run nightly in CI.
+
+### Property-based tests
+
+`property-tests/` checks properties with [ephyra](https://github.com/datadog-labs/ephyra) on stable Rust, as part of `make test`:
+
+- **Canonical decoding**: a valid encoding with a few bytes edited either fails to decode or decodes to a value whose encoding is exactly those bytes, for containers (including all-fixed and transparent ones and lists and vectors of all-fixed containers), unions, progressive containers, bitlists and bitvectors.
+- **Reference model**: encodings and hash tree roots of the derived types, the bounded and progressive collections and the `libssz-merkle` primitives are compared with a naive model of the spec that builds full Merkle trees with `sha2` and shares no code with libssz.
+- **Operation sequences**: pushes, `set`, `IndexMut` and `DerefMut` slice operations on `SszList`, `SszBitlist`, `ProgressiveList` and `ProgressiveBitlist`, checked against a `Vec` after every step.
+- **Other implementations**: the same edited encodings are decoded by Lighthouse (`ethereum_ssz`, `ssz_types`, `tree_hash`) and ssz_rs. libssz and Lighthouse must agree on which inputs are valid, and all three on the re-encoding and root of inputs they accept. ssz_rs 0.9.0 panics on some malformed inputs and accepts some invalid ones, so when it alone disagrees on validity the input is counted in the report, not failed.
+
+A failure prints a shrunk counterexample and an `EPHYRA_REPLAY=<seed>:<iteration>` line that reruns it, and is saved under `property-tests/.ephyra/regressions/` so later runs try it first. Decoding failures shrink as bytes, lowering the offsets that point past a removed range, so a counterexample is usually a few dozen bytes or less. `make property-tests-long` runs every property in release for 30 seconds (`PROPERTY_BUDGET_MS`) and collects up to 10 distinct failures each. `make property-tests-coverage` reruns the decoding properties on an instrumented build and lists the `libssz` and `libssz-types` code no input reached.
 
 ## Documentation
 

@@ -1,4 +1,4 @@
-.PHONY: ci fmt clippy build test test-alloc doc no-std-check coverage audit bench bench-baseline bench-compare fuzz fuzz-quick download-spec-tests spec-tests
+.PHONY: ci fmt clippy build test test-alloc doc no-std-check coverage audit bench bench-baseline bench-compare fuzz fuzz-quick download-spec-tests spec-tests property-tests property-tests-long property-tests-coverage
 
 ci: fmt clippy build test test-alloc doc no-std-check coverage audit spec-tests ## Run the full CI pipeline locally
 
@@ -31,6 +31,33 @@ download-spec-tests: ## Download consensus spec test vectors (~1.25GB)
 
 spec-tests: download-spec-tests ## Run consensus spec tests (downloads vectors if needed)
 	cargo test -p spec-tests
+
+property-tests: ## Run the ephyra property tests at their default budgets (also part of `make test`)
+	cargo test -p property-tests
+
+# Release build, a 30s budget per property, and up to 10 distinct failures per
+# property instead of stopping at the first. Pass SEED=<n> to replay a run.
+PROPERTY_BUDGET_MS ?= 30000
+property-tests-long: ## Long ephyra run in release (PROPERTY_BUDGET_MS=<ms per property>, SEED=<n>)
+	EPHYRA_TESTS=100000000 EPHYRA_BUDGET_MS=$(PROPERTY_BUDGET_MS) EPHYRA_FAILURES=10 \
+		$(if $(SEED),EPHYRA_SEED=$(SEED)) cargo test --release -p property-tests
+
+# Coverage of the decoding properties, one ephyra run per crate filter (a
+# filter is a single name prefix). Pages land in target/property-coverage/<filter>/
+# and coverage-gaps.py merges them into one list of unreached code.
+PROPERTY_COVERAGE_FILTERS ?= libssz libssz_types
+PROPERTY_COVERAGE_DIR := $(CURDIR)/target/property-coverage
+property-tests-coverage: ## Which decoder code the property inputs never reach (needs python3)
+	@for filter in $(PROPERTY_COVERAGE_FILTERS); do \
+		RUSTFLAGS="-C instrument-coverage" \
+		LLVM_PROFILE_FILE="$(PROPERTY_COVERAGE_DIR)/profraw/%m_%p.profraw" \
+		CARGO_TARGET_DIR="$(PROPERTY_COVERAGE_DIR)/build" \
+		RUST_TEST_THREADS=1 EPHYRA_REGRESSIONS=0 \
+		EPHYRA_COVERAGE_FILTER=$$filter EPHYRA_COVERAGE_HTML="$(PROPERTY_COVERAGE_DIR)/$$filter" \
+		cargo test -p property-tests --features coverage --test encoding --test differential \
+			-- decodes_only_canonical decoders_agree || exit 1; \
+	done
+	python3 property-tests/coverage-gaps.py $(addprefix $(PROPERTY_COVERAGE_DIR)/,$(PROPERTY_COVERAGE_FILTERS))
 
 audit: ## Audit dependencies for known vulnerabilities (requires cargo-audit)
 	cargo audit

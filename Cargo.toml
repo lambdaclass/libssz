@@ -8,6 +8,7 @@ members = [
     "examples",
     "benches",
     "spec-tests",
+    "property-tests",
 ]
 
 [profile.bench]
