@@ -42,14 +42,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Cargo.lock is not committed, so resolve it here: the key then changes
+      # when a dependency or the compiler does, and the build uses this lock.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: clippy-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: clippy-
+          key: clippy-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            clippy-${{ steps.lock.outputs.rustc }}-
+            clippy-
       - run: rustup component add clippy
       - run: cargo clippy --workspace --all-targets --exclude spec-tests -- -D warnings
 
@@ -59,14 +67,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: build-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: build-
+          key: build-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            build-${{ steps.lock.outputs.rustc }}-
+            build-
       - run: cargo build --workspace --all-targets --exclude spec-tests
 
   test:
@@ -82,14 +97,21 @@ jobs:
             args: "--no-default-features --features alloc"
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: build-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: build-
+          key: build-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            build-${{ steps.lock.outputs.rustc }}-
+            build-
       - run: cargo test --workspace --exclude spec-tests ${{ matrix.args }}
 
   doc:
@@ -98,14 +120,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: doc-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: doc-
+          key: doc-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            doc-${{ steps.lock.outputs.rustc }}-
+            doc-
       - run: cargo doc --workspace --no-deps --exclude spec-tests
         env:
           RUSTDOCFLAGS: "-D warnings"
@@ -117,14 +146,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: rustup target add thumbv7m-none-eabi riscv64imac-unknown-none-elf
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: no-std-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: no-std-
+          key: no-std-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            no-std-${{ steps.lock.outputs.rustc }}-
+            no-std-
       - run: cargo check -p libssz -p libssz-types -p libssz-merkle --target thumbv7m-none-eabi --no-default-features --features alloc
       - run: cargo check -p libssz -p libssz-types -p libssz-merkle --target riscv64imac-unknown-none-elf --no-default-features --features alloc
 
@@ -134,14 +170,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: iai-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: iai-
+          key: iai-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            iai-${{ steps.lock.outputs.rustc }}-
+            iai-
       - run: sudo apt-get install -y valgrind
       - run: cargo install iai-callgrind-runner --version 0.14.2
       - run: cargo bench --workspace --bench iai_merkle --bench iai_encode_decode
@@ -152,6 +195,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       # Only the dependency sources are cached, not `target`: cargo-llvm-cov reports on
       # every instrumented test binary it finds there, so binaries left over from other
       # branches would be counted as uncovered code.
@@ -160,8 +208,10 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: coverage-deps-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: coverage-deps-
+          key: coverage-deps-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            coverage-deps-${{ steps.lock.outputs.rustc }}-
+            coverage-deps-
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
@@ -179,14 +229,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Resolve Cargo.lock for the cache key; see the clippy job.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: spec-tests-build-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: spec-tests-build-
+          key: spec-tests-build-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            spec-tests-build-${{ steps.lock.outputs.rustc }}-
+            spec-tests-build-
       - uses: actions/cache@v6
         with:
           path: target/spec-tests

@@ -18,14 +18,21 @@ jobs:
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
+      # Cargo.lock is gitignored, so resolve it first or the key never changes.
+      - id: lock
+        run: |
+          cargo generate-lockfile
+          echo "rustc=$(rustc -V | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: bench-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: bench-
+          key: bench-${{ steps.lock.outputs.rustc }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            bench-${{ steps.lock.outputs.rustc }}-
+            bench-
       - name: Benchmark PR branch
         run: cargo bench --workspace --bench encode --bench decode --bench hash_tree_root --bench merkle --bench differential -- --save-baseline pr
       - uses: actions/checkout@v7
