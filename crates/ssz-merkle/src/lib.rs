@@ -211,8 +211,9 @@ pub fn mix_in_selector(hasher: &impl Sha256Hasher, root: &Node, selector: u8) ->
 pub trait HashTreeRoot {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node;
 
-    /// Returns `true` for SSZ basic types (bool, uN, byte arrays).
-    /// Composite types (containers, vectors, lists) return `false`.
+    /// Returns `true` for SSZ basic types: `bool` and `uintN` only.
+    /// Composite types (containers, vectors, lists, and byte vectors such
+    /// as `[u8; N]` at any length) return `false`.
     /// Used by Vector/List HTR to decide between packing and per-element hashing.
     fn is_basic_type() -> bool
     where
