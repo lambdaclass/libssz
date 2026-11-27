@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       budget_ms:
-        description: "Time budget per property, in milliseconds"
+        description: "Time budget per property, in milliseconds (the job stops after 60 minutes, about 14 rounds of properties)"
         default: "30000"
 
 env:
@@ -29,7 +29,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: property-${{ hashFiles('**/Cargo.lock') }}
+          # Cargo.lock is not committed, so there is nothing to hash: save a
+          # new cache every run and restore the latest one.
+          key: property-${{ github.run_id }}
           restore-keys: property-
       - name: Run property tests
         env:
@@ -37,7 +39,9 @@ jobs:
           EPHYRA_REPORT_JSON: ${{ github.workspace }}/property-tests/.ephyra/reports.jsonl
         run: make property-tests-long PROPERTY_BUDGET_MS="$PROPERTY_BUDGET_MS"
       - name: Upload ephyra artifacts
-        if: failure()
+        # A run that hits the timeout is cancelled, not failed, and its
+        # failures are worth keeping too.
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: ephyra-${{ github.run_id }}

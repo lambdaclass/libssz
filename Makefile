@@ -48,6 +48,7 @@ property-tests-long: ## Long ephyra run in release (PROPERTY_BUDGET_MS=<ms per p
 PROPERTY_COVERAGE_FILTERS ?= libssz libssz_types
 PROPERTY_COVERAGE_DIR := $(CURDIR)/target/property-coverage
 property-tests-coverage: ## Which decoder code the property inputs never reach (needs python3)
+	rm -rf $(PROPERTY_COVERAGE_DIR)/profraw $(addprefix $(PROPERTY_COVERAGE_DIR)/,$(PROPERTY_COVERAGE_FILTERS))
 	@for filter in $(PROPERTY_COVERAGE_FILTERS); do \
 		RUSTFLAGS="-C instrument-coverage" \
 		LLVM_PROFILE_FILE="$(PROPERTY_COVERAGE_DIR)/profraw/%m_%p.profraw" \

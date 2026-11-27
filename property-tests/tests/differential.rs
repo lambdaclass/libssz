@@ -33,7 +33,7 @@ mod lighthouse {
     use lighthouse_ssz_types::{BitList, BitVector, FixedVector, VariableList};
     use tree_hash::{Hash256, PackedEncoding, TreeHash, TreeHashType};
     use tree_hash_derive::TreeHash;
-    use typenum::{U11, U16, U2, U20, U3, U4, U40, U5, U7, U9};
+    use typenum::{U11, U16, U2, U20, U3, U4, U40, U5, U6, U7, U9};
 
     #[derive(Clone, Debug, PartialEq, Encode, Decode, TreeHash)]
     pub struct Inner {
@@ -152,6 +152,7 @@ mod lighthouse {
         pub roots: VariableList<[u8; 32], U3>,
         pub addrs: VariableList<[u8; 20], U3>,
         pub slot: u64,
+        pub slots: VariableList<u64, U6>,
         pub wrapped: VariableList<u16, U9>,
         pub tagged: Tagged,
         pub inner: Inner,
@@ -221,6 +222,7 @@ mod ssz_rs_types {
         pub roots: List<Vector<u8, 32>, 3>,
         pub addrs: List<Vector<u8, 20>, 3>,
         pub slot: u64,
+        pub slots: List<u64, 6>,
         pub wrapped: List<u16, 9>,
         pub tagged: Tagged,
         pub inner: Inner,

@@ -31,10 +31,12 @@ def main():
     parser.add_argument("--match", help="only report functions whose name contains this")
     args = parser.parse_args()
 
+    # A function can have entries in several files (code from a macro
+    # expansion lands in the macro's file), so functions are keyed by
+    # (file, name) and each entry's lines are read in its own file.
     line_inputs = collections.defaultdict(int)  # (file, line) -> most inputs
-    fn_inputs = collections.defaultdict(int)  # function -> most inputs
-    fn_file = {}
-    fn_lines = collections.defaultdict(set)
+    fn_inputs = collections.defaultdict(int)  # (file, function) -> most inputs
+    fn_lines = collections.defaultdict(set)  # (file, function) -> lines
     sources = {}
 
     pages = [p for d in args.dirs for p in sorted(glob.glob(os.path.join(d, "*.html")))]
@@ -47,41 +49,44 @@ def main():
             raise SystemExit(f"{page}: no coverage data")
         for entry in json.loads(match.group(1))["files"]:
             path = entry["display"]
-            sources[path] = entry["source"]
             # The property files themselves: their generator closures run
-            # outside the property and always read as never entered.
-            if path.startswith("tests/"):
+            # outside the property and always read as never entered. Files
+            # without source (the standard library under /rustc) cannot be
+            # shown either.
+            if path.startswith("tests/") or not entry.get("source"):
                 continue
+            sources[path] = entry["source"]
             for fn in entry["functions"]:
-                name = fn["name"]
-                fn_file[name] = path
-                fn_inputs[name] = max(fn_inputs[name], fn["inputs"])
+                key = (path, fn["name"])
+                fn_inputs[key] = max(fn_inputs[key], fn["inputs"])
                 for line, inputs, _executions in fn["lines"]:
                     line_inputs[(path, line)] = max(line_inputs[(path, line)], inputs)
-                    fn_lines[name].add(line)
+                    fn_lines[key].add(line)
 
     def wanted(name):
         return args.match is None or args.match in name
 
-    names = sorted(n for n in fn_inputs if wanted(n))
-    never = [n for n in names if fn_inputs[n] == 0]
-    print(f"{len(pages)} pages, {len(names)} functions, {len(never)} never entered")
-    for name in never:
-        print(f"  - {name}")
+    keys = sorted(k for k in fn_inputs if wanted(k[1]))
+    never = [k for k in keys if fn_inputs[k] == 0]
+    print(f"{len(pages)} pages, {len(keys)} functions, {len(never)} never entered")
+    for path, name in never:
+        print(f"  - {name}  ({path})")
 
     print("\nlines never executed in entered functions:")
     seen = set()
-    for name in names:
-        if fn_inputs[name] == 0:
+    for key in keys:
+        if fn_inputs[key] == 0:
             continue
-        path = fn_file[name]
-        gaps = tuple(sorted(l for l in fn_lines[name] if line_inputs[(path, l)] == 0))
+        path, name = key
+        gaps = tuple(sorted(l for l in fn_lines[key] if line_inputs[(path, l)] == 0))
         if not gaps or (path, gaps) in seen:
             continue
         seen.add((path, gaps))
         print(f"  {path}  ({name})")
+        lines = sources[path]
         for line in gaps:
-            print(f"    {line:5}  {sources[path][line - 1].strip()}")
+            text = lines[line - 1].strip() if line <= len(lines) else ""
+            print(f"    {line:5}  {text}")
 
 
 if __name__ == "__main__":

@@ -290,6 +290,8 @@ pub struct ShapesRecipe {
     pub addrs: Vec<Vec<u8>>,
     #[ephyra(gen = gens::int(0u64..=u64::MAX))]
     pub slot: u64,
+    #[ephyra(gen = gens::vec(gens::int(0u64..=u64::MAX)).len(0..=6))]
+    pub slots: Vec<u64>,
     #[ephyra(gen = gens::vec(gens::int(0u16..=u16::MAX)).len(0..=9))]
     pub wrapped: Vec<u16>,
     #[ephyra(gen = any::<TaggedRecipe>())]
@@ -322,6 +324,8 @@ impl ShapesRecipe {
             roots: SszList::try_from(roots).expect("test bug: roots over limit"),
             addrs: SszList::try_from(addrs).expect("test bug: addrs over limit"),
             slot: Slot(self.slot),
+            slots: SszList::try_from(self.slots.iter().copied().map(Slot).collect::<Vec<_>>())
+                .expect("test bug: slots over limit"),
             wrapped: Wrapped(
                 SszList::try_from(self.wrapped.clone()).expect("test bug: wrapped over limit"),
             ),
@@ -345,6 +349,7 @@ impl ShapesRecipe {
             .collect();
         let root_roots: Vec<Chunk> = self.roots.iter().map(|b| r::byte_vector_root(b)).collect();
         let addr_roots: Vec<Chunk> = self.addrs.iter().map(|b| r::byte_vector_root(b)).collect();
+        let slots: Vec<u8> = self.slots.iter().flat_map(|v| v.to_le_bytes()).collect();
         let wrapped: Vec<u8> = self.wrapped.iter().flat_map(|v| v.to_le_bytes()).collect();
         let fields = [
             self.record.reference_root(),
@@ -357,6 +362,8 @@ impl ShapesRecipe {
             r::composite_list_root(&root_roots, 3),
             r::composite_list_root(&addr_roots, 3),
             r::basic_root(&self.slot.to_le_bytes()),
+            // Transparent wrappers of `u64` pack like `u64`s.
+            r::basic_list_root(&slots, self.slots.len(), 6, 8),
             r::basic_list_root(&wrapped, self.wrapped.len(), 9, 2),
             self.tagged.reference_root(),
             self.inner.reference_root(),

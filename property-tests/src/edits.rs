@@ -99,11 +99,12 @@ pub fn byte_size(bytes: &Vec<u8>) -> u64 {
 /// [`byte_size`], most aggressive first:
 ///
 /// 1. remove a range, halving the range size from the largest power of two
-///    that fits down to one byte. Each removal is offered twice: first with
-///    every earlier 4-byte little-endian word that reads as an offset past
-///    the range lowered by the range's length (see [`shift_offsets`]), so a
-///    variable field's body can shrink while the container stays valid, then
-///    as a plain removal;
+///    that fits down to one byte. Each removal is offered up to three times,
+///    so a variable field's body can shrink while the container stays
+///    valid: with the offsets that point past the range lowered by its
+///    length, nested containers' offsets included (see
+///    [`shift_nested_offsets`]); with only top-level offsets lowered (see
+///    [`shift_offsets`]), when that differs; and as a plain removal;
 /// 2. zero a range, with the same sizes;
 /// 3. lower one byte: to 0, to half, by one.
 // `&Vec<u8>`, not `&[u8]`: ephyra passes `&Gen::Value`, here `&Vec<u8>`.

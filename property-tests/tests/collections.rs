@@ -13,8 +13,9 @@ use libssz_types::{
 };
 use property_tests::reference;
 
-/// `SszBitlist<33>`: one bit past four whole bytes, so the delimiter lands in
-/// a byte of its own when the list is full.
+/// `SszBitlist<33>`: one bit past four whole bytes. At length 32 the
+/// delimiter takes a byte of its own; at the limit it shares the fifth byte
+/// with the last bit.
 const BITLIST_LIMIT: usize = 33;
 /// `SszList<u16, 40>`: 80 bytes, three chunks, the last one partial.
 const LIST_LIMIT: usize = 40;

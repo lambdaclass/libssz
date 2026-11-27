@@ -94,8 +94,9 @@ pub enum Tagged {
 
 /// The shapes the types above leave out: containers nested directly (fixed
 /// and variable), lists and vectors of all-fixed containers, vectors and
-/// lists of the other basic types and byte vectors, transparent fields and a
-/// fixed-variant union.
+/// lists of the other basic types and byte vectors, transparent fields, a
+/// list of transparent basic values (which must pack like the bare `u64`s)
+/// and a fixed-variant union.
 #[derive(Debug, Clone, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
 pub struct Shapes {
     pub record: Fixed,
@@ -106,6 +107,7 @@ pub struct Shapes {
     pub roots: SszList<[u8; 32], 3>,
     pub addrs: SszList<[u8; 20], 3>,
     pub slot: Slot,
+    pub slots: SszList<Slot, 6>,
     pub wrapped: Wrapped,
     pub tagged: Tagged,
     pub inner: Inner,
