@@ -310,6 +310,9 @@ impl HashTreeRoot for u128 {
 }
 
 // ── [u8; N] ──
+// `[u8; N]` is `Vector[byte, N]`, a composite type whatever `N` is: only
+// `uintN` and `boolean` are basic. A collection of byte arrays therefore
+// merkleizes one root per element, never the elements packed together.
 
 #[cfg(feature = "alloc")]
 impl<const N: usize> HashTreeRoot for [u8; N] {
@@ -324,7 +327,7 @@ impl<const N: usize> HashTreeRoot for [u8; N] {
     }
 
     fn is_basic_type() -> bool {
-        N <= 32
+        false
     }
 }
 
@@ -931,7 +934,7 @@ mod tests {
     fn hash_tree_root_byte_array_32_is_identity() {
         let arr = [0xab_u8; 32];
         assert_eq!(arr.hash_tree_root(&Sha2Hasher), arr);
-        assert!(<[u8; 32]>::is_basic_type());
+        assert!(!<[u8; 32]>::is_basic_type());
     }
 
     #[cfg(feature = "sha2-backend")]
@@ -941,7 +944,7 @@ mod tests {
         let root = arr.hash_tree_root(&Sha2Hasher);
         assert_eq!(&root[..20], &arr[..]);
         assert_eq!(&root[20..], &[0u8; 12]);
-        assert!(<[u8; 20]>::is_basic_type());
+        assert!(!<[u8; 20]>::is_basic_type());
     }
 
     #[cfg(feature = "sha2-backend")]
@@ -951,7 +954,7 @@ mod tests {
         let root = arr.hash_tree_root(&Sha2Hasher);
         assert_eq!(&root[..4], &arr[..]);
         assert_eq!(&root[4..], &[0u8; 28]);
-        assert!(<[u8; 4]>::is_basic_type());
+        assert!(!<[u8; 4]>::is_basic_type());
     }
 
     #[cfg(feature = "sha2-backend")]
@@ -961,7 +964,7 @@ mod tests {
         let root = arr.hash_tree_root(&Sha2Hasher);
         assert_eq!(&root[..7], &arr[..]);
         assert_eq!(&root[7..], &[0u8; 25]);
-        assert!(<[u8; 7]>::is_basic_type());
+        assert!(!<[u8; 7]>::is_basic_type());
     }
 
     #[cfg(feature = "sha2-backend")]
