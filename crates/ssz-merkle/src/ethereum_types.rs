@@ -4,14 +4,14 @@ use ethereum_types as et;
 
 use crate::{HashTreeRoot, Node, Sha256Hasher};
 
-// ── H-types: delegate to inner [u8; N] ──
+// ── H-types: byte vectors, delegating to the inner [u8; N] ──
 
 impl HashTreeRoot for et::H32 {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 4]>::is_basic_type()
+        false
     }
 }
 
@@ -20,7 +20,7 @@ impl HashTreeRoot for et::H64 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 8]>::is_basic_type()
+        false
     }
 }
 
@@ -29,7 +29,7 @@ impl HashTreeRoot for et::H128 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 16]>::is_basic_type()
+        false
     }
 }
 
@@ -38,7 +38,7 @@ impl HashTreeRoot for et::H160 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 20]>::is_basic_type()
+        false
     }
 }
 
@@ -47,7 +47,7 @@ impl HashTreeRoot for et::H256 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 32]>::is_basic_type()
+        false
     }
 }
 
@@ -56,7 +56,7 @@ impl HashTreeRoot for et::H264 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 33]>::is_basic_type()
+        false
     }
 }
 
@@ -65,7 +65,7 @@ impl HashTreeRoot for et::H512 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 64]>::is_basic_type()
+        false
     }
 }
 
@@ -74,18 +74,20 @@ impl HashTreeRoot for et::H520 {
         self.as_fixed_bytes().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 65]>::is_basic_type()
+        false
     }
 }
 
 // ── U-types: serialize to LE bytes, then hash ──
+// `U64`, `U128` and `U256` are `uint64`, `uint128` and `uint256`, which are
+// basic. SSZ has no `uint512`, so `U512` is hashed as a 64-byte vector.
 
 impl HashTreeRoot for et::U64 {
     fn hash_tree_root(&self, hasher: &impl Sha256Hasher) -> Node {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 8]>::is_basic_type()
+        true
     }
 }
 
@@ -94,7 +96,7 @@ impl HashTreeRoot for et::U128 {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 16]>::is_basic_type()
+        true
     }
 }
 
@@ -103,7 +105,7 @@ impl HashTreeRoot for et::U256 {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 32]>::is_basic_type()
+        true
     }
 }
 
@@ -112,7 +114,7 @@ impl HashTreeRoot for et::U512 {
         self.to_little_endian().hash_tree_root(hasher)
     }
     fn is_basic_type() -> bool {
-        <[u8; 64]>::is_basic_type()
+        false
     }
 }
 
@@ -121,20 +123,20 @@ mod tests {
     use super::*;
     use crate::{merkleize, pack, Sha2Hasher};
 
-    // H-type basic type checks
+    // H-types are byte vectors, which are composite at every length.
     #[test]
-    fn h32_is_basic() {
-        assert!(et::H32::is_basic_type());
+    fn h32_is_not_basic() {
+        assert!(!et::H32::is_basic_type());
     }
 
     #[test]
-    fn h160_is_basic() {
-        assert!(et::H160::is_basic_type());
+    fn h160_is_not_basic() {
+        assert!(!et::H160::is_basic_type());
     }
 
     #[test]
-    fn h256_is_basic() {
-        assert!(et::H256::is_basic_type());
+    fn h256_is_not_basic() {
+        assert!(!et::H256::is_basic_type());
     }
 
     #[test]
@@ -187,6 +189,11 @@ mod tests {
     #[test]
     fn u64_is_basic() {
         assert!(et::U64::is_basic_type());
+    }
+
+    #[test]
+    fn u128_is_basic() {
+        assert!(et::U128::is_basic_type());
     }
 
     #[test]

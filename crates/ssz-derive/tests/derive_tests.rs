@@ -240,6 +240,33 @@ fn transparent_hash_tree_root() {
     );
 }
 
+/// A transparent wrapper is basic exactly when its field is, so a
+/// collection of wrappers packs (or not) like a collection of the field.
+#[test]
+fn transparent_is_basic_like_its_field() {
+    assert!(Wrapper::is_basic_type());
+    assert!(NamedWrapper::is_basic_type());
+    assert!(!ByteWrapper::is_basic_type());
+
+    let wrapped = vec![Wrapper(1), Wrapper(2), Wrapper(3)];
+    let plain = vec![1u64, 2, 3];
+    assert_eq!(
+        wrapped.hash_tree_root(&Sha2Hasher),
+        plain.hash_tree_root(&Sha2Hasher)
+    );
+
+    let wrapped = vec![ByteWrapper([1; 20]), ByteWrapper([2; 20])];
+    let plain = vec![[1u8; 20], [2u8; 20]];
+    assert_eq!(
+        wrapped.hash_tree_root(&Sha2Hasher),
+        plain.hash_tree_root(&Sha2Hasher)
+    );
+}
+
+#[derive(Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]
+#[ssz(transparent)]
+struct ByteWrapper([u8; 20]);
+
 // ── Named-field transparent ──
 
 #[derive(Debug, PartialEq, SszEncode, SszDecode, HashTreeRoot)]

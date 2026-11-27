@@ -248,4 +248,48 @@ mod tests {
         let expected = mix_in_length(&Sha2Hasher, &inner_root, 2);
         assert_eq!(root, expected);
     }
+
+    // ── Collections of byte arrays ──
+    // `[u8; N]` is `Vector[byte, N]`, composite at every length, so each
+    // element is one leaf (its own root) and the limit counts elements. The
+    // expected roots below come from Lighthouse's `tree_hash` 0.12.
+
+    fn decode_hex(hex: &str) -> Node {
+        let mut node = [0u8; 32];
+        for (i, byte) in node.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(&hex[2 * i..2 * i + 2], 16).unwrap();
+        }
+        node
+    }
+
+    #[test]
+    fn list_of_short_byte_arrays_is_not_packed() {
+        let empty: SszList<[u8; 20], 3> = SszList::new();
+        assert_eq!(
+            empty.hash_tree_root(&Sha2Hasher),
+            decode_hex("28ba1834a3a7b657460ce79fa3a1d909ab8828fd557659d4d0554a9bdbc0ec30")
+        );
+
+        let two: SszList<[u8; 20], 3> = vec![[0x11; 20], [0x22; 20]].try_into().unwrap();
+        assert_eq!(
+            two.hash_tree_root(&Sha2Hasher),
+            decode_hex("d03d6bc8b5a125c29318afccfb560d6513936076b5e8b35d30962aa07be83750")
+        );
+    }
+
+    #[test]
+    fn vector_of_short_byte_arrays_is_not_packed() {
+        let v: SszVector<[u8; 4], 3> = vec![[1; 4], [2; 4], [3; 4]].try_into().unwrap();
+        // One zero-padded leaf per element, three leaves.
+        let leaves: Vec<Node> = v
+            .iter()
+            .map(|item| {
+                let mut leaf = [0u8; 32];
+                leaf[..4].copy_from_slice(item);
+                leaf
+            })
+            .collect();
+        let expected = merkleize(&Sha2Hasher, &leaves, Some(3));
+        assert_eq!(v.hash_tree_root(&Sha2Hasher), expected);
+    }
 }

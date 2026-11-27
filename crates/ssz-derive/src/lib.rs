@@ -849,12 +849,18 @@ fn derive_htr_transparent(
     where_clause: Option<&syn::WhereClause>,
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
-    let (field_access, _) = transparent_field_info(data);
+    let (field_access, field_ty) = transparent_field_info(data);
 
+    // A transparent struct is its field, so it is basic exactly when the
+    // field is: a collection of `Gwei(u64)` packs like one of `u64`.
     quote! {
         impl #impl_generics libssz_merkle::HashTreeRoot for #name #ty_generics #where_clause {
             fn hash_tree_root(&self, hasher: &impl libssz_merkle::Sha256Hasher) -> libssz_merkle::Node {
                 libssz_merkle::HashTreeRoot::hash_tree_root(&#field_access, hasher)
+            }
+
+            fn is_basic_type() -> bool {
+                <#field_ty as libssz_merkle::HashTreeRoot>::is_basic_type()
             }
         }
     }
