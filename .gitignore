@@ -4,3 +4,6 @@ fuzz/target/
 fuzz/corpus/
 fuzz/artifacts/
 lcov.info
+# ephyra run artifacts; remembered failures are kept so every run replays them
+property-tests/.ephyra/*
+!property-tests/.ephyra/regressions/

@@ -1,0 +1,37 @@
+[package]
+name = "property-tests"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+description = "Property-based tests for libssz, written with ephyra"
+
+[dependencies]
+libssz = { version = "0.3.0", path = "../crates/ssz" }
+libssz-types = { version = "0.3.0", path = "../crates/ssz-types" }
+libssz-merkle = { version = "0.3.0", path = "../crates/ssz-merkle" }
+libssz-derive = { version = "0.3.0", path = "../crates/ssz-derive" }
+
+# Pinned exactly: ephyra is at 0.0.x and its API is not frozen.
+ephyra = "=0.0.1"
+# The reference models hash with sha2 directly instead of going through
+# libssz-merkle, so they share no code with the implementation under test.
+sha2 = "0.10"
+
+[dev-dependencies]
+# Other SSZ implementations, for `tests/differential.rs`. Same versions as the
+# benches, so the workspace gains no new dependencies.
+lighthouse_ssz = { package = "ethereum_ssz", version = "0.10" }
+lighthouse_ssz_derive = { package = "ethereum_ssz_derive", version = "0.10" }
+lighthouse_ssz_types = { package = "ssz_types", version = "0.14" }
+tree_hash = "0.12"
+# `U128`, Lighthouse's `u128`; already in the tree through `tree_hash`.
+alloy-primitives = "1"
+tree_hash_derive = "0.12"
+ssz_rs = "0.9"
+typenum = "1"
+
+[features]
+# In-process coverage for `make property-tests-coverage`; needs a build with
+# `-C instrument-coverage`, and is a no-op without one.
+coverage = ["ephyra/coverage"]
